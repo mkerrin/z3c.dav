@@ -26,8 +26,8 @@ from zope.app.i18n import ZopeMessageFactory as _
 import zope.app.container.interfaces
 import zope.publisher.interfaces.http
 
-from zope.webdav.properties import DAVProperty, DeadField
-import zope.webdav.widgets
+from z3c.dav.properties import DAVProperty, DeadField
+import z3c.dav.widgets
 
 class IDAVCreationdate(interface.Interface):
 
@@ -283,21 +283,21 @@ class IDAVLockSupport(IDAVLockdiscovery,
     """
 
 
-class LockdiscoveryDAVWidget(zope.webdav.widgets.ListDAVWidget):
+class LockdiscoveryDAVWidget(z3c.dav.widgets.ListDAVWidget):
     """
     Custom widget for the `{DAV:}lockdiscovery` property. This is basically
     a list widget but it doesn't display any sub XML element whose value
     is equal to its field missing_value.
 
       >>> import zope.schema.interfaces
-      >>> from zope.webdav.tests import test_widgets
+      >>> from z3c.dav.tests import test_widgets
 
     Setup some adapters for rendering the widget.
 
       >>> gsm = component.getGlobalSiteManager()
-      >>> gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+      >>> gsm.registerAdapter(z3c.dav.widgets.TextDAVWidget,
       ...                     (zope.schema.interfaces.IText, None))
-      >>> gsm.registerAdapter(zope.webdav.widgets.IntDAVWidget,
+      >>> gsm.registerAdapter(z3c.dav.widgets.IntDAVWidget,
       ...                     (zope.schema.interfaces.IInt, None))
 
     Setup a field and test object to render. While this is not the same field
@@ -346,23 +346,23 @@ class LockdiscoveryDAVWidget(zope.webdav.widgets.ListDAVWidget):
 
     Clean up the component registration.
 
-      >>> gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+      >>> gsm.unregisterAdapter(z3c.dav.widgets.TextDAVWidget,
       ...                       (zope.schema.interfaces.IText, None))
       True
-      >>> gsm.unregisterAdapter(zope.webdav.widgets.IntDAVWidget,
+      >>> gsm.unregisterAdapter(z3c.dav.widgets.IntDAVWidget,
       ...                       (zope.schema.interfaces.IInt, None))
       True
 
     """
-    interface.classProvides(zope.webdav.interfaces.IIDAVWidget)
+    interface.classProvides(z3c.dav.interfaces.IIDAVWidget)
 
     def render(self):
-        etree = zope.etree.getEngine()
+        etree = z3c.etree.getEngine()
         el = etree.Element(etree.QName(self.namespace, self.name))
 
         if self._value is not self.context.missing_value:
             for value in self._value:
-                widget = zope.webdav.widgets.ObjectDAVWidget(
+                widget = z3c.dav.widgets.ObjectDAVWidget(
                     self.context.value_type, self.request)
                 widget.render_missing_values = False
                 widget.setRenderedValue(value)
@@ -380,7 +380,7 @@ class LockdiscoveryDAVWidget(zope.webdav.widgets.ListDAVWidget):
 ################################################################################
 
 creationdate = DAVProperty("{DAV:}creationdate", IDAVCreationdate)
-creationdate.custom_widget = zope.webdav.widgets.ISO8601DatetimeDAVWidget
+creationdate.custom_widget = z3c.dav.widgets.ISO8601DatetimeDAVWidget
 
 displayname = DAVProperty("{DAV:}displayname", IDAVDisplayname)
 

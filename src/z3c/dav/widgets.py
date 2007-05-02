@@ -22,7 +22,7 @@ from zope import component
 from zope import interface
 from zope.schema import getFieldsInOrder
 
-from zope.etree.interfaces import IEtree
+import z3c.etree
 import interfaces
 
 import zope.datetime
@@ -59,7 +59,7 @@ class DAVWidget(object):
               "please implemented this method in a subclass of DAVWidget."
 
     def render(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         el = etree.Element(etree.QName(self.namespace, self.name))
 
         rendered_value = self.toDAVValue(self._value)
@@ -136,7 +136,7 @@ class ObjectDAVWidget(DAVWidget):
     render_missing_values = True
 
     def render(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         el = etree.Element(etree.QName(self.namespace, self.name))
 
         if self._value is None:
@@ -167,7 +167,7 @@ class ListDAVWidget(DAVWidget):
     interface.classProvides(interfaces.IIDAVWidget)
 
     def render(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         el = etree.Element(etree.QName(self.namespace, self.name))
 
         if self._value is None:

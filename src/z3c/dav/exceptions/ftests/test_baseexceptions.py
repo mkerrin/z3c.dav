@@ -20,18 +20,18 @@ __docformat__ = 'restructuredtext'
 import unittest
 from cStringIO import StringIO
 
-from zope.webdav.ftests import dav
-import zope.webdav.interfaces
-import zope.webdav.exceptions.browser
+from z3c.dav.ftests import dav
+import z3c.dav.interfaces
+import z3c.dav.exceptions.browser
 
 class TestBadRequest(dav.DAVTestCase):
 
     def test_badrequest(self):
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
-        error = zope.webdav.interfaces.BadRequest(
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
+        error = z3c.dav.interfaces.BadRequest(
             request, u"Some bad content in the request")
 
-        view = zope.webdav.exceptions.browser.BadRequest(error, request)
+        view = z3c.dav.exceptions.browser.BadRequest(error, request)
         result = view()
 
         self.assertEqual(request.response.getStatus(), 400)

@@ -16,12 +16,12 @@ enforced by the client, and the server merely records the value of the property
 verbatim.
 
 Dead properties are just stored, edited or deleted through a adapter
-*zope.webdav.interfaces.IOpaquePropertyStorage* adapter. This just stores the
+*z3c.dav.interfaces.IOpaquePropertyStorage* adapter. This just stores the
 data sent through a PROPPATCH request, performing no checks on the value of
 the data sent.
 
 Live properties are declared in advanace by declaring a utility which
-implements *zope.webdav.interfaces.IDAVProperty*. *IAVProperty* is just a data
+implements *z3c.dav.interfaces.IDAVProperty*. *IAVProperty* is just a data
 structure containing all the information neccessary to process a request.
 This information includes:
 
@@ -52,28 +52,28 @@ when the system starts up.
   >>> from zope import schema
   >>> import zope.schema.interfaces
   >>> from zope import component
-  >>> import zope.webdav.properties
-  >>> import zope.webdav.interfaces
-  >>> import zope.webdav.publisher
-  >>> import zope.webdav.widgets
+  >>> import z3c.dav.properties
+  >>> import z3c.dav.interfaces
+  >>> import z3c.dav.publisher
+  >>> import z3c.dav.widgets
   >>> from cStringIO import StringIO
 
   >>> component.getGlobalSiteManager().registerAdapter(
-  ...    zope.webdav.widgets.IntDAVWidget,
-  ...    (zope.schema.interfaces.IInt, zope.webdav.interfaces.IWebDAVRequest),
-  ...    zope.webdav.interfaces.IDAVWidget)
+  ...    z3c.dav.widgets.IntDAVWidget,
+  ...    (zope.schema.interfaces.IInt, z3c.dav.interfaces.IWebDAVRequest),
+  ...    z3c.dav.interfaces.IDAVWidget)
   >>> component.getGlobalSiteManager().registerAdapter(
-  ...    zope.webdav.widgets.TextDAVWidget,
+  ...    z3c.dav.widgets.TextDAVWidget,
   ...    (zope.schema.interfaces.ITextLine,
-  ...     zope.webdav.interfaces.IWebDAVRequest),
-  ...    zope.webdav.interfaces.IDAVWidget)
+  ...     z3c.dav.interfaces.IWebDAVRequest),
+  ...    z3c.dav.interfaces.IDAVWidget)
   >>> class IDemoContent(interface.Interface):
   ...    ageprop = schema.Int(title = u"Age of resource")
   >>> class DemoContent(object):
   ...    interface.implements(IDemoContent)
   ...    ageprop = 10
   >>> democontent = DemoContent()
-  >>> request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+  >>> request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
 
 First we must define an interface that defines how we must store and
 retrieve the property:
@@ -85,10 +85,10 @@ retrieve the property:
 
 Now we must declare and register a named utility implementing *IDAVProperty*.
 
-  >>> ageProp = zope.webdav.properties.DAVProperty("{examplens:}age",
+  >>> ageProp = z3c.dav.properties.DAVProperty("{examplens:}age",
   ...    IAgeStorage)
   >>> component.getGlobalSiteManager().registerUtility(
-  ...    ageProp, zope.webdav.interfaces.IDAVProperty, "{examplens:}age")
+  ...    ageProp, z3c.dav.interfaces.IDAVProperty, "{examplens:}age")
 
 It order for it to be defined there must be exist a multi-adapter from the
 resource to *IAgeStorage*. This allows some properties to be defined for a
@@ -97,12 +97,12 @@ one resource and not an other.
 Initially for our resource we have no defined properties, since we haven't
 yet implemented the storage adapter.
 
-  >>> list(zope.webdav.properties.getAllProperties(democontent, request))
+  >>> list(z3c.dav.properties.getAllProperties(democontent, request))
   []
-  >>> zope.webdav.properties.hasProperty(
+  >>> z3c.dav.properties.hasProperty(
   ...    democontent, request, "{examplens:}age")
   False
-  >>> zope.webdav.properties.getProperty(
+  >>> z3c.dav.properties.getProperty(
   ...    democontent, request, "{examplens:}age")
   Traceback (most recent call last):
   ...
@@ -112,29 +112,29 @@ Now define and register the storage adapter for our `age` property.
 
   >>> class AgeStorage(object):
   ...    interface.implements(IAgeStorage)
-  ...    component.adapts(IDemoContent, zope.webdav.interfaces.IWebDAVRequest)
+  ...    component.adapts(IDemoContent, z3c.dav.interfaces.IWebDAVRequest)
   ...    def __init__(self, context, request):
   ...        self.context = context
   ...    def get_age(self):
   ...        return self.context.ageprop
   ...    age = property(get_age)
   >>> component.getGlobalSiteManager().registerAdapter(AgeStorage,
-  ...    (IDemoContent, zope.webdav.interfaces.IWebDAVRequest), IAgeStorage)
+  ...    (IDemoContent, z3c.dav.interfaces.IWebDAVRequest), IAgeStorage)
 
 Since we now defined a storage adapter for the `age` property on our
 DemoContent object, the property is defined on this resource.
 
-  >>> zope.webdav.properties.hasProperty(
+  >>> z3c.dav.properties.hasProperty(
   ...    democontent, request, "{examplens:}age")
   True
 
-So now we can ask the *zope.webdav.interfaces.getProperty* method to return the
+So now we can ask the *z3c.dav.interfaces.getProperty* method to return the
 *IDAVProperty* utility representing this property and the storage adapter.
 
-  >>> prop, adapter = zope.webdav.properties.getProperty(
+  >>> prop, adapter = z3c.dav.properties.getProperty(
   ...   democontent, request, "{examplens:}age")
   >>> print prop #doctest:+ELLIPSIS
-  <zope.webdav.properties.DAVProperty ...
+  <z3c.dav.properties.DAVProperty ...
   >>> isinstance(adapter, AgeStorage)
   True
 
@@ -144,17 +144,17 @@ Now the value of this property has stored in Zope is:
   10
 
 In order to render this value has a WebDAV response we ask the
-*zope.webdav.properties.getWidget* method to return a widget that knows how to
+*z3c.dav.properties.getWidget* method to return a widget that knows how to
 render this type of property.
 
-  >>> davwidget = zope.webdav.properties.getWidget(prop, adapter, request)
+  >>> davwidget = z3c.dav.properties.getWidget(prop, adapter, request)
   >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
   <E:age xmlns:E="examplens:">10</E:age>
 
-Finally the *zope.webdav.properties.getAllProperties* method contains one entry:
+Finally the *z3c.dav.properties.getAllProperties* method contains one entry:
 
   >>> ['%s, %s' %(prop.namespace, prop.__name__) for prop, adapter in 
-  ...    zope.webdav.properties.getAllProperties(democontent, request)]
+  ...    z3c.dav.properties.getAllProperties(democontent, request)]
   ['examplens:, age']
 
 Clean up Live Properties Test
@@ -163,10 +163,10 @@ Clean up Live Properties Test
 By removing the storage adapter the above `age` property disappears.
 
   >>> component.getGlobalSiteManager().unregisterAdapter(AgeStorage,
-  ...    (IDemoContent, zope.webdav.interfaces.IWebDAVRequest), IAgeStorage)
+  ...    (IDemoContent, z3c.dav.interfaces.IWebDAVRequest), IAgeStorage)
   True
 
-  >>> prop, adapter = zope.webdav.properties.getProperty(democontent, request,
+  >>> prop, adapter = z3c.dav.properties.getProperty(democontent, request,
   ...    "{examplens:}age")
   Traceback (most recent call last):
   ...
@@ -176,12 +176,12 @@ Dead Properties
 ===============
 
 Dead properties are handled just slightly differently. We first need to setup
-a *zope.webdav.properties.IOpaquePropertyStorage* adapter for our demo content.
+a *z3c.dav.properties.IOpaquePropertyStorage* adapter for our demo content.
 
   >>> import weakref
   >>> deadprops = weakref.WeakKeyDictionary()
   >>> class DeadProperties(object):
-  ...   interface.implements(zope.webdav.interfaces.IOpaquePropertyStorage)
+  ...   interface.implements(z3c.dav.interfaces.IOpaquePropertyStorage)
   ...   component.adapts(IDemoContent)
   ...   def __init__(self, context):
   ...       self._mapping = deadprops.setdefault(context, {})
@@ -199,25 +199,25 @@ a *zope.webdav.properties.IOpaquePropertyStorage* adapter for our demo content.
 Firstly, we note that the dead property `dpname` doesn't exist because we
 have yet to register our DeadProperties class.
 
-  >>> zope.webdav.properties.hasProperty(democontent, request, dpname)
+  >>> z3c.dav.properties.hasProperty(democontent, request, dpname)
   False
   >>> [prop.__name__ for prop, adapter in
-  ...  zope.webdav.properties.getAllProperties(democontent, request)]
+  ...  z3c.dav.properties.getAllProperties(democontent, request)]
   []
-  >>> zope.webdav.properties.getProperty(democontent, request, dpname)
+  >>> z3c.dav.properties.getProperty(democontent, request, dpname)
   Traceback (most recent call last):
   ...
   PropertyNotFound: {examplens:}deadprop
 
   >>> component.getGlobalSiteManager().registerAdapter(DeadProperties)
 
-Since we have defined a *zope.webdav.properties.IOpaquePropertyStorage* adapter,
+Since we have defined a *z3c.dav.properties.IOpaquePropertyStorage* adapter,
 we can now set and get any dead properties.
 
-  >>> prop, adapter = zope.webdav.properties.getProperty(
+  >>> prop, adapter = z3c.dav.properties.getProperty(
   ...    democontent, request, dpname)
   >>> prop #doctest:+ELLIPSIS
-  <zope.webdav.properties.OpaqueProperty object at ...
+  <z3c.dav.properties.OpaqueProperty object at ...
   >>> prop.__name__
   'deadprop'
   >>> prop.namespace
@@ -228,15 +228,15 @@ it really doesn't exist yet even though we can get the property. If we want
 to call `getProperty` but not to generate the property we change the value
 of the keyword arguement `exists` to True.
 
-  >>> zope.webdav.properties.getProperty(
+  >>> z3c.dav.properties.getProperty(
   ...    democontent, request, dpname, exists = True)
   Traceback (most recent call last):
   ...
   PropertyNotFound: {examplens:}deadprop
 
-  >>> list(zope.webdav.properties.getAllProperties(democontent, request))
+  >>> list(z3c.dav.properties.getAllProperties(democontent, request))
   []
-  >>> zope.webdav.properties.hasProperty(democontent, request, dpname)
+  >>> z3c.dav.properties.hasProperty(democontent, request, dpname)
   False
 
 Now set some data.
@@ -245,11 +245,11 @@ Now set some data.
   >>> field.set(adapter, """<E:deadprop xmlns:E="examplens:">This is some content</E:deadprop>""")
 
   >>> ['%s, %s' %(prop.namespace, prop.__name__) for prop, adapter in
-  ...  zope.webdav.properties.getAllProperties(democontent, request)]
+  ...  z3c.dav.properties.getAllProperties(democontent, request)]
   ['examplens:, deadprop']
-  >>> zope.webdav.properties.hasProperty(democontent, request, dpname)
+  >>> z3c.dav.properties.hasProperty(democontent, request, dpname)
   True
-  >>> prop, adapter = zope.webdav.properties.getProperty(
+  >>> prop, adapter = z3c.dav.properties.getProperty(
   ...    democontent, request, dpname)
   >>> prop is not None
   True
@@ -271,19 +271,19 @@ exists an adapter providing the storage functionality.
   ...    title = schema.TextLine(
   ...         title = u"Title",
   ...         description = u"Title of the resource")
-  >>> nameProp = zope.webdav.properties.DAVProperty(
+  >>> nameProp = z3c.dav.properties.DAVProperty(
   ...    "{examplens:}name", INameStorage)
-  >>> titleProp = zope.webdav.properties.DAVProperty("{examplens:}title",
+  >>> titleProp = z3c.dav.properties.DAVProperty("{examplens:}title",
   ...    ITitleStorage)
   >>> component.getGlobalSiteManager().registerUtility(
-  ...    nameProp, zope.webdav.interfaces.IDAVProperty, "{examplens:}name")
+  ...    nameProp, z3c.dav.interfaces.IDAVProperty, "{examplens:}name")
   >>> component.getGlobalSiteManager().registerUtility(
-  ...    titleProp, zope.webdav.interfaces.IDAVProperty, "{examplens:}title")
+  ...    titleProp, z3c.dav.interfaces.IDAVProperty, "{examplens:}title")
 
 Now write the storage adapter and register with the component architecture.
 
   >>> class Storage(object):
-  ...    component.adapts(IDemoContent, zope.webdav.interfaces.IWebDAVRequest)
+  ...    component.adapts(IDemoContent, z3c.dav.interfaces.IWebDAVRequest)
   ...    interface.implements(INameStorage, ITitleStorage)
   ...    def __init__(self, context, request):
   ...        self.context, self.request = context, request
@@ -306,12 +306,12 @@ Now write the storage adapter and register with the component architecture.
 Now when we call either the *getProperty* or the *hasProperty* method for only
 one of the properties, name or title.
 
-  >>> nprop, adapter = zope.webdav.properties.getProperty(democontent, request,
+  >>> nprop, adapter = z3c.dav.properties.getProperty(democontent, request,
   ...    "{examplens:}name")
-  >>> titleprop, adapter = zope.webdav.properties.getProperty(
+  >>> titleprop, adapter = z3c.dav.properties.getProperty(
   ...    democontent, request, "{examplens:}title")
 
-  >>> zope.webdav.properties.hasProperty(democontent, request,
+  >>> z3c.dav.properties.hasProperty(democontent, request,
   ...    "{examplens:}name")
   True
 
@@ -329,7 +329,7 @@ previous tests.
   >>> class INameTitleStorage(INameStorage, ITitleStorage):
   ...    """Merge the name and title storage interfaces."""
   >>> class NameTitleStorage(object):
-  ...    component.adapts(IDemoContent, zope.webdav.interfaces.IWebDAVRequest)
+  ...    component.adapts(IDemoContent, z3c.dav.interfaces.IWebDAVRequest)
   ...    interface.implements(INameTitleStorage)
   ...    def __init__(self, context, request):
   ...        self.context, self.request = context, request
@@ -345,13 +345,13 @@ previous tests.
   ...    title = property(title_get, title_set)
   >>> component.getGlobalSiteManager().registerAdapter(NameTitleStorage)
 
-  >>> zope.webdav.properties.hasProperty(
+  >>> z3c.dav.properties.hasProperty(
   ...    democontent, request, "{examplens:}name")
   True
-  >>> prop, adapter = zope.webdav.properties.getProperty(democontent, request,
+  >>> prop, adapter = z3c.dav.properties.getProperty(democontent, request,
   ...    "{examplens:}name")
   >>> props = [prop for prop, adapter in
-  ...          zope.webdav.properties.getAllProperties(democontent, request)]
+  ...          z3c.dav.properties.getAllProperties(democontent, request)]
   >>> props = [prop.__name__ for prop in props]
   >>> props.sort()
   >>> props
@@ -361,18 +361,18 @@ Cleanup Test
 ============
 
   >>> component.getGlobalSiteManager().unregisterAdapter(
-  ...    zope.webdav.widgets.IntDAVWidget,
-  ...    (zope.schema.interfaces.IInt, zope.webdav.interfaces.IWebDAVRequest),
-  ...    zope.webdav.interfaces.IDAVWidget)
+  ...    z3c.dav.widgets.IntDAVWidget,
+  ...    (zope.schema.interfaces.IInt, z3c.dav.interfaces.IWebDAVRequest),
+  ...    z3c.dav.interfaces.IDAVWidget)
   True
   >>> component.getGlobalSiteManager().unregisterAdapter(
-  ...    zope.webdav.widgets.TextDAVWidget,
+  ...    z3c.dav.widgets.TextDAVWidget,
   ...    (zope.schema.interfaces.ITextLine,
-  ...     zope.webdav.interfaces.IWebDAVRequest),
-  ...    zope.webdav.interfaces.IDAVWidget)
+  ...     z3c.dav.interfaces.IWebDAVRequest),
+  ...    z3c.dav.interfaces.IDAVWidget)
   True
   >>> component.getGlobalSiteManager().unregisterUtility(
-  ...     ageProp, zope.webdav.interfaces.IDAVProperty, "{examplens:}age")
+  ...     ageProp, z3c.dav.interfaces.IDAVProperty, "{examplens:}age")
   True
   >>> component.getGlobalSiteManager().unregisterAdapter(DeadProperties)
   True

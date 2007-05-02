@@ -60,14 +60,14 @@
   <adapter
      factory=".lockingutils.DAVActiveLock"
      for="zope.interface.Interface
-          zope.webdav.interfaces.IWebDAVRequest"
-     provides="zope.webdav.coreproperties.IActiveLock"
+          z3c.dav.interfaces.IWebDAVRequest"
+     provides="z3c.dav.coreproperties.IActiveLock"
      />
 
   <class class=".lockingutils.DAVActiveLockAdapter">
     <require
        permission="zope.View"
-       interface="zope.webdav.coreproperties.IActiveLock"
+       interface="z3c.dav.coreproperties.IActiveLock"
        />
   </class>
 

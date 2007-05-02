@@ -45,12 +45,12 @@
 
   <include package="zope.app.authentication" />
 
-  <include package="zope.webdav" />
+  <include package="z3c.dav" />
 
 <!-- This is usually how we register the elementtree engine to use within
      our application but for testing purposes we use the .dav.WebDAVLayerClass
   <utility
-     factory="zope.etree.etree.EtreeEtree"
+     factory="z3c.etree.etree.EtreeEtree"
      />
 -->
 
@@ -62,27 +62,27 @@
     -->
   <utility
      name="{DAVtest:}unauthprop"
-     component="zope.webdav.tests.test_proppatch.unauthProperty"
+     component="z3c.dav.tests.test_proppatch.unauthProperty"
      />
   <adapter
-     factory="zope.webdav.tests.test_proppatch.UnauthorizedPropertyStorage"
+     factory="z3c.dav.tests.test_proppatch.UnauthorizedPropertyStorage"
      for="zope.interface.Interface
-          zope.webdav.interfaces.IWebDAVRequest"
-     provides="zope.webdav.tests.test_proppatch.IUnauthorizedPropertyStorage"
+          z3c.dav.interfaces.IWebDAVRequest"
+     provides="z3c.dav.tests.test_proppatch.IUnauthorizedPropertyStorage"
      />
 
   <utility
      name="{DAVtest:}exampletextprop"
-     component="zope.webdav.ftests.dav.exampleTextProperty"
+     component="z3c.dav.ftests.dav.exampleTextProperty"
      />
   <utility
      name="{DAVtest:}exampleintprop"
-     component="zope.webdav.ftests.dav.exampleIntProperty"
+     component="z3c.dav.ftests.dav.exampleIntProperty"
      />
   <adapter
-     factory="zope.webdav.ftests.dav.ExamplePropertyStorage"
+     factory="z3c.dav.ftests.dav.ExamplePropertyStorage"
      for="zope.interface.Interface
-          zope.webdav.interfaces.IWebDAVRequest"
+          z3c.dav.interfaces.IWebDAVRequest"
      />
 
 </configure>

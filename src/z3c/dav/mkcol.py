@@ -23,7 +23,7 @@ import zope.event
 from zope.lifecycleevent import ObjectCreatedEvent
 import zope.app.http.interfaces
 
-import zope.webdav.interfaces
+import z3c.dav.interfaces
 
 class MKCOL(object):
     """
@@ -147,9 +147,9 @@ class MKCOL(object):
       >>> zope.event.subscribers.remove(eventLog)
 
     """
-    interface.implements(zope.webdav.interfaces.IWebDAVMethod)
+    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     component.adapts(zope.app.http.interfaces.INullResource,
-                     zope.webdav.interfaces.IWebDAVRequest)
+                     z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -158,7 +158,7 @@ class MKCOL(object):
     def MKCOL(self):
         if self.request.getHeader("content-length") > 0:
             # We don't (yet) support a request body on MKCOL.
-            raise zope.webdav.interfaces.UnsupportedMediaType(
+            raise z3c.dav.interfaces.UnsupportedMediaType(
                 self.context,
                 message = u"A request body is not supported for a MKCOL method")
 
@@ -168,7 +168,7 @@ class MKCOL(object):
         dir = IWriteDirectory(container, None)
         dir_factory = IDirectoryFactory(container, None)
         if dir is None or dir_factory is None:
-            raise zope.webdav.interfaces.ForbiddenError(
+            raise z3c.dav.interfaces.ForbiddenError(
                 self.context, message = u"")
         
         newdir = dir_factory(name)

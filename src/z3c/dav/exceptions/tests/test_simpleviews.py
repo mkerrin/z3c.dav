@@ -24,18 +24,18 @@ from zope import component
 from zope import interface
 from zope.formlib.namedtemplate import INamedTemplate
 
-import zope.webdav.interfaces
-import zope.webdav.exceptions
-import zope.webdav.exceptions.browser
-from zope.webdav.publisher import WebDAVRequest
+import z3c.dav.interfaces
+import z3c.dav.exceptions
+import z3c.dav.exceptions.browser
+from z3c.dav.publisher import WebDAVRequest
 from test_multiviews import TestRequest
 
 class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 
     def test_unprocessable(self):
         request = WebDAVRequest(StringIO(""), {})
-        error = zope.webdav.interfaces.UnprocessableError(None)
-        view = zope.webdav.exceptions.UnprocessableError(error, request)
+        error = z3c.dav.interfaces.UnprocessableError(None)
+        view = z3c.dav.exceptions.UnprocessableError(error, request)
 
         result = view()
 
@@ -44,8 +44,8 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 
     def test_precondition(self):
         request = WebDAVRequest(StringIO(""), {})
-        error = zope.webdav.interfaces.PreconditionFailed(None)
-        view = zope.webdav.exceptions.PreconditionFailed(error, request)
+        error = z3c.dav.interfaces.PreconditionFailed(None)
+        view = z3c.dav.exceptions.PreconditionFailed(error, request)
 
         result = view()
 
@@ -54,8 +54,8 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 
     def test_badgateway(self):
         request = WebDAVRequest(StringIO(""), {})
-        error = zope.webdav.interfaces.BadGateway(None, request)
-        view = zope.webdav.exceptions.BadGateway(error, request)
+        error = z3c.dav.interfaces.BadGateway(None, request)
+        view = z3c.dav.exceptions.BadGateway(error, request)
 
         result = view()
 
@@ -64,8 +64,8 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 
     def test_conflicterror(self):
         request = WebDAVRequest(StringIO(""), {})
-        error = zope.webdav.interfaces.ConflictError(None, request)
-        view = zope.webdav.exceptions.HTTPConflictError(error, request)
+        error = z3c.dav.interfaces.ConflictError(None, request)
+        view = z3c.dav.exceptions.HTTPConflictError(error, request)
 
         result = view()
 
@@ -74,8 +74,8 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 
     def test_forbiddenerror(self):
         request = WebDAVRequest(StringIO(""), {})
-        error = zope.webdav.interfaces.ForbiddenError(None, request)
-        view = zope.webdav.exceptions.HTTPForbiddenError(error, request)
+        error = z3c.dav.interfaces.ForbiddenError(None, request)
+        view = z3c.dav.exceptions.HTTPForbiddenError(error, request)
 
         result = view()
 
@@ -84,8 +84,8 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 
     def test_unsupportedmediatype(self):
         request = WebDAVRequest(StringIO(""), {})
-        error = zope.webdav.interfaces.UnsupportedMediaType(None, request)
-        view = zope.webdav.exceptions.HTTPUnsupportedMediaTypeError(
+        error = z3c.dav.interfaces.UnsupportedMediaType(None, request)
+        view = z3c.dav.exceptions.HTTPUnsupportedMediaTypeError(
             error, request)
 
         result = view()
@@ -97,7 +97,7 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 class TestDAVErrors(unittest.TestCase):
 
     def test_conflict_error(self):
-        errorview = zope.webdav.exceptions.ConflictError(None, None)
+        errorview = z3c.dav.exceptions.ConflictError(None, None)
 
         self.assertEqual(errorview.status, 409)
         self.assertEqual(errorview.errors, [])
@@ -105,7 +105,7 @@ class TestDAVErrors(unittest.TestCase):
         self.assertEqual(errorview.responsedescription, "")
 
     def test_forbidden_error(self):
-        errorview = zope.webdav.exceptions.ForbiddenError(None, None)
+        errorview = z3c.dav.exceptions.ForbiddenError(None, None)
 
         self.assertEqual(errorview.status, 403)
         self.assertEqual(errorview.errors, [])
@@ -113,7 +113,7 @@ class TestDAVErrors(unittest.TestCase):
         self.assertEqual(errorview.responsedescription, "")
 
     def test_propertyNotFound_error(self):
-        errorview = zope.webdav.exceptions.PropertyNotFoundError(None, None)
+        errorview = z3c.dav.exceptions.PropertyNotFoundError(None, None)
 
         self.assertEqual(errorview.status, 404)
         self.assertEqual(errorview.errors, [])
@@ -121,7 +121,7 @@ class TestDAVErrors(unittest.TestCase):
         self.assertEqual(errorview.responsedescription, "")
 
     def test_failedDependency_error(self):
-        errorview = zope.webdav.exceptions.FailedDependencyError(None, None)
+        errorview = z3c.dav.exceptions.FailedDependencyError(None, None)
 
         self.assertEqual(errorview.status, 424)
         self.assertEqual(errorview.errors, [])
@@ -129,7 +129,7 @@ class TestDAVErrors(unittest.TestCase):
         self.assertEqual(errorview.responsedescription, "")
 
     def test_alreadlocked_error(self):
-        errorview = zope.webdav.exceptions.AlreadyLockedError(None, None)
+        errorview = z3c.dav.exceptions.AlreadyLockedError(None, None)
 
         self.assertEqual(errorview.status, 423)
         self.assertEqual(errorview.errors, [])
@@ -137,7 +137,7 @@ class TestDAVErrors(unittest.TestCase):
         self.assertEqual(errorview.responsedescription, "")
 
     def test_unauthorized_error(self):
-        errorview = zope.webdav.exceptions.UnauthorizedError(None, None)
+        errorview = z3c.dav.exceptions.UnauthorizedError(None, None)
 
         self.assertEqual(errorview.status, 401)
         self.assertEqual(errorview.errors, [])
@@ -150,7 +150,7 @@ class DummyTemplate(object):
     def __init__(self, context):
         self.context = context
 
-    component.adapts(zope.webdav.exceptions.browser.BadRequest)
+    component.adapts(z3c.dav.exceptions.browser.BadRequest)
     interface.implements(INamedTemplate)
 
     def __call__(self):
@@ -168,20 +168,20 @@ class TestBadRequestView(unittest.TestCase):
             DummyTemplate, name = "default")
 
     def test_badrequestView(self):
-        error = zope.webdav.interfaces.BadRequest(
+        error = z3c.dav.interfaces.BadRequest(
             None, message = u"Bad request data")
         request = TestRequest()
-        view = zope.webdav.exceptions.browser.BadRequest(error, request)
+        view = z3c.dav.exceptions.browser.BadRequest(error, request)
 
         result = view()
         self.assertEqual(request.response.getStatus(), 400)
         self.assertEqual(result, "Errr... bad request")
 
     def test_badrequestView_message(self):
-        error = zope.webdav.interfaces.BadRequest(
+        error = z3c.dav.interfaces.BadRequest(
             None, message = u"Bad request data")
         request = TestRequest()
-        view = zope.webdav.exceptions.browser.BadRequest(error, request)
+        view = z3c.dav.exceptions.browser.BadRequest(error, request)
 
         self.assertEqual(view.message(), "Bad request data")
 

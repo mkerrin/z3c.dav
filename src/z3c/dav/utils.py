@@ -10,7 +10,7 @@
 # FOR A PARTICULAR PURPOSE.
 ##############################################################################
 """A collection of useful classes used for generating common XML fragments
-for use within zope.webdav
+for use within z3c.dav
 
 MultiStatus
 
@@ -38,7 +38,7 @@ from zope import interface
 from zope.publisher.http import status_reasons
 from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.app.container.interfaces import IReadContainer
-from zope.etree.interfaces import IEtree
+import z3c.etree
 
 class IPropstat(interface.Interface):
     """Helper interface to render a response XML element. 
@@ -139,7 +139,7 @@ class IMultiStatus(interface.Interface):
 ################################################################################
 
 def makeelement(namespace, tagname, text_or_el = None):
-    etree = component.getUtility(IEtree)
+    etree = z3c.etree.getEngine()
     el = etree.Element(etree.QName(namespace, tagname))
     if isinstance(text_or_el, (str, unicode)):
         el.text = text_or_el
@@ -628,7 +628,7 @@ class MultiStatus(object):
         self.responsedescription = ""
 
     def __call__(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         el = etree.Element(etree.QName('DAV:', 'multistatus'))
         for response in self.responses:
             el.append(response())

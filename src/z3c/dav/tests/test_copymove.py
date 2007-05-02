@@ -31,8 +31,8 @@ from zope.app.publication.http import MethodNotAllowed
 from zope.app.container.interfaces import IReadContainer
 from zope.traversing.interfaces import IContainmentRoot
 
-import zope.webdav.publisher
-from zope.webdav.copymove import COPY, MOVE
+import z3c.dav.publisher
+from z3c.dav.copymove import COPY, MOVE
 
 class IResource(interface.Interface):
 
@@ -72,7 +72,7 @@ class CollectionResource(UserDict.UserDict):
 class RootCollectionResource(CollectionResource):
     interface.implements(IContainmentRoot)
 
-class TestRequest(zope.webdav.publisher.WebDAVRequest):
+class TestRequest(z3c.dav.publisher.WebDAVRequest):
 
     def __init__(self, environ = {}):
         env = environ.copy()
@@ -154,14 +154,14 @@ class COPYMOVEParseHeadersTestCase(unittest.TestCase):
         request = TestRequest(environ = {"OVERWRITE": "x"})
         copy = COPY(None, request)
 
-        self.assertRaises(zope.webdav.interfaces.BadRequest, copy.getOverwrite)
+        self.assertRaises(z3c.dav.interfaces.BadRequest, copy.getOverwrite)
 
     def test_default_destination_path(self):
         request = TestRequest()
         copy = COPY(None, request)
 
         self.assertRaises(
-            zope.webdav.interfaces.BadRequest, copy.getDestinationPath)
+            z3c.dav.interfaces.BadRequest, copy.getDestinationPath)
 
     def test_destination_path(self):
         request = TestRequest(
@@ -182,7 +182,7 @@ class COPYMOVEParseHeadersTestCase(unittest.TestCase):
             environ = {"DESTINATION": "http://www.server.com/testpath"})
         copy = COPY(None, request)
 
-        self.assertRaises(zope.webdav.interfaces.BadGateway,
+        self.assertRaises(z3c.dav.interfaces.BadGateway,
                           copy.getDestinationPath)
 
     def test_getDestinationPath_with_username(self):
@@ -212,7 +212,7 @@ class COPYMOVEParseHeadersTestCase(unittest.TestCase):
         request = TestRequest(
             environ = {"DESTINATION": "http://localhost:10080/testpath"})
         copy = COPY(resource, request)
-        self.assertRaises(zope.webdav.interfaces.BadGateway,
+        self.assertRaises(z3c.dav.interfaces.BadGateway,
                           copy.getDestinationNameAndParentObject)
 
     def test_getDestinationNameAndParentObject(self):
@@ -248,7 +248,7 @@ class COPYMOVEParseHeadersTestCase(unittest.TestCase):
                        "OVERWRITE": "F"})
 
         copy = COPY(resource, request)
-        self.assertRaises(zope.webdav.interfaces.PreconditionFailed,
+        self.assertRaises(z3c.dav.interfaces.PreconditionFailed,
                           copy.getDestinationNameAndParentObject)
         self.assert_("destresource" in self.root)
 
@@ -258,7 +258,7 @@ class COPYMOVEParseHeadersTestCase(unittest.TestCase):
             environ = {"DESTINATION": "http://localhost/noparent/testpath"})
 
         copy = COPY(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ConflictError,
+        self.assertRaises(z3c.dav.interfaces.ConflictError,
                           copy.getDestinationNameAndParentObject)
 
     def test_getDestinationNameAndParentObject_destob_sameob(self):
@@ -268,7 +268,7 @@ class COPYMOVEParseHeadersTestCase(unittest.TestCase):
                        "OVERWRITE": "T"})
 
         copy = COPY(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ForbiddenError,
+        self.assertRaises(z3c.dav.interfaces.ForbiddenError,
                           copy.getDestinationNameAndParentObject)
 
     def test_nocopier(self):
@@ -350,7 +350,7 @@ class COPYObjectTestCase(unittest.TestCase):
         gsm.registerAdapter(Copier, (IResource,))
         gsm.registerAdapter(DummyResourceURL,
                             (IResource,
-                             zope.webdav.interfaces.IWebDAVRequest))
+                             z3c.dav.interfaces.IWebDAVRequest))
 
     def tearDown(self):
         del self.root
@@ -361,7 +361,7 @@ class COPYObjectTestCase(unittest.TestCase):
         gsm.unregisterAdapter(Copier, (IResource,))
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
 
     def test_copy(self):
         resource = self.root["resource"] = Resource()
@@ -411,7 +411,7 @@ class COPYObjectTestCase(unittest.TestCase):
         Copier.canCopyableTo = False
 
         copy = COPY(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ConflictError, copy.COPY)
+        self.assertRaises(z3c.dav.interfaces.ConflictError, copy.COPY)
 
 
 class Movier(object):
@@ -449,7 +449,7 @@ class MOVEObjectTestCase(unittest.TestCase):
         gsm.registerAdapter(Movier, (IResource,))
         gsm.registerAdapter(DummyResourceURL,
                             (IResource,
-                             zope.webdav.interfaces.IWebDAVRequest))
+                             z3c.dav.interfaces.IWebDAVRequest))
 
     def tearDown(self):
         del self.root
@@ -460,7 +460,7 @@ class MOVEObjectTestCase(unittest.TestCase):
         gsm.unregisterAdapter(Movier, (IResource,))
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
 
     def test_move(self):
         resource = self.root["resource"] = Resource()
@@ -508,7 +508,7 @@ class MOVEObjectTestCase(unittest.TestCase):
         Movier.isMoveableTo = False
 
         move = MOVE(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ConflictError, move.MOVE)
+        self.assertRaises(z3c.dav.interfaces.ConflictError, move.MOVE)
 
 
 def test_suite():

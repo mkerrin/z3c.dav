@@ -28,10 +28,10 @@ from zope.interface.verify import verifyObject
 from zope.app.form.interfaces import ConversionError, MissingInputError
 from zope.datetime import tzinfo
 
-from zope.webdav import widgets
-from zope.webdav.interfaces import IDAVInputWidget
-from zope.etree.interfaces import IEtree
-from zope.etree.testing import etreeSetup, etreeTearDown
+from z3c.dav import widgets
+from z3c.dav.interfaces import IDAVInputWidget
+import z3c.etree
+from z3c.etree.testing import etreeSetup, etreeTearDown
 
 from test_widgets import TestWebDAVRequest
 
@@ -54,7 +54,7 @@ class _WebDAVWidgetTest(unittest.TestCase):
 
     def setUp(self):
         etreeSetup()
-        self.etree = component.getUtility(IEtree)
+        self.etree = z3c.etree.getEngine()
 
     def setUpContent(self, desc = u'', title = u'Foo Title', element = None):
         ## setup the field first to stop some really weird errors

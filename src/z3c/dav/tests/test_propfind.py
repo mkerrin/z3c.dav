@@ -35,20 +35,20 @@ from zope.security.interfaces import Unauthorized, IUnauthorized
 from zope.security.interfaces import IChecker
 from zope.security.checker import CheckerPublic
 
-import zope.webdav.properties
-import zope.webdav.publisher
-import zope.webdav.widgets
-import zope.webdav.exceptions
-import zope.webdav.coreproperties
-from zope.webdav.propfind import PROPFIND
-from zope.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
-from zope.etree.interfaces import IEtree
+import z3c.dav.properties
+import z3c.dav.publisher
+import z3c.dav.widgets
+import z3c.dav.exceptions
+import z3c.dav.coreproperties
+from z3c.dav.propfind import PROPFIND
+from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
+import z3c.etree
 
 from test_proppatch import unauthProperty, UnauthorizedPropertyStorage, \
      IUnauthorizedPropertyStorage
 from utils import TestMultiStatusBody
 
-class TestRequest(zope.webdav.publisher.WebDAVRequest):
+class TestRequest(z3c.dav.publisher.WebDAVRequest):
 
     def __init__(self, properties = None, environ = {}):
         if properties is not None:
@@ -102,11 +102,11 @@ class PROPFINDBodyTestCase(unittest.TestCase):
         return propfind
 
     def test_notxml(self):
-        self.assertRaises(zope.webdav.interfaces.BadRequest, self.checkPropfind,
+        self.assertRaises(z3c.dav.interfaces.BadRequest, self.checkPropfind,
             "<propname />", {"CONTENT_TYPE": "text/plain"})
 
     def test_bad_depthheader(self):
-        self.assertRaises(zope.webdav.interfaces.BadRequest, self.checkPropfind,
+        self.assertRaises(z3c.dav.interfaces.BadRequest, self.checkPropfind,
             "<propname />", {"DEPTH": "2"})
 
     def test_depth_header(self):
@@ -158,15 +158,15 @@ class PROPFINDBodyTestCase(unittest.TestCase):
         """
         env = {"CONTENT_TYPE": "text/xml",
                "CONTENT_LENGTH": len(body)}
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(body), env)
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(body), env)
         request.processInputs()
 
         propf = PROPFINDBodyParsed(None, request)
-        self.assertRaises(zope.webdav.interfaces.UnprocessableError,
+        self.assertRaises(z3c.dav.interfaces.UnprocessableError,
                           propf.PROPFIND)
 
     def test_xml_propfind_bad_content(self):
-        self.assertRaises(zope.webdav.interfaces.UnprocessableError,
+        self.assertRaises(z3c.dav.interfaces.UnprocessableError,
                           self.checkPropfind, properties = "<noproperties />")
 
 
@@ -188,13 +188,13 @@ class IBrokenPropertyStorage(interface.Interface):
     brokenprop = schema.Text(
         title = u"Property which does not render")
 
-exampleIntProperty = zope.webdav.properties.DAVProperty(
+exampleIntProperty = z3c.dav.properties.DAVProperty(
     "{DAVtest:}exampleintprop", IExamplePropertyStorage)
-exampleTextProperty = zope.webdav.properties.DAVProperty(
+exampleTextProperty = z3c.dav.properties.DAVProperty(
     "{DAVtest:}exampletextprop", IExamplePropertyStorage)
-extraTextProperty = zope.webdav.properties.DAVProperty(
+extraTextProperty = z3c.dav.properties.DAVProperty(
     "{DAVtest:}extratextprop", IExtraPropertyStorage)
-brokenProperty = zope.webdav.properties.DAVProperty(
+brokenProperty = z3c.dav.properties.DAVProperty(
     "{DAVtest:}brokenprop", IBrokenPropertyStorage)
 # this is a hack to make all the render all properties work as this broken
 # property then never shows up these tests responses.
@@ -294,55 +294,55 @@ def propfindSetUp():
 
     gsm.registerUtility(exampleIntProperty,
                         name = "{DAVtest:}exampleintprop",
-                        provided = zope.webdav.interfaces.IDAVProperty)
+                        provided = z3c.dav.interfaces.IDAVProperty)
     gsm.registerUtility(exampleTextProperty,
                         name = "{DAVtest:}exampletextprop",
-                        provided = zope.webdav.interfaces.IDAVProperty)
+                        provided = z3c.dav.interfaces.IDAVProperty)
     exampleTextProperty.restricted = False
     gsm.registerUtility(extraTextProperty,
                         name = "{DAVtest:}extratextprop",
-                        provided = zope.webdav.interfaces.IDAVProperty)
-    gsm.registerUtility(zope.webdav.coreproperties.resourcetype,
+                        provided = z3c.dav.interfaces.IDAVProperty)
+    gsm.registerUtility(z3c.dav.coreproperties.resourcetype,
                         name = "{DAV:}resourcetype")
     gsm.registerUtility(brokenProperty, name = "{DAVtest:}brokenprop",
-                        provided = zope.webdav.interfaces.IDAVProperty)
+                        provided = z3c.dav.interfaces.IDAVProperty)
     gsm.registerUtility(unauthProperty, name = "{DAVtest:}unauthprop")
     # make sure that this property is always restricted so that we
     # only try and render this property whenever we want to.
     unauthProperty.restricted = True
 
     gsm.registerAdapter(ExamplePropertyStorage,
-                        (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                        (IResource, z3c.dav.interfaces.IWebDAVRequest),
                         provided = IExamplePropertyStorage)
     gsm.registerAdapter(BrokenPropertyStorage,
-                        (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                        (IResource, z3c.dav.interfaces.IWebDAVRequest),
                         provided = IBrokenPropertyStorage)
     gsm.registerAdapter(UnauthorizedPropertyStorage,
-                        (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                        (IResource, z3c.dav.interfaces.IWebDAVRequest),
                         provided = IUnauthorizedPropertyStorage)
-    gsm.registerAdapter(zope.webdav.coreproperties.ResourceTypeAdapter)
+    gsm.registerAdapter(z3c.dav.coreproperties.ResourceTypeAdapter)
 
     gsm.registerAdapter(DummyResourceURL,
-                        (IResource, zope.webdav.interfaces.IWebDAVRequest))
+                        (IResource, z3c.dav.interfaces.IWebDAVRequest))
     gsm.registerAdapter(DummyResourceURL,
-                        (ICollection, zope.webdav.interfaces.IWebDAVRequest))
+                        (ICollection, z3c.dav.interfaces.IWebDAVRequest))
 
-    gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+    gsm.registerAdapter(z3c.dav.widgets.TextDAVWidget,
                         (zope.schema.interfaces.IText,
-                         zope.webdav.interfaces.IWebDAVRequest))
-    gsm.registerAdapter(zope.webdav.widgets.IntDAVWidget,
+                         z3c.dav.interfaces.IWebDAVRequest))
+    gsm.registerAdapter(z3c.dav.widgets.IntDAVWidget,
                         (zope.schema.interfaces.IInt,
-                         zope.webdav.interfaces.IWebDAVRequest))
-    gsm.registerAdapter(zope.webdav.widgets.ListDAVWidget,
+                         z3c.dav.interfaces.IWebDAVRequest))
+    gsm.registerAdapter(z3c.dav.widgets.ListDAVWidget,
                         (zope.schema.interfaces.IList,
-                         zope.webdav.interfaces.IWebDAVRequest))
+                         z3c.dav.interfaces.IWebDAVRequest))
 
-    gsm.registerAdapter(zope.webdav.exceptions.PropertyNotFoundError,
-                        (zope.webdav.interfaces.IPropertyNotFound,
-                         zope.webdav.interfaces.IWebDAVRequest))
-    gsm.registerAdapter(zope.webdav.exceptions.UnauthorizedError,
+    gsm.registerAdapter(z3c.dav.exceptions.PropertyNotFoundError,
+                        (z3c.dav.interfaces.IPropertyNotFound,
+                         z3c.dav.interfaces.IWebDAVRequest))
+    gsm.registerAdapter(z3c.dav.exceptions.UnauthorizedError,
                         (IUnauthorized,
-                         zope.webdav.interfaces.IWebDAVRequest))
+                         z3c.dav.interfaces.IWebDAVRequest))
 
 def propfindTearDown():
     etreeTearDown()
@@ -351,50 +351,50 @@ def propfindTearDown():
 
     gsm.unregisterUtility(exampleIntProperty,
                           name = "{DAVtest:}exampleintprop",
-                          provided = zope.webdav.interfaces.IDAVProperty)
+                          provided = z3c.dav.interfaces.IDAVProperty)
     gsm.unregisterUtility(exampleTextProperty,
                           name = "{DAVtest:}exampletextprop",
-                          provided = zope.webdav.interfaces.IDAVProperty)
+                          provided = z3c.dav.interfaces.IDAVProperty)
     gsm.unregisterUtility(extraTextProperty,
                           name = "{DAVtest:}extratextprop",
-                          provided = zope.webdav.interfaces.IDAVProperty)
-    gsm.unregisterUtility(zope.webdav.coreproperties.resourcetype,
+                          provided = z3c.dav.interfaces.IDAVProperty)
+    gsm.unregisterUtility(z3c.dav.coreproperties.resourcetype,
                           name = "{DAV:}resourcetype")
     gsm.unregisterUtility(brokenProperty, name = "{DAVtest:}brokenprop",
-                          provided = zope.webdav.interfaces.IDAVProperty)
+                          provided = z3c.dav.interfaces.IDAVProperty)
     gsm.unregisterUtility(unauthProperty, name = "{DAVtest:}unauthprop")
 
     gsm.unregisterAdapter(ExamplePropertyStorage,
-                          (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                          (IResource, z3c.dav.interfaces.IWebDAVRequest),
                           provided = IExamplePropertyStorage)
     gsm.unregisterAdapter(BrokenPropertyStorage,
-                          (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                          (IResource, z3c.dav.interfaces.IWebDAVRequest),
                           provided = IBrokenPropertyStorage)
     gsm.registerAdapter(UnauthorizedPropertyStorage,
-                        (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                        (IResource, z3c.dav.interfaces.IWebDAVRequest),
                         provided = IUnauthorizedPropertyStorage)
-    gsm.unregisterAdapter(zope.webdav.coreproperties.ResourceTypeAdapter)
+    gsm.unregisterAdapter(z3c.dav.coreproperties.ResourceTypeAdapter)
 
     gsm.unregisterAdapter(DummyResourceURL,
-                          (IResource, zope.webdav.interfaces.IWebDAVRequest))
+                          (IResource, z3c.dav.interfaces.IWebDAVRequest))
     gsm.unregisterAdapter(DummyResourceURL,
-                          (ICollection, zope.webdav.interfaces.IWebDAVRequest))
+                          (ICollection, z3c.dav.interfaces.IWebDAVRequest))
 
-    gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+    gsm.unregisterAdapter(z3c.dav.widgets.TextDAVWidget,
                           (zope.schema.interfaces.IText,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.widgets.IntDAVWidget,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.widgets.IntDAVWidget,
                           (zope.schema.interfaces.IInt,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.exceptions.PropertyNotFoundError,
-                          (zope.webdav.interfaces.IPropertyNotFound,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.exceptions.UnauthorizedError,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.exceptions.PropertyNotFoundError,
+                          (z3c.dav.interfaces.IPropertyNotFound,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.exceptions.UnauthorizedError,
                           (IUnauthorized,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.widgets.ListDAVWidget,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.widgets.ListDAVWidget,
                           (zope.schema.interfaces.IList,
-                           zope.webdav.interfaces.IWebDAVRequest))
+                           z3c.dav.interfaces.IWebDAVRequest))
 
 
 class ErrorReportingUtility(object):
@@ -426,7 +426,7 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderPropnames(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
 
         propf = PROPFIND(None, None)
         response = propf.renderPropnames(resource, request, None)
@@ -455,10 +455,10 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderSelected(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 <D:exampleintprop />
@@ -477,10 +477,10 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderSelected_notfound(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 <D:extratextprop />
@@ -505,7 +505,7 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderAllProperties(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
         response = propf.renderAllProperties(resource, request, None)
@@ -523,10 +523,10 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderAllProperties_withInclude(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         include = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 </include>""")
@@ -545,7 +545,7 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderAllProperties_withRestrictedProp(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
         exampleTextProperty.restricted = True
@@ -563,11 +563,11 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderAllProperties_withRestrictedProp_include(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
         exampleTextProperty.restricted = True
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         include = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 </include>""")
@@ -586,10 +586,10 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_renderBrokenProperty(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:brokenprop />
 </prop>""")
@@ -606,10 +606,10 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
     def test_render_selected_unauthorizedProperty(self):
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:unauthprop />
 <D:exampletextprop />
@@ -634,7 +634,7 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
         # access one of the propertues then this property should be threated
         # as if it were restricted property and not returned to the user.
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, request)
 
         # Set the unauthproperty as un-restricted so that the
@@ -665,10 +665,10 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
         # should get the property back as part of the multistatus response
         # but with a status 401 and no content.
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, request)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         includes = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:unauthprop />
 </include>""")
@@ -687,10 +687,10 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
         # this property back as part of the multistatus response but with a
         # status 500 and no content.
         resource = Resource("some text", 10)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, request)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         includes = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:brokenprop />
 </include>""")
@@ -760,12 +760,12 @@ class PROPFINDRecuseTest(unittest.TestCase):
         collection["r1"] = Resource("some text - r1", 2)
         collection["c"] = Collection()
         collection["c"]["r2"] = Resource("some text - r2", 4)
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         request.processInputs()
         propf = PROPFIND(collection, request)
 
         result = propf.PROPFIND()
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         etree.fromstring(result)
 
         assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">

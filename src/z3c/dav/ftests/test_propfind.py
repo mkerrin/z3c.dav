@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Collection of functional tests for PROPFIND zope.webdav
+"""Collection of functional tests for PROPFIND z3c.dav
 
 $Id$
 """
@@ -23,7 +23,7 @@ import transaction
 
 import dav
 from zope import component
-import zope.webdav.interfaces
+import z3c.dav.interfaces
 
 class PROPFINDTests(dav.DAVTestCase):
 
@@ -308,7 +308,7 @@ class PROPFINDTests(dav.DAVTestCase):
         file = self.addResource("/r", "some file content",
                                 title = u"Test resource")
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         opaqueProperties.setProperty(
             "{examplens:}testdeadprop",
             """<E:testdeadprop xmlns:E="examplens:">TEST</E:testdeadprop>""")
@@ -342,7 +342,7 @@ class PROPFINDTests(dav.DAVTestCase):
         file = self.addResource("/r", "some file content",
                                 title = u"Test Resource")
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         opaqueProperties.setProperty(
             "{examplens:}testdeadprop",
             """<E:testdeadprop xmlns:E="examplens:">TEST</E:testdeadprop>""")
@@ -372,7 +372,7 @@ class PROPFINDTests(dav.DAVTestCase):
     def test_allprop_with_deadprops(self):
         file = self.addResource("/r", "some content", title = u"Test Resource")
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         opaqueProperties.setProperty("{deadprop:}deadprop",
                                      """<X:deadprop xmlns:X="deadprop:">
 This is a dead property.</X:deadprop>""")
@@ -421,7 +421,7 @@ This is a dead property.""")
         examplePropStorage.exampletextprop = "EXAMPLE TEXT PROP"
         transaction.commit()
 
-        textprop = component.getUtility(zope.webdav.interfaces.IDAVProperty,
+        textprop = component.getUtility(z3c.dav.interfaces.IDAVProperty,
                                         name = "{DAVtest:}exampletextprop")
         textprop.restricted = True
 

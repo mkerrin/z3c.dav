@@ -23,7 +23,7 @@ import transaction
 from cStringIO import StringIO
 import os.path
 
-import zope.webdav.ftests.dav
+import z3c.dav.ftests.dav
 
 from zope import component
 from zope.app.publication.http import MethodNotAllowed
@@ -34,17 +34,17 @@ from zope.locking import tokens
 import zope.locking.utils
 from zope.security.interfaces import Unauthorized
 
-from zope.webdav.interfaces import IDAVLockmanager
-import zope.webdav.publisher
-from zope.etree.interfaces import IEtree
-from zope.etree.testing import assertXMLEqual
+from z3c.dav.interfaces import IDAVLockmanager
+import z3c.dav.publisher
+import z3c.etree
+from z3c.etree.testing import assertXMLEqual
 
 here = os.path.dirname(os.path.realpath(__file__))
-WebDAVLockingLayer = zope.webdav.ftests.dav.WebDAVLayerClass(
+WebDAVLockingLayer = z3c.dav.ftests.dav.WebDAVLayerClass(
    os.path.join(here, "ftesting-locking.zcml"), __name__, "WebDAVLockingLayer")
 
 
-class LOCKNotAllowedTestCase(zope.webdav.ftests.dav.DAVTestCase):
+class LOCKNotAllowedTestCase(z3c.dav.ftests.dav.DAVTestCase):
 
     layer = WebDAVLockingLayer
 
@@ -86,12 +86,12 @@ class LOCKNotAllowedTestCase(zope.webdav.ftests.dav.DAVTestCase):
                                    status = 404)
 
 
-class LOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
+class LOCKTestCase(z3c.dav.ftests.dav.DAVTestCase):
 
     layer = WebDAVLockingLayer
 
     def _setup(self):
-        zope.webdav.ftests.dav.DAVTestCase.setUp(self)
+        z3c.dav.ftests.dav.DAVTestCase.setUp(self)
 
         self.oldnow = zope.locking.utils.now
         def now():
@@ -111,7 +111,7 @@ class LOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
         zope.locking.utils.now = self.oldnow
         del self.oldnow
 
-        zope.webdav.ftests.dav.DAVTestCase.tearDown(self)
+        z3c.dav.ftests.dav.DAVTestCase.tearDown(self)
 
     def tearDown(self):
         self._teardown()
@@ -303,11 +303,11 @@ class LOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
 
         token = self.utility.get(self.getRootFolder())
         self.assertEqual(
-            token.annotations["zope.webdav.lockingutils.info"]["token"],
+            token.annotations["z3c.dav.lockingutils.info"]["token"],
             locktoken)
         token = self.utility.get(self.getRootFolder()["a"])
         self.assertEqual(
-            token.annotations["zope.webdav.lockingutils.info"]["token"],
+            token.annotations["z3c.dav.lockingutils.info"]["token"],
             locktoken)
 
         root = self.getRootFolder()
@@ -317,7 +317,7 @@ class LOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
             IDAVLockmanager(root["a"]["r2"]).getActivelock().locktoken[0],
             locktoken)
 
-        request = zope.webdav.publisher.WebDAVRequest(
+        request = z3c.dav.publisher.WebDAVRequest(
             StringIO(""), {"HTTP_HOST": "localhost"})
 
         lockroot = IDAVLockmanager(root).getActivelock(request).lockroot
@@ -355,7 +355,7 @@ class LOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
             request_body = body,
             handle_errors = True)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         xmlbody = etree.fromstring(httpresponse.getBody())
 
         self.assertEqual(httpresponse.getStatus(), 207)
@@ -498,7 +498,7 @@ class LOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
         rootfolder = self.getRootFolder()["a"]
         subresource = rootfolder["r2"]
 
-        request = zope.webdav.publisher.WebDAVRequest(
+        request = z3c.dav.publisher.WebDAVRequest(
             StringIO(""), {"HTTP_HOST": "localhost"})
 
         lockmanager = IDAVLockmanager(rootfolder)
@@ -623,7 +623,7 @@ class LOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
         self.assertEqual(response.getStatus(), 412)
 
 
-class UNLOCKTestCase(zope.webdav.ftests.dav.DAVTestCase):
+class UNLOCKTestCase(z3c.dav.ftests.dav.DAVTestCase):
 
     layer = WebDAVLockingLayer
 

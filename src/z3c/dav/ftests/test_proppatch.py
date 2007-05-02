@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Collection of functional tests for PROPFIND zope.webdav
+"""Collection of functional tests for PROPFIND z3c.dav
 
 $Id$
 """
@@ -25,9 +25,9 @@ from zope.dublincore.interfaces import IZopeDublinCore
 
 import dav
 
-import zope.webdav.interfaces
-from zope.webdav.publisher import WebDAVRequest
-from zope.etree.testing import assertXMLEqual
+import z3c.dav.interfaces
+from z3c.dav.publisher import WebDAVRequest
+from z3c.etree.testing import assertXMLEqual
 
 class PROPPATCHTestCase(dav.DAVTestCase):
 
@@ -176,7 +176,7 @@ Jim Whitehead
         httpresponse, xmlbody = self.checkProppatch(
             "/r", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         self.assertEqual(opaqueProperties.hasProperty(
             "{http://ns.example.com/z39.50/}Author"), True)
         assertXMLEqual(opaqueProperties.getProperty(
@@ -197,7 +197,7 @@ Jim Whitehead
         httpresponse, xmlbody = self.checkProppatch(
             "/r", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         allprops = [tag for tag in opaqueProperties.getAllProperties()]
         allprops.sort()
         self.assertEqual(allprops, ["{example:}prop0", "{example:}prop1",
@@ -220,7 +220,7 @@ Jim Whitehead
     def test_remove_live_prop(self):
         file = self.addResource("/r", "some content", title = u"Test Resource")
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         opaqueProperties.setProperty("{deadprop:}deadprop",
                                      """<X:deadprop xmlns:X="deadprop:">
 This is a dead property.</X:deadprop>""")
@@ -255,7 +255,7 @@ This is a dead property.</X:deadprop>""")
         proptag = "{deadprop:}deadprop"
         file = self.addResource("/r", "some content", title = u"Test Resource")
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         opaqueProperties.setProperty(proptag,
                                      """<X:deadprop xmlns:X="deadprop:">
 This is a dead property.</X:deadprop>""")
@@ -271,7 +271,7 @@ This is a dead property.</X:deadprop>""")
 
         self.assertMSPropertyValue(response, proptag)
 
-        opaqueProperties = zope.webdav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         self.assertEqual(opaqueProperties.hasProperty(proptag), False)
 
     def test_setting_unicode_title(self):

@@ -22,7 +22,7 @@ from zope.dublincore.interfaces import IDCTimes, IDCDescriptiveProperties
 from zope.annotation.interfaces import IAnnotatable
 import zope.app.file.interfaces
 
-import zope.webdav.coreproperties
+import z3c.dav.coreproperties
 
 
 class DAVSchemaAdapter(object):
@@ -81,7 +81,7 @@ class DAVSchemaAdapter(object):
       True
 
     """
-    interface.implements(zope.webdav.coreproperties.IDAVCoreSchema)
+    interface.implements(z3c.dav.coreproperties.IDAVCoreSchema)
     component.adapts(IAnnotatable,
                      zope.publisher.interfaces.http.IHTTPRequest)
 
@@ -123,7 +123,7 @@ class DAVFileGetSchema(object):
       >>> from zope.interface.verify import verifyObject
       >>> file = File('some data for the file', 'text/plain')
       >>> adapter = DAVFileGetSchema(file, None)
-      >>> verifyObject(zope.webdav.coreproperties.IDAVGetSchema, adapter)
+      >>> verifyObject(z3c.dav.coreproperties.IDAVGetSchema, adapter)
       True
       >>> adapter.getcontentlanguage is None
       True
@@ -165,7 +165,7 @@ class DAVFileGetSchema(object):
       True
 
     """
-    interface.implements(zope.webdav.coreproperties.IDAVGetSchema)
+    interface.implements(z3c.dav.coreproperties.IDAVGetSchema)
     component.adapts(zope.app.file.interfaces.IFile,
                      zope.publisher.interfaces.http.IHTTPRequest)
 

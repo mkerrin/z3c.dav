@@ -26,8 +26,8 @@ from zope import schema
 from zope import component
 from zope.traversing.browser.interfaces import IAbsoluteURL
 
-import zope.webdav.publisher
-from zope.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
+import z3c.dav.publisher
+from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
 
 class IResource(interface.Interface):
 
@@ -72,7 +72,7 @@ class DummyResourceURL(object):
     __call__ = __str__
 
 
-class TestRequest(zope.webdav.publisher.WebDAVRequest):
+class TestRequest(z3c.dav.publisher.WebDAVRequest):
 
     def __init__(self, properties = None, environ = {}):
         if properties is not None:
@@ -104,10 +104,10 @@ class TestPropstatErrorView(unittest.TestCase):
 
         gsm = component.getGlobalSiteManager()
         gsm.registerAdapter(DummyResourceURL,
-                            (IResource, zope.webdav.interfaces.IWebDAVRequest))
-        gsm.registerAdapter(zope.webdav.exceptions.ForbiddenError,
-                            (zope.webdav.interfaces.IForbiddenError,
-                             zope.webdav.interfaces.IWebDAVRequest))
+                            (IResource, z3c.dav.interfaces.IWebDAVRequest))
+        gsm.registerAdapter(z3c.dav.exceptions.ForbiddenError,
+                            (z3c.dav.interfaces.IForbiddenError,
+                             z3c.dav.interfaces.IWebDAVRequest))
 
     def tearDown(self):
         super(TestPropstatErrorView, self).tearDown()
@@ -117,26 +117,26 @@ class TestPropstatErrorView(unittest.TestCase):
         gsm = component.getGlobalSiteManager()
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest))
-        gsm.unregisterAdapter(zope.webdav.exceptions.ForbiddenError,
-                              (zope.webdav.interfaces.IForbiddenError,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
+        gsm.unregisterAdapter(z3c.dav.exceptions.ForbiddenError,
+                              (z3c.dav.interfaces.IForbiddenError,
+                               z3c.dav.interfaces.IWebDAVRequest))
 
     def test_propstat_interface(self):
         resource = Resource()
-        error = zope.webdav.interfaces.WebDAVPropstatErrors(resource)
+        error = z3c.dav.interfaces.WebDAVPropstatErrors(resource)
         self.assertEqual(
-            verifyObject(zope.webdav.interfaces.IWebDAVPropstatErrors, error),
+            verifyObject(z3c.dav.interfaces.IWebDAVPropstatErrors, error),
             True)
 
     def test_propstat_simple_errors(self):
         resource = Resource()
-        error = zope.webdav.interfaces.WebDAVPropstatErrors(resource)
-        error["{DAV:}displayname"] = zope.webdav.interfaces.ForbiddenError(
+        error = z3c.dav.interfaces.WebDAVPropstatErrors(resource)
+        error["{DAV:}displayname"] = z3c.dav.interfaces.ForbiddenError(
             resource, "{DAV:}displayname", message = u"readonly field")
         request = TestRequest()
 
-        view = zope.webdav.exceptions.WebDAVPropstatErrorView(error, request)
+        view = z3c.dav.exceptions.WebDAVPropstatErrorView(error, request)
         result = view()
 
         self.assertEqual(request.response.getStatus(), 207)
@@ -162,13 +162,13 @@ class TestMSErrorView(unittest.TestCase):
 
         gsm = component.getGlobalSiteManager()
         gsm.registerAdapter(DummyResourceURL,
-                            (IResource, zope.webdav.interfaces.IWebDAVRequest))
-        gsm.registerAdapter(zope.webdav.exceptions.ForbiddenError,
-                            (zope.webdav.interfaces.IForbiddenError,
-                             zope.webdav.interfaces.IWebDAVRequest))
-        gsm.registerAdapter(zope.webdav.exceptions.PropertyNotFoundError,
-                            (zope.webdav.interfaces.IPropertyNotFound,
-                             zope.webdav.interfaces.IWebDAVRequest))
+                            (IResource, z3c.dav.interfaces.IWebDAVRequest))
+        gsm.registerAdapter(z3c.dav.exceptions.ForbiddenError,
+                            (z3c.dav.interfaces.IForbiddenError,
+                             z3c.dav.interfaces.IWebDAVRequest))
+        gsm.registerAdapter(z3c.dav.exceptions.PropertyNotFoundError,
+                            (z3c.dav.interfaces.IPropertyNotFound,
+                             z3c.dav.interfaces.IWebDAVRequest))
 
     def tearDown(self):
         super(TestMSErrorView, self).tearDown()
@@ -178,28 +178,28 @@ class TestMSErrorView(unittest.TestCase):
         gsm = component.getGlobalSiteManager()
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest))
-        gsm.unregisterAdapter(zope.webdav.exceptions.ForbiddenError,
-                              (zope.webdav.interfaces.IForbiddenError,
-                               zope.webdav.interfaces.IWebDAVRequest))
-        gsm.unregisterAdapter(zope.webdav.exceptions.PropertyNotFoundError,
-                              (zope.webdav.interfaces.IPropertyNotFound,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
+        gsm.unregisterAdapter(z3c.dav.exceptions.ForbiddenError,
+                              (z3c.dav.interfaces.IForbiddenError,
+                               z3c.dav.interfaces.IWebDAVRequest))
+        gsm.unregisterAdapter(z3c.dav.exceptions.PropertyNotFoundError,
+                              (z3c.dav.interfaces.IPropertyNotFound,
+                               z3c.dav.interfaces.IWebDAVRequest))
 
     def test_multi_resource_error_interface(self):
         resource = Resource()
-        error = zope.webdav.interfaces.WebDAVErrors(resource)
+        error = z3c.dav.interfaces.WebDAVErrors(resource)
         self.assertEqual(
-            verifyObject(zope.webdav.interfaces.IWebDAVErrors, error), True)
+            verifyObject(z3c.dav.interfaces.IWebDAVErrors, error), True)
 
     def test_multi_resource_error(self):
         resource = Resource()
-        error = zope.webdav.interfaces.WebDAVErrors(resource)
-        error.append(zope.webdav.interfaces.ForbiddenError(
+        error = z3c.dav.interfaces.WebDAVErrors(resource)
+        error.append(z3c.dav.interfaces.ForbiddenError(
             resource, "{DAV:}displayname", message = u"readonly field"))
         request = TestRequest()
 
-        view = zope.webdav.exceptions.MultiStatusErrorView(error, request)
+        view = z3c.dav.exceptions.MultiStatusErrorView(error, request)
         result = view()
 
         self.assertEqual(request.response.getStatus(), 207)
@@ -216,14 +216,14 @@ class TestMSErrorView(unittest.TestCase):
         resource = Resource()
         resource1 = Resource()
         resource1.__name__ = "secondresource"
-        error = zope.webdav.interfaces.WebDAVErrors(resource)
-        error.append(zope.webdav.interfaces.ForbiddenError(
+        error = z3c.dav.interfaces.WebDAVErrors(resource)
+        error.append(z3c.dav.interfaces.ForbiddenError(
             resource, "{DAV:}displayname", message = u"readonly field"))
-        error.append(zope.webdav.interfaces.PropertyNotFound(
+        error.append(z3c.dav.interfaces.PropertyNotFound(
             resource1, "{DAV:}getcontentlength", message = u"readonly field"))
         request = TestRequest()
 
-        view = zope.webdav.exceptions.MultiStatusErrorView(error, request)
+        view = z3c.dav.exceptions.MultiStatusErrorView(error, request)
         result = view()
 
         self.assertEqual(request.response.getStatus(), 207)
@@ -246,12 +246,12 @@ class TestMSErrorView(unittest.TestCase):
         resource = Resource()
         resource1 = Resource()
         resource1.__name__ = "secondresource"
-        error = zope.webdav.interfaces.WebDAVErrors(resource)
-        error.append(zope.webdav.interfaces.PropertyNotFound(
+        error = z3c.dav.interfaces.WebDAVErrors(resource)
+        error.append(z3c.dav.interfaces.PropertyNotFound(
             resource1, "{DAV:}getcontentlength", message = u"readonly field"))
         request = TestRequest()
 
-        view = zope.webdav.exceptions.MultiStatusErrorView(error, request)
+        view = z3c.dav.exceptions.MultiStatusErrorView(error, request)
         result = view()
 
         self.assertEqual(request.response.getStatus(), 207)

@@ -17,7 +17,7 @@ $Id$
 __docformat__ = 'restructuredtext'
 
 from zope.publisher.http import status_reasons
-from zope.etree.testing import assertXMLEqual
+from z3c.etree.testing import assertXMLEqual
 
 class TestMultiStatusBody(object):
     #
@@ -36,7 +36,7 @@ class TestMultiStatusBody(object):
         #   - tag - 
         #   - text_value -
         #   - propelement - etree Element that we compare with the property
-        #                   using zope.webdav.testing.assertXMLEqual
+        #                   using z3c.etree.testing.assertXMLEqual
         self.assertEqual(response.tag, "{DAV:}response")
 
         # set to true if we found the property, under the correct status code

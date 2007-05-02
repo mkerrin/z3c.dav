@@ -24,11 +24,11 @@ from zope import schema
 from zope.schema.interfaces import IField
 from zope.schema.fieldproperty import FieldProperty
 
-from zope.webdav.interfaces import IDAVProperty, IDAVWidget, IDAVInputWidget
-from zope.webdav.interfaces import IOpaquePropertyStorage
-import zope.webdav.widgets
-from zope.etree.interfaces import IEtree
-import zope.webdav.utils
+import z3c.etree
+from z3c.dav.interfaces import IDAVProperty, IDAVWidget, IDAVInputWidget
+from z3c.dav.interfaces import IOpaquePropertyStorage
+import z3c.dav.widgets
+import z3c.dav.utils
 
 class DAVProperty(object):
     """
@@ -70,7 +70,7 @@ class DAVProperty(object):
     restricted = FieldProperty(IDAVProperty['restricted'])
 
     def __init__(self, tag, iface):
-        namespace, name = zope.webdav.utils.parseEtreeTag(tag)
+        namespace, name = z3c.dav.utils.parseEtreeTag(tag)
         self.namespace = namespace
         self.__name__  = name
         self.iface     = iface
@@ -80,26 +80,26 @@ class DAVProperty(object):
         self.restricted    = False
 
 
-_opaque_namespace_key = "zope.webdav.properties.DAVOpaqueProperties"
+_opaque_namespace_key = "z3c.dav.properties.DAVOpaqueProperties"
 
 class DeadField(schema.Field):
     pass
 
 
-class OpaqueWidget(zope.webdav.widgets.DAVWidget):
+class OpaqueWidget(z3c.dav.widgets.DAVWidget):
 
     def render(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         el = etree.fromstring(self._value)
         return el
 
 
-class OpaqueInputWidget(zope.webdav.widgets.DAVInputWidget):
+class OpaqueInputWidget(z3c.dav.widgets.DAVInputWidget):
 
     def getInputValue(self):
         el = self.getProppatchElement()
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         # XXX - ascii seems a bit wrong here
         return etree.tostring(el[0], 'ascii')
 
@@ -139,7 +139,7 @@ class OpaqueProperty(object):
     interface.implements(IDAVProperty)
 
     def __init__(self, tag):
-        namespace, name = zope.webdav.utils.parseEtreeTag(tag)
+        namespace, name = z3c.dav.utils.parseEtreeTag(tag)
         self.__name__ = name
         self.namespace = namespace
         self.iface = IOpaquePropertyStorage
@@ -194,12 +194,12 @@ def getProperty(context, request, tag, exists = False):
         if adapter is None:
             ## XXX - should we use the zope.publisher.interfaces.NotFound
             ## exceptin here.
-            raise zope.webdav.interfaces.PropertyNotFound(context, tag, tag)
+            raise z3c.dav.interfaces.PropertyNotFound(context, tag, tag)
 
         if exists and not adapter.hasProperty(tag):
             ## XXX - should we use the zope.publisher.interfaces.NotFound
             ## exceptin here.
-            raise zope.webdav.interfaces.PropertyNotFound(context, tag, tag)
+            raise z3c.dav.interfaces.PropertyNotFound(context, tag, tag)
 
         return OpaqueProperty(tag), adapter
 
@@ -208,7 +208,7 @@ def getProperty(context, request, tag, exists = False):
     if adapter is None:
         ## XXX - should we use the zope.publisher.interfaces.NotFound
         ## exceptin here.
-        raise zope.webdav.interfaces.PropertyNotFound(context, tag, tag)
+        raise z3c.dav.interfaces.PropertyNotFound(context, tag, tag)
 
     return prop, adapter
 

@@ -22,11 +22,11 @@ from cStringIO import StringIO
 
 from zope.interface.verify import verifyObject
 
-from zope.webdav.publisher import WebDAVRequest
-from zope.webdav.interfaces import IWebDAVRequest, IWebDAVResponse, BadRequest
+from z3c.dav.publisher import WebDAVRequest
+from z3c.dav.interfaces import IWebDAVRequest, IWebDAVResponse, BadRequest
 
-from zope.etree.testing import etreeSetup
-from zope.etree.testing import etreeTearDown
+from z3c.etree.testing import etreeSetup
+from z3c.etree.testing import etreeTearDown
 
 def create_request(body = None, env = {}):
     if isinstance(body, types.StringTypes):

@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Collection of functional tests for zope.webdav
+"""Collection of functional tests for z3c.dav
 
 $Id$
 """

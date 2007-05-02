@@ -27,12 +27,12 @@ from zope.formlib import namedtemplate
 from zope.app.http.interfaces import IHTTPException
 from zope.app.pagetemplate import ViewPageTemplateFile
 
-import zope.webdav.interfaces
+import z3c.dav.interfaces
 
 class BadRequest(object):
     interface.implements(IHTTPException)
-    component.adapts(zope.webdav.interfaces.IBadRequest,
-                     zope.webdav.interfaces.IHTTPRequest)
+    component.adapts(z3c.dav.interfaces.IBadRequest,
+                     z3c.dav.interfaces.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

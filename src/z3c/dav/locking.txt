@@ -2,12 +2,12 @@
 WebDAV locking
 ==============
 
-zope.webdav.locking doesn't fully implement the WebDAV LOCK and UNLOCK methods.
+z3c.dav.locking doesn't fully implement the WebDAV LOCK and UNLOCK methods.
 Instead it tries to hide most of the protocols details from developers and
 provide a way for developers to integrate the WebDAV LOCK and UNLOCK methods
 with different locking mechanisms. This is mainly done by an implementation
-of the zope.webdav.interfaces.IDAVLockmanager adapter. The
-zope.webdav.lockingutils module uses the zope.locking package to integrate
+of the z3c.dav.interfaces.IDAVLockmanager adapter. The
+z3c.dav.lockingutils module uses the zope.locking package to integrate
 the zope.locking with the LOCK and UNLOCK methods.
 
 This test will define a very simple locking mechanism that will show what
@@ -24,12 +24,12 @@ Setup
   >>> from zope.interface.verify import verifyObject
   >>> import zope.component
   >>> import zope.app.container.interfaces
-  >>> import zope.webdav.interfaces
+  >>> import z3c.dav.interfaces
 
 Define a test request object and a content type against which to run the
 tests.
 
-  >>> class TestWebDAVRequest(zope.webdav.publisher.WebDAVRequest):
+  >>> class TestWebDAVRequest(z3c.dav.publisher.WebDAVRequest):
   ...    def __init__(self, lockinfo = {}, body = "", environ = {}):
   ...        env = environ.copy()
   ...        if body:
@@ -50,21 +50,21 @@ tests.
 LOCK Method
 ===========
 
-  >>> from zope.webdav.locking import LOCK
+  >>> from z3c.dav.locking import LOCK
 
 The LOCK method is only defined when the current resource is adaptable to
-`zope.webdav.interfaces.IDAVLockManager`.
+`z3c.dav.interfaces.IDAVLockManager`.
 
   >>> LOCK(Resource(), TestWebDAVRequest()) is None
   True
 
-Implement the zope.webdav.interfaces.IDAVLockmanager adapter. When the
+Implement the z3c.dav.interfaces.IDAVLockmanager adapter. When the
 lock, refreshlock, and unlock methods are called by the LOCK / UNLOCK methods
 below then these methods will print out a simple unique message that we
 can test for.
 
   >>> class DAVLockmanager(object):
-  ...    zope.interface.implements(zope.webdav.interfaces.IDAVLockmanager)
+  ...    zope.interface.implements(z3c.dav.interfaces.IDAVLockmanager)
   ...    zope.component.adapts(IResource)
   ...    _islockable = True
   ...    def __init__(self, context):
@@ -78,7 +78,7 @@ can test for.
   ...        print "Refreshed lock token."
   ...    def lock(self, scope, type, owner, duration, depth):
   ...        if self.context._lockinfo is not None:
-  ...            raise zope.webdav.interfaces.AlreadyLocked(self.context)
+  ...            raise z3c.dav.interfaces.AlreadyLocked(self.context)
   ...        self.context._lockinfo = {'scope': scope,
   ...            'type': type,
   ...            'owner': owner,
@@ -89,13 +89,13 @@ can test for.
   ...        self.context._lockinfo = None
   ...        print "Unlocked the resource."
 
-  >>> verifyObject(zope.webdav.interfaces.IDAVLockmanager,
+  >>> verifyObject(z3c.dav.interfaces.IDAVLockmanager,
   ...    DAVLockmanager(Resource()))
   True
   >>> gsm.registerAdapter(DAVLockmanager)
 
   >>> LOCK(Resource(), TestWebDAVRequest()) #doctest:+ELLIPSIS
-  <zope.webdav.locking.LOCKMethod object at 0x...>
+  <z3c.dav.locking.LOCKMethod object at 0x...>
 
 In some locking implementations the lockmanager can say that a resource can
 not be locked - ever. This is when the islockable method returns False. In
@@ -160,13 +160,13 @@ Now in-order to valid the request lock we need a `ILockEntry` and
 supports.
 
   >>> class Exclusivelock(object):
-  ...    zope.interface.implements(zope.webdav.coreproperties.ILockEntry)
+  ...    zope.interface.implements(z3c.dav.coreproperties.ILockEntry)
   ...    lockscope = [u"exclusive"]
   ...    locktype = [u"write"]
 
   >>> class Supportedlock(object):
-  ...    zope.interface.implements(zope.webdav.coreproperties.IDAVSupportedlock)
-  ...    zope.component.adapts(IResource, zope.webdav.interfaces.IWebDAVRequest)
+  ...    zope.interface.implements(z3c.dav.coreproperties.IDAVSupportedlock)
+  ...    zope.component.adapts(IResource, z3c.dav.interfaces.IWebDAVRequest)
   ...    def __init__(self, context, request):
   ...        pass
   ...    @property
@@ -269,7 +269,7 @@ The depth parameter defaults to 'infinity' but could also specify a zero depth.
   '0'
 
 Now if the resource is already locked then the `handleLock` returns an
-`zope.webdav.interfaces.AlreadyLocked` error.
+`z3c.dav.interfaces.AlreadyLocked` error.
 
   >>> errors = LOCK(resource, TestWebDAVRequest(
   ...    body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -281,13 +281,13 @@ Now if the resource is already locked then the `handleLock` returns an
   ...   </D:owner>
   ... </D:lockinfo>""")).handleLock()
   >>> errors #doctest:+ELLIPSIS
-  [<zope.webdav.interfaces.AlreadyLocked instance at ...>]
+  [<z3c.dav.interfaces.AlreadyLocked instance at ...>]
 
 LOCK
 ----
 
 The LOCK method will wrap any AlreadyLockedErrors in a
-`zope.webdav.interfaces.WebDAVErrors` containing exception. The logic behind
+`z3c.dav.interfaces.WebDAVErrors` containing exception. The logic behind
 this is to make it easier write a view of the error.
 
   >>> LOCK(resource, TestWebDAVRequest(
@@ -335,8 +335,8 @@ transaction.
   True
 
   >>> class Activelock(object):
-  ...    zope.interface.implements(zope.webdav.coreproperties.IActiveLock)
-  ...    zope.component.adapts(IResource, zope.webdav.interfaces.IWebDAVRequest)
+  ...    zope.interface.implements(z3c.dav.coreproperties.IActiveLock)
+  ...    zope.component.adapts(IResource, z3c.dav.interfaces.IWebDAVRequest)
   ...    def __init__(self, context, request):
   ...        self.context = context
   ...        self.data = context._lockinfo
@@ -369,14 +369,14 @@ transaction.
   ...    def locktoken(self):
   ...        return self._locktoken
 
-  >>> verifyObject(zope.webdav.coreproperties.IActiveLock,
+  >>> verifyObject(z3c.dav.coreproperties.IActiveLock,
   ...    Activelock(resource, None))
   True
   >>> gsm.registerAdapter(Activelock)
 
   >>> class Lockdiscovery(object):
-  ...    zope.interface.implements(zope.webdav.coreproperties.IDAVLockdiscovery)
-  ...    zope.component.adapts(IResource, zope.webdav.interfaces.IWebDAVRequest)
+  ...    zope.interface.implements(z3c.dav.coreproperties.IDAVLockdiscovery)
+  ...    zope.component.adapts(IResource, z3c.dav.interfaces.IWebDAVRequest)
   ...    def __init__(self, context, request):
   ...        self.context, self.request = context, request
   ...    @property
@@ -386,23 +386,23 @@ transaction.
 We need the following setup in-order for the LOCK method to render the
 `{DAV:}lockdiscovery` widget.
 
-  >>> gsm.registerAdapter(zope.webdav.widgets.ListDAVWidget,
+  >>> gsm.registerAdapter(z3c.dav.widgets.ListDAVWidget,
   ...                     (zope.schema.interfaces.IList,
-  ...                      zope.webdav.interfaces.IWebDAVRequest))
-  >>> gsm.registerAdapter(zope.webdav.widgets.ObjectDAVWidget,
+  ...                      z3c.dav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(z3c.dav.widgets.ObjectDAVWidget,
   ...                     (zope.schema.interfaces.IObject,
-  ...                      zope.webdav.interfaces.IWebDAVRequest))
-  >>> gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+  ...                      z3c.dav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(z3c.dav.widgets.TextDAVWidget,
   ...                     (zope.schema.interfaces.IText,
-  ...                      zope.webdav.interfaces.IWebDAVRequest))
-  >>> gsm.registerAdapter(zope.webdav.properties.OpaqueWidget,
-  ...                     (zope.webdav.properties.DeadField,
-  ...                      zope.webdav.interfaces.IWebDAVRequest))
-  >>> gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+  ...                      z3c.dav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(z3c.dav.properties.OpaqueWidget,
+  ...                     (z3c.dav.properties.DeadField,
+  ...                      z3c.dav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(z3c.dav.widgets.TextDAVWidget,
   ...                     (zope.schema.interfaces.IURI,
-  ...                      zope.webdav.interfaces.IWebDAVRequest))
+  ...                      z3c.dav.interfaces.IWebDAVRequest))
 
-  >>> gsm.registerUtility(zope.webdav.coreproperties.lockdiscovery,
+  >>> gsm.registerUtility(z3c.dav.coreproperties.lockdiscovery,
   ...                     name = "{DAV:}lockdiscovery")
   >>> gsm.registerAdapter(Lockdiscovery)
 
@@ -451,9 +451,9 @@ When rendering the `{DAV:}lockdiscovery` XML element the timeout and locktoken
 data can be known. This is handy information if you are implementing a custom
 lock mechanism.
 
-  >>> davprop, adapter = zope.webdav.properties.getProperty(
+  >>> davprop, adapter = z3c.dav.properties.getProperty(
   ...    resource, request, '{DAV:}lockdiscovery')
-  >>> davwidget = zope.webdav.properties.getWidget(davprop, adapter, request)
+  >>> davwidget = z3c.dav.properties.getWidget(davprop, adapter, request)
 
   >>> resource._lockinfo['duration'] = None
   >>> Activelock._locktoken = None
@@ -653,7 +653,7 @@ It doesn't make sense trying to refresh the lock on a unlock resource.
 UNLOCK Method
 =============
 
-  >>> from zope.webdav.locking import UNLOCK
+  >>> from z3c.dav.locking import UNLOCK
 
 Re-lock the resource which just got unlocked.
 
@@ -741,28 +741,28 @@ Cleanup
   >>> gsm.unregisterAdapter(Activelock)
   True
 
-  >>> gsm.unregisterAdapter(zope.webdav.widgets.ListDAVWidget,
+  >>> gsm.unregisterAdapter(z3c.dav.widgets.ListDAVWidget,
   ...                       (zope.schema.interfaces.IList,
-  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  ...                        z3c.dav.interfaces.IWebDAVRequest))
   True
-  >>> gsm.unregisterAdapter(zope.webdav.widgets.ObjectDAVWidget,
+  >>> gsm.unregisterAdapter(z3c.dav.widgets.ObjectDAVWidget,
   ...                       (zope.schema.interfaces.IObject,
-  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  ...                        z3c.dav.interfaces.IWebDAVRequest))
   True
-  >>> gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+  >>> gsm.unregisterAdapter(z3c.dav.widgets.TextDAVWidget,
   ...                       (zope.schema.interfaces.IText,
-  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  ...                        z3c.dav.interfaces.IWebDAVRequest))
   True
-  >>> gsm.unregisterAdapter(zope.webdav.properties.OpaqueWidget,
-  ...                       (zope.webdav.properties.DeadField,
-  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  >>> gsm.unregisterAdapter(z3c.dav.properties.OpaqueWidget,
+  ...                       (z3c.dav.properties.DeadField,
+  ...                        z3c.dav.interfaces.IWebDAVRequest))
   True
-  >>> gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+  >>> gsm.unregisterAdapter(z3c.dav.widgets.TextDAVWidget,
   ...                       (zope.schema.interfaces.IURI,
-  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  ...                        z3c.dav.interfaces.IWebDAVRequest))
   True
 
-  >>> gsm.unregisterUtility(zope.webdav.coreproperties.lockdiscovery,
+  >>> gsm.unregisterUtility(z3c.dav.coreproperties.lockdiscovery,
   ...                       name = "{DAV:}lockdiscovery")
   True
   >>> gsm.unregisterAdapter(Lockdiscovery)

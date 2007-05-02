@@ -38,11 +38,11 @@ from zope.security.management import newInteraction, endInteraction
 from zope.security.testing import Principal, Participation
 from zope.dublincore.interfaces import IWriteZopeDublinCore
 
-from zope.webdav.publisher import WebDAVRequest
-from zope.webdav.properties import DAVProperty
-from zope.etree.interfaces import IEtree
-import zope.etree.testing
-from zope.webdav.tests.utils import TestMultiStatusBody
+import z3c.etree
+import z3c.etree.testing
+from z3c.dav.publisher import WebDAVRequest
+from z3c.dav.properties import DAVProperty
+from z3c.dav.tests.utils import TestMultiStatusBody
 
 
 class WebDAVLayerClass(zope.app.testing.functional.ZCMLLayer):
@@ -51,11 +51,11 @@ class WebDAVLayerClass(zope.app.testing.functional.ZCMLLayer):
 
     def setUp(self):
         zope.app.testing.functional.ZCMLLayer.setUp(self)
-        zope.etree.testing.etreeSetup()
+        z3c.etree.testing.etreeSetup()
 
     def tearDown(self):
         zope.app.testing.functional.ZCMLLayer.tearDown(self)
-        zope.etree.testing.etreeTearDown()
+        z3c.etree.testing.etreeTearDown()
 
 here = os.path.dirname(os.path.realpath(__file__))
 WebDAVLayer = WebDAVLayerClass(
@@ -264,7 +264,7 @@ class DAVTestCase(zope.app.testing.functional.HTTPTestCase,
         self.assertEqual(response.getHeader("content-type"), "application/xml")
 
         respbody = response.getBody()
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         xmlbody = etree.fromstring(respbody)
 
         return response, xmlbody
@@ -309,7 +309,7 @@ class DAVTestCase(zope.app.testing.functional.HTTPTestCase,
         self.assertEqual(response.getHeader("content-type"), "application/xml")
 
         respbody = response.getBody()
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         xmlbody = etree.fromstring(respbody)
 
         return response, xmlbody

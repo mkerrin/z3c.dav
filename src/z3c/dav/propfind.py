@@ -30,7 +30,7 @@ requested by the PROPFIND method.
   renderSelectedProperties(ob, req, props) - extra argument is a list of all
                                              the properties to render.
 
-And all these methods return a zope.webdav.utils.IResponse implementation.
+And all these methods return a z3c.dav.utils.IResponse implementation.
 
 $Id$
 """
@@ -45,10 +45,10 @@ from zope.app.error.interfaces import IErrorReportingUtility
 from zope.security.checker import canAccess
 from zope.security.interfaces import Unauthorized
 
-from zope.etree.interfaces import IEtree
-import zope.webdav.utils
-import zope.webdav.interfaces
-import zope.webdav.properties
+import z3c.etree
+import z3c.dav.utils
+import z3c.dav.interfaces
+import z3c.dav.properties
 
 DEFAULT_NS = "DAV:"
 
@@ -56,8 +56,8 @@ class PROPFIND(object):
     """
     PROPFIND handler for all objects.
     """
-    interface.implements(zope.webdav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
+    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -70,13 +70,13 @@ class PROPFIND(object):
     def PROPFIND(self):
         if self.request.getHeader("content-length") > 0 and \
                self.request.content_type not in ("text/xml", "application/xml"):
-            raise zope.webdav.interfaces.BadRequest(
+            raise z3c.dav.interfaces.BadRequest(
                 self.request,
                 message = u"PROPFIND requires a valid XML request")
 
         depth = self.getDepth()
         if depth not in ("0", "1", "infinity"):
-            raise zope.webdav.interfaces.BadRequest(
+            raise z3c.dav.interfaces.BadRequest(
                 self.request, message = u"Invalid Depth header supplied")
 
         propertiesFactory = None
@@ -85,7 +85,7 @@ class PROPFIND(object):
         propfind = self.request.xmlDataSource
         if propfind is not None:
             if propfind.tag != "{DAV:}propfind":
-                raise zope.webdav.interfaces.UnprocessableError(
+                raise z3c.dav.interfaces.UnprocessableError(
                     self.context,
                     message = u"Request is not a `propfind' XML element.")
             properties = propfind[0]
@@ -104,18 +104,18 @@ class PROPFIND(object):
                     propertiesFactory = self.renderSelectedProperties
                     extraArg = properties
             else:
-                raise zope.webdav.interfaces.UnprocessableError(
+                raise z3c.dav.interfaces.UnprocessableError(
                     self.context,
                     message = u"Unknown propfind property element.")
         else:
             propertiesFactory = self.renderAllProperties
 
-        multistatus = zope.webdav.utils.MultiStatus()
+        multistatus = z3c.dav.utils.MultiStatus()
         responses = self.handlePropfindResource(
             self.context, self.request, depth, propertiesFactory, extraArg)
         multistatus.responses.extend(responses)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
 
         self.request.response.setStatus(207)
         self.request.response.setHeader("content-type", "application/xml")
@@ -148,7 +148,7 @@ class PROPFIND(object):
 
     def handleException(self, proptag, exc_info, request, response):
         error_view = component.queryMultiAdapter(
-            (exc_info[1], request), zope.webdav.interfaces.IDAVErrorWidget)
+            (exc_info[1], request), z3c.dav.interfaces.IDAVErrorWidget)
         if error_view is None:
             ## An unexpected error occured here. This error should be
             ## fixed. In order to easily debug the problem we will
@@ -162,7 +162,7 @@ class PROPFIND(object):
             propstat.responsedescription += error_view.propstatdescription
             response.responsedescription += error_view.responsedescription
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propstat.properties.append(etree.Element(proptag))
 
     def renderPropnames(self, ob, req, ignore):
@@ -172,13 +172,13 @@ class PROPFIND(object):
         the storage adapters should be enough to hide any properties that users
         don't have permission to see.
         """
-        response = zope.webdav.utils.Response(
-            zope.webdav.utils.getObjectURL(ob, req))
+        response = z3c.dav.utils.Response(
+            z3c.dav.utils.getObjectURL(ob, req))
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
 
         for davprop, adapter in \
-                zope.webdav.properties.getAllProperties(ob, req):
+                z3c.dav.properties.getAllProperties(ob, req):
             rendered_name = etree.Element(etree.QName(davprop.namespace,
                                                       davprop.__name__))
             response.addProperty(200, rendered_name)
@@ -195,11 +195,11 @@ class PROPFIND(object):
           MAY be silently excluded from the response.
 
         """
-        response = zope.webdav.utils.Response(
-            zope.webdav.utils.getObjectURL(ob, req))
+        response = z3c.dav.utils.Response(
+            z3c.dav.utils.getObjectURL(ob, req))
 
         for davprop, adapter in \
-                zope.webdav.properties.getAllProperties(ob, req):
+                z3c.dav.properties.getAllProperties(ob, req):
             isIncluded = False
             if include is not None and \
                    include.find("{%s}%s" %(davprop.namespace,
@@ -211,7 +211,7 @@ class PROPFIND(object):
             try:
                 # getWidget and render are two possible areas where the
                 # property is silently ignored because of security concerns.
-                davwidget = zope.webdav.properties.getWidget(
+                davwidget = z3c.dav.properties.getWidget(
                     davprop, adapter, req)
                 response.addProperty(200, davwidget.render())
             except Unauthorized:
@@ -232,14 +232,14 @@ class PROPFIND(object):
         return response
 
     def renderSelectedProperties(self, ob, req, props):
-        response = zope.webdav.utils.Response(
-            zope.webdav.utils.getObjectURL(ob, req))
+        response = z3c.dav.utils.Response(
+            z3c.dav.utils.getObjectURL(ob, req))
 
         for prop in props:
             try:
-                davprop, adapter = zope.webdav.properties.getProperty(
+                davprop, adapter = z3c.dav.properties.getProperty(
                     ob, req, prop.tag, exists = True)
-                davwidget = zope.webdav.properties.getWidget(
+                davwidget = z3c.dav.properties.getWidget(
                     davprop, adapter, req)
                 propstat = response.getPropstat(200)
                 propstat.properties.append(davwidget.render())

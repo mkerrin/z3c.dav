@@ -21,7 +21,7 @@ from zope.publisher.http import HTTPResponse, HTTPRequest
 from zope.app.publication.http import HTTPPublication
 from zope.app.publication.interfaces import IRequestPublicationFactory
 
-from zope.etree.interfaces import IEtree
+import z3c.etree
 import interfaces
 
 
@@ -58,7 +58,7 @@ class WebDAVRequest(HTTPRequest):
 
         if content_type in ("text/xml", "application/xml") and \
                self.getHeader("content-length", 0) > 0:
-            etree = component.getUtility(IEtree)
+            etree = z3c.etree.getEngine()
             try:
                 self.xmlDataSource = etree.parse(self.bodyStream).getroot()
             except:

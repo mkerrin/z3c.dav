@@ -36,9 +36,9 @@ from zope.app.keyreference.interfaces import IKeyReference
 from zope.traversing.browser.absoluteurl import absoluteURL
 from zope.app.container.interfaces import IReadContainer
 
-from zope.webdav.coreproperties import ILockEntry, IDAVSupportedlock, \
+from z3c.dav.coreproperties import ILockEntry, IDAVSupportedlock, \
      IActiveLock
-import zope.webdav.interfaces
+import z3c.dav.interfaces
 
 
 INDIRECT_INDEX_KEY = 'zope.app.dav.lockingutils'
@@ -491,7 +491,7 @@ class SharedLockEntry(object):
     locktype = [u"write"]
 
 
-@component.adapter(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
+@component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 @interface.implementer(IDAVSupportedlock)
 def DAVSupportedlock(context, request):
     """
@@ -544,16 +544,16 @@ def DAVSupportedlock(context, request):
 class DAVSupportedlockAdapter(object):
     interface.implements(IDAVSupportedlock)
     component.adapts(interface.Interface,
-                     zope.webdav.interfaces.IWebDAVRequest)
+                     z3c.dav.interfaces.IWebDAVRequest)
 
     @property
     def supportedlock(self):
         return [ExclusiveLockEntry(), SharedLockEntry()]
 
 
-WEBDAV_LOCK_KEY = "zope.webdav.lockingutils.info"
+WEBDAV_LOCK_KEY = "z3c.dav.lockingutils.info"
 
-@component.adapter(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
+@component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 @interface.implementer(IActiveLock)
 def DAVActiveLock(context, request):
     """
@@ -568,7 +568,7 @@ def DAVActiveLock(context, request):
       >>> import zope.locking.utils
       >>> from zope.locking.utility import TokenUtility
       >>> from zope.locking.adapters import TokenBroker
-      >>> from zope.webdav.publisher import WebDAVRequest
+      >>> from z3c.dav.publisher import WebDAVRequest
 
       >>> def hackNow():
       ...     return datetime.datetime(2007, 4, 7, tzinfo = pytz.utc)
@@ -622,7 +622,7 @@ def DAVActiveLock(context, request):
       '/dummy/'
 
     The depth attribute is required by the WebDAV specification. But this
-    information is stored by the zope.webdav.lockingutils in the lock token's
+    information is stored by the z3c.dav.lockingutils in the lock token's
     annotation. But if a lock token is taken out by an alternative Zope3
     application that uses the zope.locking package then this information will
     must likely not be set up. So this adapter should provide reasonable
@@ -643,8 +643,8 @@ def DAVActiveLock(context, request):
     specified by the WebDAV specification get rendered.
 
       >>> lockdiscovery = DAVLockdiscovery(resource, request)
-      >>> davwidget = zope.webdav.properties.getWidget(
-      ...    zope.webdav.coreproperties.lockdiscovery,
+      >>> davwidget = z3c.dav.properties.getWidget(
+      ...    z3c.dav.coreproperties.lockdiscovery,
       ...    lockdiscovery, request)
       >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
       <lockdiscovery xmlns="DAV:" />
@@ -652,8 +652,8 @@ def DAVActiveLock(context, request):
       >>> component.getGlobalSiteManager().registerAdapter(DAVActiveLock)
 
       >>> lockdiscovery = DAVLockdiscovery(resource, request)
-      >>> davwidget = zope.webdav.properties.getWidget(
-      ...    zope.webdav.coreproperties.lockdiscovery,
+      >>> davwidget = z3c.dav.properties.getWidget(
+      ...    z3c.dav.coreproperties.lockdiscovery,
       ...    lockdiscovery, request)
       >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
       <lockdiscovery xmlns="DAV:">
@@ -694,8 +694,8 @@ def DAVActiveLock(context, request):
       ['simpletoken']
 
       >>> lockdiscovery = DAVLockdiscovery(resource, request)
-      >>> davwidget = zope.webdav.properties.getWidget(
-      ...    zope.webdav.coreproperties.lockdiscovery,
+      >>> davwidget = z3c.dav.properties.getWidget(
+      ...    z3c.dav.coreproperties.lockdiscovery,
       ...    lockdiscovery, request)
       >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
       <lockdiscovery xmlns="DAV:">
@@ -742,8 +742,8 @@ def DAVActiveLock(context, request):
     the following.
 
       >>> lockdiscovery = DAVLockdiscovery(resource['demo'], request)
-      >>> davwidget = zope.webdav.properties.getWidget(
-      ...    zope.webdav.coreproperties.lockdiscovery,
+      >>> davwidget = z3c.dav.properties.getWidget(
+      ...    z3c.dav.coreproperties.lockdiscovery,
       ...    lockdiscovery, request)
       >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
       <lockdiscovery xmlns="DAV:">
@@ -795,14 +795,14 @@ def DAVActiveLock(context, request):
 
       >>> activelock.lockscope
       []
-      >>> activelock.lockscope != zope.webdav.coreproperties.IActiveLock['lockscope'].missing_value
+      >>> activelock.lockscope != z3c.dav.coreproperties.IActiveLock['lockscope'].missing_value
       True
 
     Rending this lock token we get the following.
 
       >>> lockdiscovery = DAVLockdiscovery(resource, request)
-      >>> davwidget = zope.webdav.properties.getWidget(
-      ...    zope.webdav.coreproperties.lockdiscovery,
+      >>> davwidget = z3c.dav.properties.getWidget(
+      ...    z3c.dav.coreproperties.lockdiscovery,
       ...    lockdiscovery, request)
       >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
       <lockdiscovery xmlns="DAV:">
@@ -834,8 +834,8 @@ def DAVActiveLock(context, request):
       True
 
       >>> lockdiscovery = DAVLockdiscovery(resource, request)
-      >>> davwidget = zope.webdav.properties.getWidget(
-      ...    zope.webdav.coreproperties.lockdiscovery,
+      >>> davwidget = z3c.dav.properties.getWidget(
+      ...    z3c.dav.coreproperties.lockdiscovery,
       ...    lockdiscovery, request)
       >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
       <lockdiscovery xmlns="DAV:">
@@ -873,7 +873,7 @@ def DAVActiveLock(context, request):
 
 class DAVActiveLockAdapter(object):
     component.adapts(interface.Interface,
-                     zope.webdav.interfaces.IWebDAVRequest)
+                     z3c.dav.interfaces.IWebDAVRequest)
     interface.implements(IActiveLock)
 
     def __init__(self, token, context, request):
@@ -932,8 +932,8 @@ class DAVActiveLockAdapter(object):
         return absoluteURL(root, self.request)
 
 
-@component.adapter(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
-@interface.implementer(zope.webdav.coreproperties.IDAVLockdiscovery)
+@component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+@interface.implementer(z3c.dav.coreproperties.IDAVLockdiscovery)
 def DAVLockdiscovery(context, request):
     """
     This adapter is responsible for getting the data for the
@@ -943,7 +943,7 @@ def DAVLockdiscovery(context, request):
       >>> from zope.interface.verify import verifyObject
       >>> from zope.locking.utility import TokenUtility
       >>> from zope.locking.adapters import TokenBroker
-      >>> from zope.webdav.publisher import WebDAVRequest
+      >>> from z3c.dav.publisher import WebDAVRequest
       >>> from cStringIO import StringIO
       >>> resource = Demo()
       >>> request = WebDAVRequest(StringIO(''), {})
@@ -955,7 +955,7 @@ def DAVLockdiscovery(context, request):
       >>> component.getGlobalSiteManager().registerUtility(
       ...    util, zope.locking.interfaces.ITokenUtility)
       >>> component.getGlobalSiteManager().registerAdapter(DAVActiveLock,
-      ...    (interface.Interface, zope.webdav.interfaces.IWebDAVRequest),
+      ...    (interface.Interface, z3c.dav.interfaces.IWebDAVRequest),
       ...     IActiveLock)
       >>> component.getGlobalSiteManager().registerAdapter(
       ...    TokenBroker, (interface.Interface,),
@@ -991,7 +991,7 @@ def DAVLockdiscovery(context, request):
       ...    util, zope.locking.interfaces.ITokenUtility)
       True
       >>> component.getGlobalSiteManager().unregisterAdapter(DAVActiveLock,
-      ...    (interface.Interface, zope.webdav.interfaces.IWebDAVRequest),
+      ...    (interface.Interface, z3c.dav.interfaces.IWebDAVRequest),
       ...     IActiveLock)
       True
       >>> component.getGlobalSiteManager().unregisterAdapter(
@@ -1007,9 +1007,9 @@ def DAVLockdiscovery(context, request):
 
 
 class DAVLockdiscoveryAdapter(object):
-    interface.implements(zope.webdav.coreproperties.IDAVLockdiscovery)
+    interface.implements(z3c.dav.coreproperties.IDAVLockdiscovery)
     component.adapts(interface.Interface,
-                     zope.webdav.interfaces.IWebDAVRequest)
+                     z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -1059,7 +1059,7 @@ class DAVLockmanager(object):
     Test the DAVLockmanager implements the descired interface.
 
       >>> adapter = DAVLockmanager(file)
-      >>> verifyObject(zope.webdav.interfaces.IDAVLockmanager, adapter)
+      >>> verifyObject(z3c.dav.interfaces.IDAVLockmanager, adapter)
       True
 
     The adapter should also be lockable.
@@ -1177,7 +1177,7 @@ class DAVLockmanager(object):
       >>> utils.now = oldNow
 
     """
-    interface.implements(zope.webdav.interfaces.IDAVLockmanager)
+    interface.implements(z3c.dav.interfaces.IDAVLockmanager)
     component.adapts(interface.Interface)
 
     def __init__(self, context):
@@ -1199,7 +1199,7 @@ class DAVLockmanager(object):
 
         tokenBroker = zope.locking.interfaces.ITokenBroker(context)
         if tokenBroker.get():
-            raise zope.webdav.interfaces.AlreadyLocked(
+            raise z3c.dav.interfaces.AlreadyLocked(
                 context, message = u"Context or subitem is already locked.")
 
         if roottoken is None:
@@ -1208,7 +1208,7 @@ class DAVLockmanager(object):
             elif scope == u"shared":
                 roottoken = tokenBroker.lockShared(duration = duration)
             else:
-                raise zope.webdav.interfaces.UnprocessableError(
+                raise z3c.dav.interfaces.UnprocessableError(
                     self.context,
                     message = u"Invalid lockscope supplied to the lock manager")
 

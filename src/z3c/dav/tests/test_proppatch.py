@@ -31,13 +31,13 @@ from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.security.interfaces import Unauthorized
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
-import zope.webdav.proppatch
-import zope.webdav.publisher
-import zope.webdav.interfaces
-from zope.etree.interfaces import IEtree
-from zope.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
+import z3c.dav.proppatch
+import z3c.dav.publisher
+import z3c.dav.interfaces
+import z3c.etree
+from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
 
-class TestRequest(zope.webdav.publisher.WebDAVRequest):
+class TestRequest(z3c.dav.publisher.WebDAVRequest):
 
     def __init__(self, set_properties = None, remove_properties = None,
                  environ = {}):
@@ -108,7 +108,7 @@ class DummyResourceURL(object):
     __call__ = __str__
 
 
-class PROPPATCHHandler(zope.webdav.proppatch.PROPPATCH):
+class PROPPATCHHandler(z3c.dav.proppatch.PROPPATCH):
 
     def __init__(self, context, request):
         super(PROPPATCHHandler, self).__init__(context, request)
@@ -133,7 +133,7 @@ class PROPPATCHXmlParsing(unittest.TestCase):
         gsm = component.getGlobalSiteManager()
 
         gsm.registerAdapter(DummyResourceURL,
-                            (IResource, zope.webdav.interfaces.IWebDAVRequest))
+                            (IResource, z3c.dav.interfaces.IWebDAVRequest))
 
     def tearDown(self):
         etreeTearDown()
@@ -142,20 +142,20 @@ class PROPPATCHXmlParsing(unittest.TestCase):
 
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
 
     def test_noxml(self):
-        request = zope.webdav.publisher.WebDAVRequest(StringIO(""), {})
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propp = PROPPATCHHandler(Resource(), request)
-        self.assertRaises(zope.webdav.interfaces.BadRequest, propp.PROPPATCH)
+        self.assertRaises(z3c.dav.interfaces.BadRequest, propp.PROPPATCH)
 
     def test_notxml(self):
-        request = zope.webdav.publisher.WebDAVRequest(
+        request = z3c.dav.publisher.WebDAVRequest(
             StringIO("content"), {"CONTENT_TYPE": "text/plain",
                                   "CONTENT_LENGTH": 7})
         propp = PROPPATCHHandler(Resource(), request)
         request.processInputs()
-        self.assertRaises(zope.webdav.interfaces.BadRequest, propp.PROPPATCH)
+        self.assertRaises(z3c.dav.interfaces.BadRequest, propp.PROPPATCH)
 
     def test_notproppatch(self):
         body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -164,13 +164,13 @@ class PROPPATCHXmlParsing(unittest.TestCase):
 </D:notpropertyupdate>
         """
 
-        request = zope.webdav.publisher.WebDAVRequest(
+        request = z3c.dav.publisher.WebDAVRequest(
             StringIO(body), {"CONTENT_TYPE": "text/xml",
                              "CONTENT_LENGTH": len(body)})
         request.processInputs()
 
         propp = PROPPATCHHandler(Resource(), request)
-        self.assertRaises(zope.webdav.interfaces.UnprocessableError,
+        self.assertRaises(z3c.dav.interfaces.UnprocessableError,
                           propp.PROPPATCH)
 
     def test_not_set_element(self):
@@ -180,7 +180,7 @@ class PROPPATCHXmlParsing(unittest.TestCase):
 </propertyupdate>
         """
 
-        request = zope.webdav.publisher.WebDAVRequest(
+        request = z3c.dav.publisher.WebDAVRequest(
             StringIO(body), {"CONTENT_TYPE": "text/xml",
                              "CONTENT_LENGTH": len(body)})
         request.processInputs()
@@ -198,7 +198,7 @@ class PROPPATCHXmlParsing(unittest.TestCase):
 </propertyupdate>
         """
 
-        request = zope.webdav.publisher.WebDAVRequest(
+        request = z3c.dav.publisher.WebDAVRequest(
             StringIO(body), {"CONTENT_TYPE": "text/xml",
                              "CONTENT_LENGTH": len(body)})
         request.processInputs()
@@ -216,7 +216,7 @@ class PROPPATCHXmlParsing(unittest.TestCase):
 </propertyupdate>
         """
 
-        request = zope.webdav.publisher.WebDAVRequest(
+        request = z3c.dav.publisher.WebDAVRequest(
             StringIO(body), {"CONTENT_TYPE": "text/xml",
                              "CONTENT_LENGTH": len(body)})
         request.processInputs()
@@ -286,13 +286,13 @@ class PROPPATCHXmlParsing(unittest.TestCase):
     def test_error_set_prop(self):
         class PROPPATCHHandlerError(PROPPATCHHandler):
             def handleSet(self, prop):
-                raise zope.webdav.interfaces.PropertyNotFound(
+                raise z3c.dav.interfaces.PropertyNotFound(
                     self.context, "getcontenttype", u"property is missing")
 
         request = TestRequest(
             set_properties = "<getcontenttype>text/plain</getcontenttype>")
         propp = PROPPATCHHandlerError(Resource(), request)
-        self.assertRaises(zope.webdav.interfaces.WebDAVPropstatErrors,
+        self.assertRaises(z3c.dav.interfaces.WebDAVPropstatErrors,
                           propp.PROPPATCH)
 
         self.assertEqual(propp.setprops, [])
@@ -301,14 +301,14 @@ class PROPPATCHXmlParsing(unittest.TestCase):
     def test_error_set_prop_with_remove(self):
         class PROPPATCHHandlerError(PROPPATCHHandler):
             def handleSet(self, prop):
-                raise zope.webdav.interfaces.PropertyNotFound(
+                raise z3c.dav.interfaces.PropertyNotFound(
                     self.context, "getcontenttype", u"property is missing")
 
         request = TestRequest(
             remove_properties = "<displayname>Test Name</displayname>",
             set_properties = "<getcontenttype>text/plain</getcontenttype>")
         propp = PROPPATCHHandlerError(Resource(), request)
-        self.assertRaises(zope.webdav.interfaces.WebDAVPropstatErrors,
+        self.assertRaises(z3c.dav.interfaces.WebDAVPropstatErrors,
                           propp.PROPPATCH)
 
         self.assertEqual(propp.setprops, [])
@@ -347,11 +347,11 @@ class IUnauthorizedPropertyStorage(interface.Interface):
     unauthprop = schema.TextLine(
         title = u"Property that you are not allowed to set")
 
-exampleIntProperty = zope.webdav.properties.DAVProperty(
+exampleIntProperty = z3c.dav.properties.DAVProperty(
     "{DAVtest:}exampleintprop", IExamplePropertyStorage)
-exampleTextProperty = zope.webdav.properties.DAVProperty(
+exampleTextProperty = z3c.dav.properties.DAVProperty(
     "{DAVtest:}exampletextprop", IExamplePropertyStorage)
-unauthProperty = zope.webdav.properties.DAVProperty(
+unauthProperty = z3c.dav.properties.DAVProperty(
     "{DAVtest:}unauthprop", IUnauthorizedPropertyStorage)
 unauthProperty.restricted = True
 
@@ -402,29 +402,29 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
 
         gsm.registerUtility(exampleIntProperty,
                             name = "{DAVtest:}exampleintprop",
-                            provided = zope.webdav.interfaces.IDAVProperty)
+                            provided = z3c.dav.interfaces.IDAVProperty)
         gsm.registerUtility(exampleTextProperty,
                             name = "{DAVtest:}exampletextprop",
-                            provided = zope.webdav.interfaces.IDAVProperty)
+                            provided = z3c.dav.interfaces.IDAVProperty)
         exampleTextProperty.field.readonly = False
         gsm.registerUtility(unauthProperty, name = "{DAVtest:}unauthprop")
 
         gsm.registerAdapter(ExamplePropertyStorage,
-                            (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                            (IResource, z3c.dav.interfaces.IWebDAVRequest),
                             provided = IExamplePropertyStorage)
         gsm.registerAdapter(UnauthorizedPropertyStorage,
-                            (IResource, zope.webdav.interfaces.IWebDAVRequest),
+                            (IResource, z3c.dav.interfaces.IWebDAVRequest),
                             provided = IUnauthorizedPropertyStorage)
 
-        gsm.registerAdapter(zope.webdav.widgets.IntDAVInputWidget,
+        gsm.registerAdapter(z3c.dav.widgets.IntDAVInputWidget,
                             (zope.schema.interfaces.IInt,
-                             zope.webdav.interfaces.IWebDAVRequest))
-        gsm.registerAdapter(zope.webdav.widgets.TextDAVInputWidget,
+                             z3c.dav.interfaces.IWebDAVRequest))
+        gsm.registerAdapter(z3c.dav.widgets.TextDAVInputWidget,
                             (zope.schema.interfaces.IText,
-                             zope.webdav.interfaces.IWebDAVRequest))
+                             z3c.dav.interfaces.IWebDAVRequest))
 
         gsm.registerAdapter(DummyResourceURL,
-                            (IResource, zope.webdav.interfaces.IWebDAVRequest))
+                            (IResource, z3c.dav.interfaces.IWebDAVRequest))
 
         self.events = []
         zope.event.subscribers.append(self.eventLog)
@@ -436,37 +436,37 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
 
         gsm.unregisterUtility(exampleIntProperty,
                               name = "{DAVtest:}exampleintprop",
-                              provided = zope.webdav.interfaces.IDAVProperty)
+                              provided = z3c.dav.interfaces.IDAVProperty)
         gsm.unregisterUtility(exampleTextProperty,
                               name = "{DAVtest:}exampletextprop",
-                              provided = zope.webdav.interfaces.IDAVProperty)
+                              provided = z3c.dav.interfaces.IDAVProperty)
         gsm.unregisterUtility(unauthProperty, name = "{DAVtest:}unauthprop")
 
         gsm.unregisterAdapter(ExamplePropertyStorage,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest),
+                               z3c.dav.interfaces.IWebDAVRequest),
                               provided = IExamplePropertyStorage)
         gsm.unregisterAdapter(UnauthorizedPropertyStorage,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest),
+                               z3c.dav.interfaces.IWebDAVRequest),
                               provided = IUnauthorizedPropertyStorage)
 
-        gsm.unregisterAdapter(zope.webdav.widgets.IntDAVInputWidget,
+        gsm.unregisterAdapter(z3c.dav.widgets.IntDAVInputWidget,
                               (zope.schema.interfaces.IInt,
-                               zope.webdav.interfaces.IWebDAVRequest))
-        gsm.unregisterAdapter(zope.webdav.widgets.TextDAVInputWidget,
+                               z3c.dav.interfaces.IWebDAVRequest))
+        gsm.unregisterAdapter(z3c.dav.widgets.TextDAVInputWidget,
                               (zope.schema.interfaces.IText,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
 
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
 
         self.events = []
         zope.event.subscribers.remove(self.eventLog)
 
     def test_handleSetProperty(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{DAVtest:}exampletextprop")
         propel.text = "Example Text Prop"
 
@@ -474,12 +474,12 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             set_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         self.assertEqual(propp.handleSet(propel), True)
         self.assertEqual(resource.text, "Example Text Prop")
 
     def test_handleSetProperty_samevalue(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{DAVtest:}exampletextprop")
         propel.text = "Text Prop"
 
@@ -487,12 +487,12 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             set_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         self.assertEqual(propp.handleSet(propel), False)
         self.assertEqual(resource.text, "Text Prop")
 
     def test_handleSet_forbidden_property(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{DAVtest:}exampletextprop")
         propel.text = "Example Text Prop"
 
@@ -502,13 +502,13 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             set_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ForbiddenError,
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.ForbiddenError,
                           propp.handleSet,
                           propel)
 
     def test_handleSet_unauthorized(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{DAVtest:}unauthprop")
         propel.text = "Example Text Prop"
 
@@ -516,11 +516,11 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             set_properties = """<Dt:unauthprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:unauthprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         self.assertRaises(Unauthorized, propp.handleSet, propel)
 
     def test_handleSet_property_notfound(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{DAVtest:}exampletextpropmissing")
         propel.text = "Example Text Prop"
 
@@ -528,13 +528,13 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             set_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(zope.webdav.interfaces.PropertyNotFound,
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.PropertyNotFound,
                           propp.handleSet,
                           propel)
 
     def test_handleRemove_live_property(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{DAVtest:}exampletextprop")
         propel.text = "Example Text Prop"
 
@@ -542,13 +542,13 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             remove_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ConflictError,
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.ConflictError,
                           propp.handleRemove,
                           propel)
 
     def test_handleRemove_no_dead_properties(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
@@ -556,8 +556,8 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             remove_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ConflictError,
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.ConflictError,
                           propp.handleRemove,
                           propel)
 
@@ -566,7 +566,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             set_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         propp.PROPPATCH()
 
         self.assertEqual(resource.text, "Example Text Prop") # property modified
@@ -579,7 +579,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
             set_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         propp.PROPPATCH()
 
         self.assertEqual(resource.text, "Text Prop")
@@ -593,7 +593,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
 """)
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         propp.PROPPATCH()
 
         self.assertEqual(resource.text, "Text Prop")
@@ -604,7 +604,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
 
 
 class DEADProperties(object):
-    interface.implements(zope.webdav.interfaces.IOpaquePropertyStorage)
+    interface.implements(z3c.dav.interfaces.IOpaquePropertyStorage)
 
     def __init__(self, context):
         self.data = context.props = getattr(context, "props", {})
@@ -639,7 +639,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         gsm.registerAdapter(DEADProperties, (IResource,))
 
         gsm.registerAdapter(DummyResourceURL,
-                            (IResource, zope.webdav.interfaces.IWebDAVRequest))
+                            (IResource, z3c.dav.interfaces.IWebDAVRequest))
 
         self.events = []
         zope.event.subscribers.append(self.eventLog)
@@ -653,13 +653,13 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
 
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
-                               zope.webdav.interfaces.IWebDAVRequest))
+                               z3c.dav.interfaces.IWebDAVRequest))
 
         self.events = []
         zope.event.subscribers.remove(self.eventLog)
 
     def test_remove_no_storage(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
@@ -667,13 +667,13 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
             remove_properties = """<Dt:exampledeadprop xmlns:Dt="example:">Example Text Prop</Dt:exampledeadprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ConflictError,
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.ConflictError,
                           propp.handleRemove,
                           propel)
 
     def test_remove_not_there(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
@@ -681,14 +681,14 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
             remove_properties = """<Dt:exampletextprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:exampletextprop>""")
         resource = Resource("Text Prop", 10)
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(zope.webdav.interfaces.ConflictError,
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.ConflictError,
                           propp.handleRemove,
                           propel)
         self.assertEqual(self.events, [])
 
     def test_remove_prop(self):
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
         propel = etree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
@@ -703,7 +703,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         self.assertEqual(deadprops.hasProperty(testprop), True)
         self.assertEqual(deadprops.getProperty(testprop), "Example Text Prop")
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
 
         self.assertEqual(propp.handleRemove(propel), True)
         self.assertEqual(deadprops.hasProperty(testprop), False)
@@ -718,7 +718,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         deadprops = DEADProperties(resource)
         deadprops.setProperty(testprop, "Example Text Prop")
 
-        propp = zope.webdav.proppatch.PROPPATCH(resource, request)
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         propp.PROPPATCH()
 
         self.assertEqual(deadprops.hasProperty(testprop), False)

@@ -27,10 +27,10 @@ from zope.interface import Interface, implements
 from zope.interface.verify import verifyObject
 from zope.datetime import tzinfo
 
-from zope.webdav import widgets
-import zope.webdav.interfaces
-from zope.webdav.publisher import WebDAVRequest
-from zope.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
+from z3c.dav import widgets
+import z3c.dav.interfaces
+from z3c.dav.publisher import WebDAVRequest
+from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
 
 
 class TestWebDAVRequest(WebDAVRequest):
@@ -125,7 +125,7 @@ class WebDAVWidgetTest(_WebDAVWidgetTest):
 
     def test_interface(self):
         self.assertEqual(
-            verifyObject(zope.webdav.interfaces.IDAVWidget, self.widget), True)
+            verifyObject(z3c.dav.interfaces.IDAVWidget, self.widget), True)
 
     def test_render(self):
         self.widget.setRenderedValue(self.field_content)
@@ -269,7 +269,7 @@ class ListTextWebDAVWidgetTest(WebDAVWidgetTest):
         component.getGlobalSiteManager().registerAdapter(
             widgets.TextDAVWidget,
             (zope.schema.interfaces.ITextLine,
-             zope.webdav.interfaces.IWebDAVRequest))
+             z3c.dav.interfaces.IWebDAVRequest))
 
         foofield = schema.List(__name__ = self.name,
                                title = u"Foo Title",
@@ -295,7 +295,7 @@ class ListTextWebDAVWidgetTest(WebDAVWidgetTest):
         component.getGlobalSiteManager().unregisterAdapter(
             widgets.TextDAVWidget,
             (zope.schema.interfaces.ITextLine,
-             zope.webdav.interfaces.IWebDAVRequest))
+             z3c.dav.interfaces.IWebDAVRequest))
         super(ListTextWebDAVWidgetTest, self).tearDown()
 
 
@@ -348,21 +348,21 @@ class ObjectDAVWidgetTest(WebDAVWidgetTest):
         component.getGlobalSiteManager().registerAdapter(
             widgets.TextDAVWidget,
             (zope.schema.interfaces.ITextLine,
-             zope.webdav.interfaces.IWebDAVRequest))
+             z3c.dav.interfaces.IWebDAVRequest))
         component.getGlobalSiteManager().registerAdapter(
             widgets.IntDAVWidget,
             (zope.schema.interfaces.IInt,
-             zope.webdav.interfaces.IWebDAVRequest))
+             z3c.dav.interfaces.IWebDAVRequest))
 
     def tearDown(self):
         component.getGlobalSiteManager().unregisterAdapter(
             widgets.TextDAVWidget,
             (zope.schema.interfaces.ITextLine,
-             zope.webdav.interfaces.IWebDAVRequest))
+             z3c.dav.interfaces.IWebDAVRequest))
         component.getGlobalSiteManager().unregisterAdapter(
             widgets.IntDAVWidget,
             (zope.schema.interfaces.IInt,
-             zope.webdav.interfaces.IWebDAVRequest))
+             z3c.dav.interfaces.IWebDAVRequest))
         super(ObjectDAVWidgetTest, self).tearDown()
 
     def test_default_render_missing_values(self):

@@ -29,11 +29,11 @@ from zope.traversing.interfaces import TraversalError
 from zope.traversing.browser import absoluteURL
 from zope.app.publication.http import MethodNotAllowed
 
-import zope.webdav.interfaces
+import z3c.dav.interfaces
 
 class Base(object):
-    interface.implements(zope.webdav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
+    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -46,7 +46,7 @@ class Base(object):
         elif overwrite == "f":
             overwrite = False
         else:
-            raise zope.webdav.interfaces.BadRequest(
+            raise z3c.dav.interfaces.BadRequest(
                 self.request, message = u"Invalid overwrite header")
 
         return overwrite
@@ -56,7 +56,7 @@ class Base(object):
         while dest and dest[-1] == "/":
             dest = dest[:-1]
         if not dest:
-            raise zope.webdav.interfaces.BadRequest(
+            raise z3c.dav.interfaces.BadRequest(
                 self.request, message = u"No `destination` header sent.")
 
         scheme, location, destpath, query, fragment = urlparse.urlsplit(dest)
@@ -69,7 +69,7 @@ class Base(object):
                 # namespace, or the destination namespace refuses to accept
                 # the resource.  The client may wish to try GET/PUT and
                 # PROPFIND/PROPPATCH instead.
-                raise zope.webdav.interfaces.BadGateway(
+                raise z3c.dav.interfaces.BadGateway(
                     self.context, self.request)
 
         return destpath
@@ -92,15 +92,15 @@ class Base(object):
         try:
             parent = traverse(getRoot(self.context), parentpath)
         except TraversalError:
-            raise zope.webdav.interfaces.ConflictError(
+            raise z3c.dav.interfaces.ConflictError(
                 self.context, message = u"Destination resource has no parent")
 
         if destob is not None and not overwrite:
-            raise zope.webdav.interfaces.PreconditionFailed(
+            raise z3c.dav.interfaces.PreconditionFailed(
                 self.context,
                 message = "destination exists and OverWrite header is F")
         elif destob is not None and destob == self.context:
-            raise zope.webdav.interfaces.ForbiddenError(
+            raise z3c.dav.interfaces.ForbiddenError(
                 self.context,
                 message = "destionation and source objects are the same")
         elif destob is not None:
@@ -122,7 +122,7 @@ class COPY(Base):
 
         if not copier.copyableTo(parent, destname):
             # Conflict
-            raise zope.webdav.interfaces.ConflictError(
+            raise z3c.dav.interfaces.ConflictError(
                 self.context,
                 message = u"can not copy to the destionation folder")
 
@@ -150,7 +150,7 @@ class MOVE(Base):
         destname, destob, parent = self.getDestinationNameAndParentObject()
 
         if not mover.moveableTo(parent, destname):
-            raise zope.webdav.interfaces.ConflictError(
+            raise z3c.dav.interfaces.ConflictError(
                 self.context,
                 message = u"can not copy to the destionation folder")
 

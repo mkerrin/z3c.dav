@@ -2,7 +2,7 @@
    xmlns="http://namespaces.zope.org/zope"
    i18n_domain="zope.app.dav">
 
-  <include package="zope.webdav.exceptions" />
+  <include package="z3c.dav.exceptions" />
 
   <!--
       Support for integrating the protocol request handlers found in
@@ -42,16 +42,16 @@
 
   <adapter
      for="zope.interface.Interface
-          zope.webdav.interfaces.IWebDAVRequest"
-     provides="zope.webdav.interfaces.IWebDAVMethod"
+          z3c.dav.interfaces.IWebDAVRequest"
+     provides="z3c.dav.interfaces.IWebDAVMethod"
      factory=".locking.LOCK"
      name="LOCK"
      />
 
   <adapter
      for="zope.interface.Interface
-          zope.webdav.interfaces.IWebDAVRequest"
-     provides="zope.webdav.interfaces.IWebDAVMethod"
+          z3c.dav.interfaces.IWebDAVRequest"
+     provides="z3c.dav.interfaces.IWebDAVMethod"
      factory=".locking.UNLOCK"
      name="UNLOCK"
      />
@@ -231,23 +231,23 @@
      xmlns="http://namespaces.zope.org/apidoc">
 
     <bookchapter
-       id="zope.webdav"
+       id="z3c.dav"
        title="WebDAV"
        doc_path="README.txt"
        />
 
     <bookchapter
-       id="zope.webdav.datamodel"
+       id="z3c.dav.datamodel"
        title="WebDAV Data Model"
        doc_path="datamodel.txt"
-       parent="zope.webdav"
+       parent="z3c.dav"
        />
 
     <bookchapter
-       id="zope.webdav.locking"
+       id="z3c.dav.locking"
        title="Locking"
        doc_path="locking.txt"
-       parent="zope.webdav"
+       parent="z3c.dav"
        />
 
   </configure>

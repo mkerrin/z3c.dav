@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Run all doctests contained within zope.webdav.
+"""Run all doctests contained within z3c.dav.
 
 $Id$
 """
@@ -35,9 +35,9 @@ from zope.security.management import newInteraction, endInteraction, \
      queryInteraction
 from zope.traversing.browser.interfaces import IAbsoluteURL
 
-import zope.etree.testing
-import zope.webdav.widgets
-import zope.webdav.interfaces
+import z3c.etree.testing
+import z3c.dav.widgets
+import z3c.dav.interfaces
 
 
 class IDemo(IContained):
@@ -128,7 +128,7 @@ def contentTeardown(test):
 
 def lockingSetUp(test):
     placelesssetup.setUp(test)
-    zope.etree.testing.etreeSetup(test)
+    z3c.etree.testing.etreeSetup(test)
 
     # create principal
     participation = Participation(Principal('michael'))
@@ -158,21 +158,21 @@ def lockingSetUp(test):
 
     # register some IDAVWidgets so that we can render the activelock and
     # supportedlock widgets.
-    gsm.registerAdapter(zope.webdav.widgets.ListDAVWidget,
+    gsm.registerAdapter(z3c.dav.widgets.ListDAVWidget,
                         (zope.schema.interfaces.IList,
-                         zope.webdav.interfaces.IWebDAVRequest))
-    gsm.registerAdapter(zope.webdav.widgets.ObjectDAVWidget,
+                         z3c.dav.interfaces.IWebDAVRequest))
+    gsm.registerAdapter(z3c.dav.widgets.ObjectDAVWidget,
                         (zope.schema.interfaces.IObject,
-                         zope.webdav.interfaces.IWebDAVRequest))
-    gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+                         z3c.dav.interfaces.IWebDAVRequest))
+    gsm.registerAdapter(z3c.dav.widgets.TextDAVWidget,
                         (zope.schema.interfaces.IText,
-                         zope.webdav.interfaces.IWebDAVRequest))
-    gsm.registerAdapter(zope.webdav.properties.OpaqueWidget,
-                        (zope.webdav.properties.DeadField,
-                         zope.webdav.interfaces.IWebDAVRequest))
-    gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+                         z3c.dav.interfaces.IWebDAVRequest))
+    gsm.registerAdapter(z3c.dav.properties.OpaqueWidget,
+                        (z3c.dav.properties.DeadField,
+                         z3c.dav.interfaces.IWebDAVRequest))
+    gsm.registerAdapter(z3c.dav.widgets.TextDAVWidget,
                         (zope.schema.interfaces.IURI,
-                         zope.webdav.interfaces.IWebDAVRequest))
+                         z3c.dav.interfaces.IWebDAVRequest))
 
     # expose these classes to the test
     test.globs["Demo"] = Demo
@@ -181,7 +181,7 @@ def lockingSetUp(test):
 
 def lockingTearDown(test):
     placelesssetup.tearDown(test)
-    zope.etree.testing.etreeTearDown(test)
+    z3c.etree.testing.etreeTearDown(test)
 
     events = test.globs.pop("events")
     assert zope.event.subscribers.pop().__self__ is events
@@ -205,54 +205,54 @@ def lockingTearDown(test):
                           (IDemoFolder, interface.Interface),
                           IAbsoluteURL)
 
-    gsm.unregisterAdapter(zope.webdav.widgets.ListDAVWidget,
+    gsm.unregisterAdapter(z3c.dav.widgets.ListDAVWidget,
                           (zope.schema.interfaces.IList,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.widgets.ObjectDAVWidget,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.widgets.ObjectDAVWidget,
                           (zope.schema.interfaces.IObject,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.widgets.TextDAVWidget,
                           (zope.schema.interfaces.IText,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.properties.OpaqueWidget,
-                          (zope.webdav.properties.DeadField,
-                           zope.webdav.interfaces.IWebDAVRequest))
-    gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.properties.OpaqueWidget,
+                          (z3c.dav.properties.DeadField,
+                           z3c.dav.interfaces.IWebDAVRequest))
+    gsm.unregisterAdapter(z3c.dav.widgets.TextDAVWidget,
                           (zope.schema.interfaces.IURI,
-                           zope.webdav.interfaces.IWebDAVRequest))
+                           z3c.dav.interfaces.IWebDAVRequest))
 
     endInteraction()
 
 
 def test_suite():
     return unittest.TestSuite((
-        doctest.DocTestSuite("zope.webdav.properties",
+        doctest.DocTestSuite("z3c.dav.properties",
                              setUp = contentSetup, tearDown = contentTeardown),
-        doctest.DocTestSuite("zope.webdav.utils",
-                             checker = zope.etree.testing.xmlOutputChecker,
-                             setUp = zope.etree.testing.etreeSetup,
-                             tearDown = zope.etree.testing.etreeTearDown),
-        doctest.DocTestSuite("zope.webdav.coreproperties",
-                             checker = zope.etree.testing.xmlOutputChecker,
-                             setUp = zope.etree.testing.etreeSetup,
-                             tearDown = zope.etree.testing.etreeTearDown),
-        doctest.DocFileSuite("datamodel.txt", package = "zope.webdav",
-                             checker = zope.etree.testing.xmlOutputChecker,
-                             setUp = zope.etree.testing.etreeSetup,
-                             tearDown = zope.etree.testing.etreeTearDown),
-        doctest.DocTestSuite("zope.webdav.lockingutils",
-                             checker = zope.etree.testing.xmlOutputChecker,
+        doctest.DocTestSuite("z3c.dav.utils",
+                             checker = z3c.etree.testing.xmlOutputChecker,
+                             setUp = z3c.etree.testing.etreeSetup,
+                             tearDown = z3c.etree.testing.etreeTearDown),
+        doctest.DocTestSuite("z3c.dav.coreproperties",
+                             checker = z3c.etree.testing.xmlOutputChecker,
+                             setUp = z3c.etree.testing.etreeSetup,
+                             tearDown = z3c.etree.testing.etreeTearDown),
+        doctest.DocFileSuite("datamodel.txt", package = "z3c.dav",
+                             checker = z3c.etree.testing.xmlOutputChecker,
+                             setUp = z3c.etree.testing.etreeSetup,
+                             tearDown = z3c.etree.testing.etreeTearDown),
+        doctest.DocTestSuite("z3c.dav.lockingutils",
+                             checker = z3c.etree.testing.xmlOutputChecker,
                              setUp = lockingSetUp,
                              tearDown = lockingTearDown),
-        doctest.DocTestSuite("zope.webdav.deadproperties"),
-        doctest.DocTestSuite("zope.webdav.adapters"),
-        doctest.DocTestSuite("zope.webdav.locking",
-                             checker = zope.etree.testing.xmlOutputChecker,
-                             setUp = zope.etree.testing.etreeSetup,
-                             tearDown = zope.etree.testing.etreeTearDown),
-        doctest.DocFileSuite("locking.txt", package = "zope.webdav",
-                             checker = zope.etree.testing.xmlOutputChecker,
-                             setUp = zope.etree.testing.etreeSetup,
-                             tearDown = zope.etree.testing.etreeTearDown),
-        doctest.DocTestSuite("zope.webdav.mkcol"),
+        doctest.DocTestSuite("z3c.dav.deadproperties"),
+        doctest.DocTestSuite("z3c.dav.adapters"),
+        doctest.DocTestSuite("z3c.dav.locking",
+                             checker = z3c.etree.testing.xmlOutputChecker,
+                             setUp = z3c.etree.testing.etreeSetup,
+                             tearDown = z3c.etree.testing.etreeTearDown),
+        doctest.DocFileSuite("locking.txt", package = "z3c.dav",
+                             checker = z3c.etree.testing.xmlOutputChecker,
+                             setUp = z3c.etree.testing.etreeSetup,
+                             tearDown = z3c.etree.testing.etreeTearDown),
+        doctest.DocTestSuite("z3c.dav.mkcol"),
         ))

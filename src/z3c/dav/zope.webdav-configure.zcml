@@ -1,1 +1,1 @@
-<include package="zope.webdav" />
+<include package="z3c.dav" />

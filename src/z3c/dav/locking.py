@@ -44,11 +44,11 @@ import datetime
 from zope import component
 from zope import interface
 
-import zope.webdav.interfaces
-import zope.webdav.properties
-from zope.webdav.coreproperties import IActiveLock, IDAVSupportedlock
-from zope.etree.interfaces import IEtree
-import zope.webdav.utils
+import z3c.etree
+import z3c.dav.interfaces
+import z3c.dav.properties
+from z3c.dav.coreproperties import IActiveLock, IDAVSupportedlock
+import z3c.dav.utils
 
 MAXTIMEOUT = (2L ** 32) - 1
 DEFAULTTIMEOUT = 12 * 60L
@@ -76,14 +76,14 @@ def getIfHeader(request):
     return None
 
 
-@component.adapter(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
-@interface.implementer(zope.webdav.interfaces.IWebDAVMethod)
+@component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+@interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def LOCK(context, request):
     """
     If we can adapt the context to a lock manager then we should be able to
     lock the resource.
     """
-    lockmanager = zope.webdav.interfaces.IDAVLockmanager(context, None)
+    lockmanager = z3c.dav.interfaces.IDAVLockmanager(context, None)
     if lockmanager is None:
         return None
     if not lockmanager.islockable():
@@ -96,8 +96,8 @@ class LOCKMethod(object):
     """
     LOCK handler for all objects.
     """
-    interface.implements(zope.webdav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
+    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -205,7 +205,7 @@ class LOCKMethod(object):
             elif len(t) == 1 and (t[0] == "infinite" or t[0] == "infinity"):
                 th = t[0]
             else:
-                raise zope.webdav.interfaces.BadRequest(
+                raise z3c.dav.interfaces.BadRequest(
                     self.request, message = u"Invalid TIMEOUT header")
 
             if th == "infinite" or th == "infinite" or th == "infinity":
@@ -214,7 +214,7 @@ class LOCKMethod(object):
                 try:
                     timeout = long(th)
                 except ValueError:
-                    raise zope.webdav.interfaces.BadRequest(
+                    raise z3c.dav.interfaces.BadRequest(
                         self.request, message = u"Invalid TIMEOUT header")
 
             if timeout is not None and timeout < MAXTIMEOUT:
@@ -248,7 +248,7 @@ class LOCKMethod(object):
         """
         depth = self.request.getHeader("depth", "infinity")
         if depth not in ("0", "infinity"):
-            raise zope.webdav.interfaces.BadRequest(
+            raise z3c.dav.interfaces.BadRequest(
                 self.request,
                 u"Invalid depth header. Must be either '0' or 'infinity'")
 
@@ -266,13 +266,13 @@ class LOCKMethod(object):
             errors = self.handleLock()
 
         if errors:
-            raise zope.webdav.interfaces.WebDAVErrors(self.context, errors)
+            raise z3c.dav.interfaces.WebDAVErrors(self.context, errors)
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
 
-        davprop, adapter = zope.webdav.properties.getProperty(
+        davprop, adapter = z3c.dav.properties.getProperty(
             self.context, self.request, "{DAV:}lockdiscovery")
-        davwidget = zope.webdav.properties.getWidget(
+        davwidget = z3c.dav.properties.getWidget(
             davprop, adapter, self.request)
         propel = etree.Element(etree.QName("DAV:", "prop"))
         propel.append(davwidget.render())
@@ -289,10 +289,10 @@ class LOCKMethod(object):
         return etree.tostring(propel)
 
     def handleLockRefresh(self):
-        lockmanager = zope.webdav.interfaces.IDAVLockmanager(self.context)
+        lockmanager = z3c.dav.interfaces.IDAVLockmanager(self.context)
 
         if not lockmanager.islocked():
-            raise zope.webdav.interfaces.PreconditionFailed(
+            raise z3c.dav.interfaces.PreconditionFailed(
                 self.context, message = u"Context is not locked.")
 
         locktoken = component.getMultiAdapter((self.context, self.request),
@@ -301,7 +301,7 @@ class LOCKMethod(object):
         if not request_uri or \
                request_uri[0] != "<" or request_uri[-1] != ">" or \
                request_uri[1:-1] != locktoken:
-            raise zope.webdav.interfaces.PreconditionFailed(
+            raise z3c.dav.interfaces.PreconditionFailed(
                 self.context, message = u"Lock-Token doesn't match request uri")
 
         timeout = self.getTimeout()
@@ -312,7 +312,7 @@ class LOCKMethod(object):
 
         xmlsource = self.request.xmlDataSource
         if xmlsource.tag != "{DAV:}lockinfo":
-            raise zope.webdav.interfaces.UnprocessableError(
+            raise z3c.dav.interfaces.UnprocessableError(
                 self.context,
                 message = u"LOCK request body must be a `lockinfo' XML element")
 
@@ -320,21 +320,21 @@ class LOCKMethod(object):
 
         depth = self.getDepth()
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
 
         lockscope = xmlsource.find("{DAV:}lockscope")
         if not lockscope:
-            raise zope.webdav.interfaces.UnprocessableError(
+            raise z3c.dav.interfaces.UnprocessableError(
                 self.context,
                 message = u"No `{DAV:}lockscope' XML element in request")
-        lockscope_str = zope.webdav.utils.parseEtreeTag(lockscope[0].tag)[1]
+        lockscope_str = z3c.dav.utils.parseEtreeTag(lockscope[0].tag)[1]
 
         locktype = xmlsource.find("{DAV:}locktype")
         if not locktype:
-            raise zope.webdav.interfaces.UnprocessableError(
+            raise z3c.dav.interfaces.UnprocessableError(
                 self.context,
                 message = u"No `{DAV:}locktype' XML element in request")
-        locktype_str = zope.webdav.utils.parseEtreeTag(locktype[0].tag)[1]
+        locktype_str = z3c.dav.utils.parseEtreeTag(locktype[0].tag)[1]
 
         supportedlocks = component.getMultiAdapter(
             (self.context, self.request), IDAVSupportedlock)
@@ -343,7 +343,7 @@ class LOCKMethod(object):
                entry.lockscope[0] == lockscope_str:
                 break
         else:
-            raise zope.webdav.interfaces.UnprocessableError(
+            raise z3c.dav.interfaces.UnprocessableError(
                 self.context,
                 message = u"Unknown lock-token requested.")
 
@@ -353,7 +353,7 @@ class LOCKMethod(object):
         else:
             owner_str = None
 
-        lockmanager = zope.webdav.interfaces.IDAVLockmanager(self.context)
+        lockmanager = z3c.dav.interfaces.IDAVLockmanager(self.context)
 
         try:
             lockmanager.lock(scope = lockscope_str,
@@ -361,7 +361,7 @@ class LOCKMethod(object):
                              owner = owner_str,
                              duration = timeout,
                              depth = depth)
-        except zope.webdav.interfaces.AlreadyLocked, error:
+        except z3c.dav.interfaces.AlreadyLocked, error:
             errors.append(error)
 
         return errors
@@ -372,14 +372,14 @@ class LOCKMethod(object):
 #
 ################################################################################
 
-@component.adapter(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
-@interface.implementer(zope.webdav.interfaces.IWebDAVMethod)
+@component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+@interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def UNLOCK(context, request):
     """
     If we can adapt the context to a lock manager then we should be able to
     unlock the resource.
     """
-    lockmanager = zope.webdav.interfaces.IDAVLockmanager(context, None)
+    lockmanager = z3c.dav.interfaces.IDAVLockmanager(context, None)
     if lockmanager is None:
         return None
     if not lockmanager.islockable():
@@ -392,8 +392,8 @@ class UNLOCKMethod(object):
     """
     UNLOCK handler for all objects.
     """
-    interface.implements(zope.webdav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
+    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -405,14 +405,14 @@ class UNLOCKMethod(object):
             locktoken = locktoken[1:-1]
 
         if not locktoken:
-            raise zope.webdav.interfaces.BadRequest(
+            raise z3c.dav.interfaces.BadRequest(
                 self.request, message = u"No lock-token header supplied")
 
-        lockmanager = zope.webdav.interfaces.IDAVLockmanager(self.context)
+        lockmanager = z3c.dav.interfaces.IDAVLockmanager(self.context)
         activelock = component.getMultiAdapter((self.context, self.request),
                                                IActiveLock)
         if not lockmanager.islocked() or activelock.locktoken[0] != locktoken:
-            raise zope.webdav.interfaces.ConflictError(
+            raise z3c.dav.interfaces.ConflictError(
                 self.context, message = "object is locked or the lock isn't" \
                                         " in the scope the passed.")
 

@@ -25,17 +25,17 @@ from zope import interface
 from zope import component
 from zope.lifecycleevent import ObjectModifiedEvent
 
-import zope.webdav.utils
-import zope.webdav.interfaces
-import zope.webdav.properties
-from zope.etree.interfaces import IEtree
+import z3c.etree
 from zope.security.interfaces import Unauthorized
 
+import z3c.dav.utils
+import z3c.dav.interfaces
+import z3c.dav.properties
 
 class PROPPATCH(object):
     """PROPPATCH handler for all objects"""
-    interface.implements(zope.webdav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, zope.webdav.interfaces.IWebDAVRequest)
+    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -43,18 +43,18 @@ class PROPPATCH(object):
 
     def PROPPATCH(self):
         if self.request.content_type not in ("text/xml", "application/xml"):
-            raise zope.webdav.interfaces.BadRequest(
+            raise z3c.dav.interfaces.BadRequest(
                 self.request,
                 message = "All PROPPATCH requests needs a XML body")
 
         xmldata = self.request.xmlDataSource
         if xmldata.tag != "{DAV:}propertyupdate":
-            raise zope.webdav.interfaces.UnprocessableError(
+            raise z3c.dav.interfaces.UnprocessableError(
                 self.context,
                 message = u"PROPPATCH request body must be a "
                            "`propertyupdate' XML element.")
 
-        etree = component.getUtility(IEtree)
+        etree = z3c.etree.getEngine()
 
         # propErrors - list of (property tag, error). error is None if no
         #              error occurred in setting / removing the property.
@@ -90,13 +90,13 @@ class PROPPATCH(object):
                     properties.append(prop.tag)
 
         if propErrors:
-            errors = zope.webdav.interfaces.WebDAVPropstatErrors(self.context)
+            errors = z3c.dav.interfaces.WebDAVPropstatErrors(self.context)
 
             for prop, error in propErrors:
                 errors[prop] = error
 
             for proptag in properties:
-                errors[proptag] = zope.webdav.interfaces.FailedDependency(
+                errors[proptag] = z3c.dav.interfaces.FailedDependency(
                     self.context, proptag)
 
             raise errors # this kills the current transaction.
@@ -104,14 +104,14 @@ class PROPPATCH(object):
         if changed:
             zope.event.notify(ObjectModifiedEvent(self.context))
 
-        url = zope.webdav.utils.getObjectURL(self.context, self.request)
-        response = zope.webdav.utils.Response(url)
+        url = z3c.dav.utils.getObjectURL(self.context, self.request)
+        response = z3c.dav.utils.Response(url)
         propstat = response.getPropstat(200)
 
         for proptag in properties:
             propstat.properties.append(etree.Element(proptag))
 
-        multistatus = zope.webdav.utils.MultiStatus()
+        multistatus = z3c.dav.utils.MultiStatus()
         multistatus.responses.append(response)
 
         self.request.response.setStatus(207)
@@ -119,17 +119,17 @@ class PROPPATCH(object):
         return etree.tostring(multistatus())
 
     def handleSet(self, prop):
-        davprop, adapter = zope.webdav.properties.getProperty(
+        davprop, adapter = z3c.dav.properties.getProperty(
             self.context, self.request, prop.tag)
 
-        widget = zope.webdav.properties.getWidget(
+        widget = z3c.dav.properties.getWidget(
             davprop, adapter, self.request,
-            type = zope.webdav.interfaces.IDAVInputWidget)
+            type = z3c.dav.interfaces.IDAVInputWidget)
 
         field = davprop.field.bind(adapter)
 
         if field.readonly:
-            raise zope.webdav.interfaces.ForbiddenError(
+            raise z3c.dav.interfaces.ForbiddenError(
                 self.context, prop.tag, message = u"readonly field")
 
         value = widget.getInputValue()
@@ -142,18 +142,18 @@ class PROPPATCH(object):
 
     def handleRemove(self, prop):
         davprop = component.queryUtility(
-            zope.webdav.interfaces.IDAVProperty, prop.tag, None)
+            z3c.dav.interfaces.IDAVProperty, prop.tag, None)
 
         if davprop is not None:
-            raise zope.webdav.interfaces.ConflictError(
+            raise z3c.dav.interfaces.ConflictError(
                 self.context, prop.tag,
                 message = u"cannot remove a live property")
 
-        deadproperties = zope.webdav.interfaces.IOpaquePropertyStorage(
+        deadproperties = z3c.dav.interfaces.IOpaquePropertyStorage(
             self.context, None)
 
         if deadproperties is None or not deadproperties.hasProperty(prop.tag):
-            raise zope.webdav.interfaces.ConflictError(
+            raise z3c.dav.interfaces.ConflictError(
                 self.context, prop.tag, message = u"property doesn't exist")
 
         deadproperties.removeProperty(prop.tag)

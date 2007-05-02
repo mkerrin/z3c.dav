@@ -537,7 +537,7 @@ class IDAVLockmanager(interface.Interface):
         Return False when the current context can never be locked or locking
         is not support in your setup.
 
-        For example in Zope3, zope.webdav.lockingutils.DAVLockmanager depends
+        For example in Zope3, z3c.dav.lockingutils.DAVLockmanager depends
         on a persistent zope.locking.interfaces.ITokenUtility utility being
         present and registered. If this utility can not be locked be then
         we can never use this implementation of IDAVLockmanager.

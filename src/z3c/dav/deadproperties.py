@@ -23,9 +23,9 @@ from zope import interface
 from zope import component
 from zope.annotation.interfaces import IAnnotatable, IAnnotations
 
-import zope.webdav.interfaces
+import z3c.dav.interfaces
 
-_opaque_namespace_key = "zope.webdav.deadproperties.DAVOpaqueProperties"
+_opaque_namespace_key = "z3c.dav.deadproperties.DAVOpaqueProperties"
 
 class OpaqueProperties(object):
     """
@@ -40,7 +40,7 @@ class OpaqueProperties(object):
       ...     interface.implements(IAnnotatable)
       >>> resource = DemoContent()
       >>> opaqueProperties = OpaqueProperties(resource)
-      >>> verifyObject(zope.webdav.interfaces.IOpaquePropertyStorage,
+      >>> verifyObject(z3c.dav.interfaces.IOpaquePropertyStorage,
       ...              opaqueProperties)
       True
       >>> annotations = IAnnotations(resource)
@@ -107,7 +107,7 @@ class OpaqueProperties(object):
       True
 
     """
-    interface.implements(zope.webdav.interfaces.IOpaquePropertyStorage)
+    interface.implements(z3c.dav.interfaces.IOpaquePropertyStorage)
     component.adapts(IAnnotatable)
 
     _annotations = None

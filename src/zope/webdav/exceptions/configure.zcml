@@ -1,0 +1,181 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+           xmlns:browser="http://namespaces.zope.org/browser">
+
+  <!--
+      Error widgets
+    -->
+  <adapter
+     factory="zope.webdav.exceptions.ForbiddenError"
+     for="zope.webdav.interfaces.ForbiddenError
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IDAVErrorWidget"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.PropertyNotFoundError"
+     for="zope.webdav.interfaces.IPropertyNotFound
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IDAVErrorWidget"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.ConflictError"
+     for="zope.app.form.interfaces.IWidgetInputError
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IDAVErrorWidget"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.ConflictError"
+     for="zope.webdav.interfaces.IConflictError
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IDAVErrorWidget"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.AlreadyLockedError"
+     for="zope.webdav.interfaces.AlreadyLocked
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IDAVErrorWidget"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.FailedDependencyError"
+     for="zope.webdav.interfaces.IFailedDependency
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IDAVErrorWidget"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.UnauthorizedError"
+     for="zope.security.interfaces.IUnauthorized
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IDAVErrorWidget"
+     />
+
+  <!--
+      Some default errors that can make it back to the publisher.
+    -->
+  <adapter
+     factory="zope.webdav.exceptions.UnprocessableError"
+     name="index.html"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IUnprocessableError"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.MultiStatusErrorView"
+     name="index.html"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IWebDAVErrors"
+     type="zope.webdav.interfaces.IWebDAVRequest"
+     name="index.html"
+     />
+
+  <adapter
+     factory="zope.webdav.exceptions.WebDAVPropstatErrorView"
+     name="index.html"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IWebDAVPropstatErrors"
+     type="zope.webdav.interfaces.IWebDAVRequest"
+     name="index.html"
+     />
+
+  <view
+     for="zope.webdav.interfaces.IPreconditionFailed"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="zope.webdav.exceptions.PreconditionFailed"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IPreconditionFailed"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
+  <view
+     for="zope.webdav.interfaces.IBadGateway"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="zope.webdav.exceptions.BadGateway"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IBadGateway"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
+  <view
+     for="zope.webdav.interfaces.IConflictError"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="zope.webdav.exceptions.HTTPConflictError"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IConflictError"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
+  <view
+     for="zope.webdav.interfaces.IForbiddenError"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="zope.webdav.exceptions.HTTPForbiddenError"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IForbiddenError"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
+  <view
+     for="zope.webdav.interfaces.IUnsupportedMediaType"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="zope.webdav.exceptions.HTTPUnsupportedMediaTypeError"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IUnsupportedMediaType"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
+  <adapter
+     factory=".browser.default_template"
+     name="default"
+     />
+
+  <view
+     for="zope.webdav.interfaces.IBadRequest"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="zope.webdav.exceptions.browser.BadRequest"
+     />
+
+  <defaultView
+     for="zope.webdav.interfaces.IBadRequest"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
+</configure>

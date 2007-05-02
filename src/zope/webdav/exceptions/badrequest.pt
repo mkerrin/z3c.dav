@@ -1,0 +1,18 @@
+<html>
+
+  <body>
+
+    <div>
+
+      <h1>Bad Request</h1>
+
+      <p tal:define="msg view/message"
+         tal:condition="msg"
+         tal:content="msg"
+         />
+
+    </div>
+
+  </body>
+
+</html>

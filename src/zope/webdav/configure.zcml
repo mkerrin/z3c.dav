@@ -1,0 +1,255 @@
+<configure
+   xmlns="http://namespaces.zope.org/zope"
+   i18n_domain="zope.app.dav">
+
+  <include package="zope.webdav.exceptions" />
+
+  <!--
+      Support for integrating the protocol request handlers found in
+      the webdav package with the Zope3 publisher.
+    -->
+  <publisher
+     name="WEBDAV"
+     factory=".publisher.WebDAVRequestFactory"
+     methods="PROPFIND PROPPATCH MKCOL LOCK UNLOCK COPY MOVE"
+     priority="30"
+     />
+
+  <adapter
+     factory=".propfind.PROPFIND"
+     name="PROPFIND"
+     />
+
+  <adapter
+     factory=".proppatch.PROPPATCH"
+     name="PROPPATCH"
+     />
+
+  <adapter
+     factory=".mkcol.MKCOL"
+     name="MKCOL"
+     />
+
+  <adapter
+     factory=".copymove.COPY"
+     name="COPY"
+     />
+
+  <adapter
+     factory=".copymove.MOVE"
+     name="MOVE"
+     />
+
+  <adapter
+     for="zope.interface.Interface
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IWebDAVMethod"
+     factory=".locking.LOCK"
+     name="LOCK"
+     />
+
+  <adapter
+     for="zope.interface.Interface
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.interfaces.IWebDAVMethod"
+     factory=".locking.UNLOCK"
+     name="UNLOCK"
+     />
+
+  <!--
+      Collection of display widget definitions.
+    -->
+
+  <adapter
+     for="zope.schema.interfaces.IText
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.TextDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.ITextLine
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.TextDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IInt
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.IntDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IFloat
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.IntDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IDatetime
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.DatetimeDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IDate
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.DateDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.ISequence
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.ListDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IObject
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.ObjectDAVWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IURI
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.TextDAVWidget"
+     />
+
+  <adapter
+     for=".properties.DeadField
+          .interfaces.IWebDAVRequest"
+     factory=".properties.OpaqueWidget"
+     />
+
+  <!--
+      Collection of webdav input widgets definitions
+    -->
+
+  <adapter
+     for="zope.schema.interfaces.IText
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.TextDAVInputWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.ITextLine
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.TextDAVInputWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IInt
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.IntDAVInputWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IFloat
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.FloatDAVInputWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IDatetime
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.DatetimeDAVInputWidget"
+     />
+
+  <adapter
+     for="zope.schema.interfaces.IDate
+          .interfaces.IWebDAVRequest"
+     factory=".widgets.DateDAVInputWidget"
+     />
+
+  <!--
+      Declare all properties managed by this package.
+    -->
+  <utility
+     component=".coreproperties.creationdate"
+     name="{DAV:}creationdate"
+     />
+
+  <utility
+     component=".coreproperties.displayname"
+     name="{DAV:}displayname"
+     />
+
+  <utility
+     component=".coreproperties.getcontentlanguage"
+     name="{DAV:}getcontentlanguage"
+     />
+
+  <utility
+     component=".coreproperties.getcontentlength"
+     name="{DAV:}getcontentlength"
+     />
+
+  <utility
+     component=".coreproperties.getcontenttype"
+     name="{DAV:}getcontenttype"
+     />
+
+  <utility
+     component=".coreproperties.getetag"
+     name="{DAV:}getetag"
+     />
+
+  <utility
+     component=".coreproperties.getlastmodified"
+     name="{DAV:}getlastmodified"
+     />
+
+  <utility
+     component=".coreproperties.lockdiscovery"
+     name="{DAV:}lockdiscovery"
+     />
+
+  <utility
+     component=".coreproperties.resourcetype"
+     name="{DAV:}resourcetype"
+     />
+
+  <utility
+     component=".coreproperties.supportedlock"
+     name="{DAV:}supportedlock"
+     />
+
+  <!--
+      Mandatory minimum storage adapter
+    -->
+  <adapter
+     factory=".coreproperties.ResourceTypeAdapter"
+     />
+
+  <!--
+      Zope3 support for WebDAV
+    -->
+  <include file="z3-configure.zcml" />
+
+  <configure
+     xmlns:zcml="http://namespaces.zope.org/zcml"
+     zcml:condition="have apidoc"
+     xmlns="http://namespaces.zope.org/apidoc">
+
+    <bookchapter
+       id="zope.webdav"
+       title="WebDAV"
+       doc_path="README.txt"
+       />
+
+    <bookchapter
+       id="zope.webdav.datamodel"
+       title="WebDAV Data Model"
+       doc_path="datamodel.txt"
+       parent="zope.webdav"
+       />
+
+    <bookchapter
+       id="zope.webdav.locking"
+       title="Locking"
+       doc_path="locking.txt"
+       parent="zope.webdav"
+       />
+
+  </configure>
+
+</configure>

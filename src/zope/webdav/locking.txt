@@ -1,0 +1,769 @@
+==============
+WebDAV locking
+==============
+
+zope.webdav.locking doesn't fully implement the WebDAV LOCK and UNLOCK methods.
+Instead it tries to hide most of the protocols details from developers and
+provide a way for developers to integrate the WebDAV LOCK and UNLOCK methods
+with different locking mechanisms. This is mainly done by an implementation
+of the zope.webdav.interfaces.IDAVLockmanager adapter. The
+zope.webdav.lockingutils module uses the zope.locking package to integrate
+the zope.locking with the LOCK and UNLOCK methods.
+
+This test will define a very simple locking mechanism that will show what
+needs to be done in order to integrate this mechanism with the LOCK and
+UNLOCK methods. At the end of the tests we will have successfully locked
+and then unlocked an instance of the Resource content type defined below.
+
+Setup
+=====
+
+  >>> import UserDict
+  >>> from cStringIO import StringIO
+  >>> import zope.interface
+  >>> from zope.interface.verify import verifyObject
+  >>> import zope.component
+  >>> import zope.app.container.interfaces
+  >>> import zope.webdav.interfaces
+
+Define a test request object and a content type against which to run the
+tests.
+
+  >>> class TestWebDAVRequest(zope.webdav.publisher.WebDAVRequest):
+  ...    def __init__(self, lockinfo = {}, body = "", environ = {}):
+  ...        env = environ.copy()
+  ...        if body:
+  ...            env.setdefault("CONTENT_TYPE", "text/xml")
+  ...        env.setdefault("CONTENT_LENGTH", len(body))
+  ...        super(TestWebDAVRequest, self).__init__(StringIO(body), env)
+  ...        self.processInputs()
+
+  >>> class IResource(zope.interface.Interface):
+  ...    """ """
+
+  >>> class Resource(object):
+  ...    zope.interface.implements(IResource)
+  ...    _lockinfo = None
+
+  >>> gsm = zope.component.getGlobalSiteManager()
+
+LOCK Method
+===========
+
+  >>> from zope.webdav.locking import LOCK
+
+The LOCK method is only defined when the current resource is adaptable to
+`zope.webdav.interfaces.IDAVLockManager`.
+
+  >>> LOCK(Resource(), TestWebDAVRequest()) is None
+  True
+
+Implement the zope.webdav.interfaces.IDAVLockmanager adapter. When the
+lock, refreshlock, and unlock methods are called by the LOCK / UNLOCK methods
+below then these methods will print out a simple unique message that we
+can test for.
+
+  >>> class DAVLockmanager(object):
+  ...    zope.interface.implements(zope.webdav.interfaces.IDAVLockmanager)
+  ...    zope.component.adapts(IResource)
+  ...    _islockable = True
+  ...    def __init__(self, context):
+  ...        self.context = context
+  ...    def islockable(self):
+  ...        return self._islockable
+  ...    def islocked(self):
+  ...        return self.context._lockinfo is not None
+  ...    def refreshlock(self, timeout):
+  ...        self.context._lockinfo['duration'] = timeout
+  ...        print "Refreshed lock token."
+  ...    def lock(self, scope, type, owner, duration, depth):
+  ...        if self.context._lockinfo is not None:
+  ...            raise zope.webdav.interfaces.AlreadyLocked(self.context)
+  ...        self.context._lockinfo = {'scope': scope,
+  ...            'type': type,
+  ...            'owner': owner,
+  ...            'duration': duration,
+  ...            'depth': depth}
+  ...        print "Locked the resource."
+  ...    def unlock(self):
+  ...        self.context._lockinfo = None
+  ...        print "Unlocked the resource."
+
+  >>> verifyObject(zope.webdav.interfaces.IDAVLockmanager,
+  ...    DAVLockmanager(Resource()))
+  True
+  >>> gsm.registerAdapter(DAVLockmanager)
+
+  >>> LOCK(Resource(), TestWebDAVRequest()) #doctest:+ELLIPSIS
+  <zope.webdav.locking.LOCKMethod object at 0x...>
+
+In some locking implementations the lockmanager can say that a resource can
+not be locked - ever. This is when the islockable method returns False. In
+this case we don't create a LOCK view.
+
+  >>> DAVLockmanager._islockable = False
+  >>> DAVLockmanager(Resource()).islockable()
+  False
+
+  >>> LOCK(Resource(), TestWebDAVRequest()) is None
+  True
+  >>> DAVLockmanager._islockable = True
+
+handleLock
+----------
+
+The `handleLock` method is responsible for locking a resource. It parses the
+body of the request and calls the `IDAVLockmanager` lock method (assuming that
+everything is OK) with the information in the request body. Whether or not
+the `handleLock` method is called just depends on whether or not the request
+contains an xml body that the elementtree used was able to use.
+
+The request body must conform to the specification in order to the LOCK method
+to succeed in locking the resource.
+
+  >>> body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:notlockinfo xmlns:D="DAV:">
+  ...  Not a lockinfo.
+  ... </D:notlockinfo>"""
+  >>> resource = Resource()
+  >>> LOCK(resource, TestWebDAVRequest(body = body)).handleLock()
+  Traceback (most recent call last):
+  ...
+  UnprocessableError: LOCK request body must be a `lockinfo' XML element
+
+  >>> body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...  Not a lockinfo.
+  ... </D:lockinfo>"""
+  >>> LOCK(resource, TestWebDAVRequest(body = body,
+  ...    environ = {'DEPTH': '1'})).handleLock()
+  Traceback (most recent call last):
+  ...
+  BadRequest: <__builtin__.TestWebDAVRequest instance URL=http:/>, u"Invalid depth header. Must be either '0' or 'infinity'"
+
+  >>> LOCK(resource, TestWebDAVRequest(body = body)).handleLock()
+  Traceback (most recent call last):
+  ...
+  UnprocessableError: No `{DAV:}lockscope' XML element in request
+
+  >>> body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exculsive/></D:lockscope>
+  ... </D:lockinfo>"""
+  >>> LOCK(resource, TestWebDAVRequest(body = body)).handleLock()
+  Traceback (most recent call last):
+  ...
+  UnprocessableError: No `{DAV:}locktype' XML element in request
+
+Now in-order to valid the request lock we need a `ILockEntry` and
+`IDAVSupportedlock` implementation in order to integrate what the system
+supports.
+
+  >>> class Exclusivelock(object):
+  ...    zope.interface.implements(zope.webdav.coreproperties.ILockEntry)
+  ...    lockscope = [u"exclusive"]
+  ...    locktype = [u"write"]
+
+  >>> class Supportedlock(object):
+  ...    zope.interface.implements(zope.webdav.coreproperties.IDAVSupportedlock)
+  ...    zope.component.adapts(IResource, zope.webdav.interfaces.IWebDAVRequest)
+  ...    def __init__(self, context, request):
+  ...        pass
+  ...    @property
+  ...    def supportedlock(self):
+  ...        return [Exclusivelock()]
+
+  >>> gsm.registerAdapter(Supportedlock)
+
+If the system doesn't know about the lockscope or the locktype then we get
+an `UnprocessableError`.
+
+  >>> errors = LOCK(resource, TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:none-exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ... </D:lockinfo>""")).LOCK()
+  Traceback (most recent call last):
+  ...
+  UnprocessableError: Unknown lock-token requested.
+
+Now enough of the errors that can occur, we will now lock the resource.
+
+  >>> errors = LOCK(resource, TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ... </D:lockinfo>""")).handleLock()
+  Locked the resource.
+  >>> errors
+  []
+
+  >>> manager = DAVLockmanager(resource)
+  >>> manager.islocked()
+  True
+
+The lock method sets the `_lockinfo` attribute on the resource object which
+just contains all the info need to set up the lock.
+
+  >>> resource._lockinfo
+  {'owner': None, 'scope': 'exclusive', 'duration': datetime.timedelta(0, 720), 'type': 'write', 'depth': 'infinity'}
+  >>> resource._lockinfo = None # unlocks the resource.
+
+  >>> errors = LOCK(resource, TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ...   <D:owner>
+  ...     <D:href>http://example.org/~ejw/contact.html</D:href>
+  ...   </D:owner>
+  ... </D:lockinfo>""")).handleLock()
+  Locked the resource.
+  >>> errors
+  []
+  >>> lockinfo = resource._lockinfo
+  >>> print lockinfo['owner'] #doctest:+XMLDATA
+  <owner xmlns="DAV:">
+    <href>http://example.org/~ejw/contact.html</href>
+  </owner>
+  >>> resource._lockinfo['duration']
+  datetime.timedelta(0, 720)
+  >>> resource._lockinfo['scope']
+  'exclusive'
+  >>> resource._lockinfo['type']
+  'write'
+  >>> resource._lockinfo['depth']
+  'infinity'
+
+The depth parameter defaults to 'infinity' but could also specify a zero depth.
+
+  >>> resource._lockinfo = None
+
+  >>> errors = LOCK(resource, TestWebDAVRequest(
+  ...    environ = {'DEPTH': '0'},
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ...   <D:owner>
+  ...     <D:href>http://example.org/~ejw/contact.html</D:href>
+  ...   </D:owner>
+  ... </D:lockinfo>""")).handleLock()
+  Locked the resource.
+  >>> errors
+  []
+  >>> lockinfo = resource._lockinfo
+  >>> print lockinfo['owner'] #doctest:+XMLDATA
+  <owner xmlns="DAV:">
+    <href>http://example.org/~ejw/contact.html</href>
+  </owner>
+  >>> resource._lockinfo['duration']
+  datetime.timedelta(0, 720)
+  >>> resource._lockinfo['scope']
+  'exclusive'
+  >>> resource._lockinfo['type']
+  'write'
+  >>> resource._lockinfo['depth']
+  '0'
+
+Now if the resource is already locked then the `handleLock` returns an
+`zope.webdav.interfaces.AlreadyLocked` error.
+
+  >>> errors = LOCK(resource, TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ...   <D:owner>
+  ...     <D:href>http://example.org/~ejw/contact.html</D:href>
+  ...   </D:owner>
+  ... </D:lockinfo>""")).handleLock()
+  >>> errors #doctest:+ELLIPSIS
+  [<zope.webdav.interfaces.AlreadyLocked instance at ...>]
+
+LOCK
+----
+
+The LOCK method will wrap any AlreadyLockedErrors in a
+`zope.webdav.interfaces.WebDAVErrors` containing exception. The logic behind
+this is to make it easier write a view of the error.
+
+  >>> LOCK(resource, TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ...   <D:owner>
+  ...     <D:href>http://example.org/~ejw/contact.html</D:href>
+  ...   </D:owner>
+  ... </D:lockinfo>""")).LOCK()
+  Traceback (most recent call last):
+  ...
+  WebDAVErrors
+
+Now unlock the resource for the other locking tests to work.
+
+  >>> resource._lockinfo = None
+
+When the LOCK method is called with a correct body it calls the `handleLock`
+method tested previously tries to render the `{DAV:}lockdiscovery` property to
+return to the requesting client.
+
+  >>> LOCK(resource, TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ...   <D:owner>
+  ...     <D:href>http://example.org/~ejw/contact.html</D:href>
+  ...   </D:owner>
+  ... </D:lockinfo>""")).LOCK()
+  Traceback (most recent call last):
+  ...
+  PropertyNotFound: {DAV:}lockdiscovery
+
+Now we will define the `{DAV:}lockdiscovery` property and re-lock the resource.
+We keep the resource locked until after we make sure that the `Activelock`
+implementation implements the `IActiveLock` interface with the `verifyObject`
+method. As this method calls all the properties on this adapter. Note that the
+previous test locked the resource since these tests aren't run within a
+transaction.
+
+  >>> manager.islocked()
+  True
+
+  >>> class Activelock(object):
+  ...    zope.interface.implements(zope.webdav.coreproperties.IActiveLock)
+  ...    zope.component.adapts(IResource, zope.webdav.interfaces.IWebDAVRequest)
+  ...    def __init__(self, context, request):
+  ...        self.context = context
+  ...        self.data = context._lockinfo
+  ...    @property
+  ...    def lockscope(self):
+  ...        return [self.data['scope']]
+  ...    @property
+  ...    def locktype(self):
+  ...        return [self.data['type']]
+  ...    @property
+  ...    def depth(self):
+  ...        return self.data['depth']
+  ...    @property
+  ...    def owner(self):
+  ...        value = self.data['owner']
+  ...        if value:
+  ...            return value.replace('\n', '')
+  ...        return None
+  ...    @property
+  ...    def timeout(self):
+  ...        duration = self.data['duration']
+  ...        if duration is not None:
+  ...            return "Second-%d" % self.data['duration'].seconds
+  ...        return None
+  ...    @property
+  ...    def lockroot(self):
+  ...        return "http://localhost/resource"
+  ...    _locktoken = ['urn:resourcelocktoken']
+  ...    @property
+  ...    def locktoken(self):
+  ...        return self._locktoken
+
+  >>> verifyObject(zope.webdav.coreproperties.IActiveLock,
+  ...    Activelock(resource, None))
+  True
+  >>> gsm.registerAdapter(Activelock)
+
+  >>> class Lockdiscovery(object):
+  ...    zope.interface.implements(zope.webdav.coreproperties.IDAVLockdiscovery)
+  ...    zope.component.adapts(IResource, zope.webdav.interfaces.IWebDAVRequest)
+  ...    def __init__(self, context, request):
+  ...        self.context, self.request = context, request
+  ...    @property
+  ...    def lockdiscovery(self):
+  ...        return [Activelock(self.context, self.request)]
+
+We need the following setup in-order for the LOCK method to render the
+`{DAV:}lockdiscovery` widget.
+
+  >>> gsm.registerAdapter(zope.webdav.widgets.ListDAVWidget,
+  ...                     (zope.schema.interfaces.IList,
+  ...                      zope.webdav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(zope.webdav.widgets.ObjectDAVWidget,
+  ...                     (zope.schema.interfaces.IObject,
+  ...                      zope.webdav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+  ...                     (zope.schema.interfaces.IText,
+  ...                      zope.webdav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(zope.webdav.properties.OpaqueWidget,
+  ...                     (zope.webdav.properties.DeadField,
+  ...                      zope.webdav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(zope.webdav.widgets.TextDAVWidget,
+  ...                     (zope.schema.interfaces.IURI,
+  ...                      zope.webdav.interfaces.IWebDAVRequest))
+
+  >>> gsm.registerUtility(zope.webdav.coreproperties.lockdiscovery,
+  ...                     name = "{DAV:}lockdiscovery")
+  >>> gsm.registerAdapter(Lockdiscovery)
+
+Now unlock the resource since we have already tested the `Activelock`
+implementation.
+
+  >>> resource._lockinfo = None
+
+By calling the LOCK method directly on a unlocked resource we get a full
+response to a LOCK request. This is a response with a status of 200 (we get
+a 201 on unmapped URL's but this isn't supported yet), a correct content-type
+of application/xml and the body should be a rendering of the
+`{DAV:}lockdiscovery` property.
+
+First we note that the owner element is optional.
+
+  >>> request = TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ... </D:lockinfo>""")
+  >>> respbody = LOCK(resource, request).LOCK()
+  Locked the resource.
+  >>> print respbody #doctest:+XMLDATA
+  <prop xmlns="DAV:">
+    <lockdiscovery>
+      <activelock>
+        <lockscope><exclusive /></lockscope>
+        <locktype><write /></locktype>
+        <depth>infinity</depth>
+        <timeout>Second-720</timeout>
+        <locktoken><href>urn:resourcelocktoken</href></locktoken>
+        <lockroot>http://localhost/resource</lockroot>
+      </activelock>
+    </lockdiscovery>
+  </prop>
+  >>> request.response.getStatus()
+  200
+  >>> request.response.getHeader("Content-type")
+  'application/xml'
+  >>> request.response.getHeader("Lock-token")
+  '<urn:resourcelocktoken>'
+
+When rendering the `{DAV:}lockdiscovery` XML element the timeout and locktoken
+data can be known. This is handy information if you are implementing a custom
+lock mechanism.
+
+  >>> davprop, adapter = zope.webdav.properties.getProperty(
+  ...    resource, request, '{DAV:}lockdiscovery')
+  >>> davwidget = zope.webdav.properties.getWidget(davprop, adapter, request)
+
+  >>> resource._lockinfo['duration'] = None
+  >>> Activelock._locktoken = None
+
+  >>> print etree.tostring(davwidget.render()) #doctest:+XMLDATA
+  <lockdiscovery xmlns="DAV:">
+    <activelock>
+      <lockscope><exclusive /></lockscope>
+      <locktype><write /></locktype>
+      <depth>infinity</depth>
+      <lockroot>http://localhost/resource</lockroot>
+    </activelock>
+  </lockdiscovery>
+
+  >>> Activelock._locktoken = ['urn:resourcelocktoken']
+
+Unlock the resource and try again with the owner element included in the
+request.
+
+  >>> resource._lockinfo = None
+
+  >>> request = TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ...   <D:owner>
+  ...     <D:href>http://example.org/~ejw/contact.html</D:href>
+  ...   </D:owner>
+  ... </D:lockinfo>""")
+  >>> respbody = LOCK(resource, request).LOCK()
+  Locked the resource.
+  >>> respbody #doctest:+XMLDATA
+  <prop xmlns="DAV:">
+    <lockdiscovery>
+      <activelock>
+        <lockscope><exclusive /></lockscope>
+        <locktype><write /></locktype>
+        <depth>infinity</depth>
+        <owner>
+          <href>http://example.org/~ejw/contact.html</href>
+        </owner>
+        <timeout>Second-720</timeout>
+        <locktoken><href>urn:resourcelocktoken</href></locktoken>
+        <lockroot>http://localhost/resource</lockroot>
+      </activelock>
+    </lockdiscovery>
+  </prop>
+  >>> request.response.getStatus()
+  200
+  >>> request.response.getHeader("Content-type")
+  'application/xml'
+  >>> request.response.getHeader("Lock-token")
+  '<urn:resourcelocktoken>'
+
+handleLockRefresh
+-----------------
+
+  >>> manager.islocked()
+  True
+
+Lock token can be refreshed by submitting a request without a body. In this
+case the `handleLock` method is not called but the `handleLockRefresh` is
+called.
+
+  >>> LOCK(resource, TestWebDAVRequest()).handleLockRefresh()
+  Traceback (most recent call last):
+  ...
+  PreconditionFailed: Lock-Token doesn't match request uri
+
+  >>> LOCK(resource, TestWebDAVRequest(
+  ...    environ = {'IF': '<urn:wrong-resourcelocktoken>'})).handleLockRefresh()
+  Traceback (most recent call last):
+  ...
+  PreconditionFailed: Lock-Token doesn't match request uri
+
+Now refresh the lock info but without a timeout so it doesn't change.
+
+  >>> LOCK(resource, TestWebDAVRequest(
+  ...    environ = {'IF': '<urn:resourcelocktoken>'})).handleLockRefresh()
+  Refreshed lock token.
+  >>> resource._lockinfo['duration']
+  datetime.timedelta(0, 720)
+  >>> resource._lockinfo['scope']
+  'exclusive'
+  >>> resource._lockinfo['type']
+  'write'
+  >>> resource._lockinfo['depth']
+  'infinity'
+
+  >>> LOCK(resource, TestWebDAVRequest(
+  ...    environ = {'IF': '<urn:resourcelocktoken>',
+  ...               'TIMEOUT': 'Second-1440'})).handleLockRefresh()
+  Refreshed lock token.
+  >>> resource._lockinfo['duration']
+  datetime.timedelta(0, 1440)
+  >>> resource._lockinfo['scope']
+  'exclusive'
+  >>> resource._lockinfo['type']
+  'write'
+  >>> resource._lockinfo['depth']
+  'infinity'
+
+Now when we call the LOCK method without a request body the handleLockRefresh
+method is called and assuming that everything else is OK then the lock token
+gets refreshed and the `{DAV:}lockdiscovery` property is rendered and
+returned.
+
+  >>> request = TestWebDAVRequest(environ = {'IF': '<urn:resourcelocktoken>'})
+  >>> respbody = LOCK(resource, request).LOCK()
+  Refreshed lock token.
+
+We didn't specify a timeout but in this cause the default timeout is selected
+and the lock token timeout is updated with this value.
+
+  >>> resource._lockinfo['duration']
+  datetime.timedelta(0, 720)
+  >>> resource._lockinfo['scope']
+  'exclusive'
+  >>> resource._lockinfo['type']
+  'write'
+  >>> resource._lockinfo['depth']
+  'infinity'
+  >>> print resource._lockinfo['owner'] #doctest:+XMLDATA
+  <owner xmlns="DAV:">
+    <href>http://example.org/~ejw/contact.html</href>
+  </owner>
+  >>> print respbody #doctest:+XMLDATA
+  <prop xmlns="DAV:">
+    <lockdiscovery>
+      <activelock>
+        <lockscope><exclusive /></lockscope>
+        <locktype><write /></locktype>
+        <depth>infinity</depth>
+        <owner>
+          <href>http://example.org/~ejw/contact.html</href>
+        </owner>
+        <timeout>Second-720</timeout>
+        <locktoken>
+          <href>urn:resourcelocktoken</href>
+        </locktoken>
+        <lockroot>http://localhost/resource</lockroot>
+      </activelock>
+    </lockdiscovery>
+  </prop>
+  >>> request.response.getStatus()
+  200
+  >>> request.response.getHeader('content-type')
+  'application/xml'
+
+Similar if we specify a timeout header.
+
+  >>> request = TestWebDAVRequest(environ = {'IF': '<urn:resourcelocktoken>',
+  ...                                  'TIMEOUT': 'Second-1440'})
+  >>> respbody = LOCK(resource, request).LOCK()
+  Refreshed lock token.
+  >>> resource._lockinfo['duration']
+  datetime.timedelta(0, 1440)
+  >>> resource._lockinfo['scope']
+  'exclusive'
+  >>> resource._lockinfo['type']
+  'write'
+  >>> resource._lockinfo['depth']
+  'infinity'
+  >>> print respbody #doctest:+XMLDATA
+  <prop xmlns="DAV:">
+    <lockdiscovery>
+      <activelock>
+        <lockscope><exclusive /></lockscope>
+        <locktype><write /></locktype>
+        <depth>infinity</depth>
+        <owner>
+          <href>http://example.org/~ejw/contact.html</href>
+        </owner>
+        <timeout>Second-1440</timeout>
+        <locktoken>
+          <href>urn:resourcelocktoken</href>
+        </locktoken>
+        <lockroot>http://localhost/resource</lockroot>
+      </activelock>
+    </lockdiscovery>
+  </prop>
+  >>> request.response.getStatus()
+  200
+  >>> request.response.getHeader('content-type')
+  'application/xml'
+
+It doesn't make sense trying to refresh the lock on a unlock resource.
+
+  >>> resource._lockinfo = None
+
+  >>> LOCK(resource, request).LOCK()
+  Traceback (most recent call last):
+  ...
+  PreconditionFailed: Context is not locked.
+
+UNLOCK Method
+=============
+
+  >>> from zope.webdav.locking import UNLOCK
+
+Re-lock the resource which just got unlocked.
+
+  >>> manager.islocked()
+  False
+  >>> request = TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ...   <D:owner>
+  ...     <D:href>http://example.org/~ejw/contact.html</D:href>
+  ...   </D:owner>
+  ... </D:lockinfo>""")
+  >>> respbody = LOCK(resource, request).LOCK()
+  Locked the resource.
+  >>> request.response.getStatus()
+  200
+
+  >>> manager.islocked()
+  True
+
+A UNLOCK request needs a lock-token header.
+
+  >>> UNLOCK(resource, TestWebDAVRequest()).UNLOCK()
+  Traceback (most recent call last):
+  ...
+  BadRequest: <__builtin__.TestWebDAVRequest instance URL=http:/>, u'No lock-token header supplied'
+
+We need to be test this again later - as we get the same error when resource
+is finally locked.
+
+  >>> UNLOCK(resource, TestWebDAVRequest(
+  ...    environ = {'LOCK_TOKEN': '<urn:wrong-resourcelocktoken>'})).UNLOCK()
+  Traceback (most recent call last):
+  ...
+  ConflictError: object is locked or the lock isn't in the scope the passed.
+
+Now successfully unlock the object.
+
+  >>> request = TestWebDAVRequest(
+  ...    environ = {'LOCK_TOKEN': '<urn:resourcelocktoken>'})
+  >>> respbody = UNLOCK(resource, request).UNLOCK()
+  Unlocked the resource.
+  >>> respbody
+  ''
+  >>> request.response.getStatus()
+  204
+
+  >>> manager.islocked()
+  False
+
+If we try and unlock an unlocked resource we get the following error.
+
+  >>> UNLOCK(resource, request).UNLOCK()
+  Traceback (most recent call last):
+  ...
+  ConflictError: object is locked or the lock isn't in the scope the passed.
+
+In some locking implementations the lockmanager can say that a resource can
+not be locked - and hence unlocked.
+
+  >>> DAVLockmanager._islockable = False
+  >>> DAVLockmanager(Resource()).islockable()
+  False
+
+  >>> UNLOCK(Resource(), TestWebDAVRequest()) is None
+  True
+  >>> DAVLockmanager._islockable = True
+
+Finally the UNLOCK method is only defined when their is a `IDAVLockmanager`
+implementation registered with the system.
+
+  >>> gsm.unregisterAdapter(DAVLockmanager)
+  True
+
+  >>> UNLOCK(resource, TestWebDAVRequest()) is None
+  True
+
+Cleanup
+-------
+
+  >>> gsm.unregisterAdapter(Supportedlock)
+  True
+  >>> gsm.unregisterAdapter(Activelock)
+  True
+
+  >>> gsm.unregisterAdapter(zope.webdav.widgets.ListDAVWidget,
+  ...                       (zope.schema.interfaces.IList,
+  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  True
+  >>> gsm.unregisterAdapter(zope.webdav.widgets.ObjectDAVWidget,
+  ...                       (zope.schema.interfaces.IObject,
+  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  True
+  >>> gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+  ...                       (zope.schema.interfaces.IText,
+  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  True
+  >>> gsm.unregisterAdapter(zope.webdav.properties.OpaqueWidget,
+  ...                       (zope.webdav.properties.DeadField,
+  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  True
+  >>> gsm.unregisterAdapter(zope.webdav.widgets.TextDAVWidget,
+  ...                       (zope.schema.interfaces.IURI,
+  ...                        zope.webdav.interfaces.IWebDAVRequest))
+  True
+
+  >>> gsm.unregisterUtility(zope.webdav.coreproperties.lockdiscovery,
+  ...                       name = "{DAV:}lockdiscovery")
+  True
+  >>> gsm.unregisterAdapter(Lockdiscovery)
+  True

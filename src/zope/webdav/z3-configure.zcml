@@ -1,0 +1,88 @@
+<configure xmlns="http://namespaces.zope.org/zope">
+
+  <!--
+      Zope3 webdav support - this should all be in a seperate Zope3 package.
+    -->
+
+  <adapter
+     factory=".adapters.DAVSchemaAdapter"
+     />
+
+  <adapter
+     factory=".adapters.DAVFileGetSchema"
+     />
+
+  <adapter
+     factory=".deadproperties.OpaqueProperties"
+     trusted="1"
+     />
+
+  <class class=".deadproperties.OpaqueProperties">
+    <require
+       permission="zope.Public"
+       attributes="getAllProperties hasProperty getProperty"
+       />
+
+    <require
+       permission="zope.ManageContent"
+       attributes="setProperty removeProperty"
+       />
+  </class>
+
+  <!--
+      Support for using zope.locking for locking support.
+    -->
+  <adapter
+     factory=".lockingutils.DAVSupportedlock"
+     />
+
+  <adapter
+     factory=".lockingutils.DAVLockdiscovery"
+     />
+
+  <adapter
+     factory=".lockingutils.DAVLockmanager"
+     trusted="1"
+     />
+
+  <class class=".lockingutils.DAVLockmanager">
+    <require
+       permission="zope.View"
+       attributes="getActivelock islocked islockable"
+       />
+
+    <require
+       permission="zope.ManageContent"
+       attributes="lock refreshlock unlock"
+       />
+  </class>
+
+  <adapter
+     factory=".lockingutils.DAVActiveLock"
+     for="zope.interface.Interface
+          zope.webdav.interfaces.IWebDAVRequest"
+     provides="zope.webdav.coreproperties.IActiveLock"
+     />
+
+  <class class=".lockingutils.DAVActiveLockAdapter">
+    <require
+       permission="zope.View"
+       interface="zope.webdav.coreproperties.IActiveLock"
+       />
+  </class>
+
+  <class class=".lockingutils.IndirectToken">
+    <require
+       permission="zope.View"
+       attributes="context utility principal_ids started annotations roottoken"
+       />
+
+    <require permission="zope.View"
+      attributes="ended expiration duration remaining_duration" />
+
+    <require permission="zope.Security"
+      attributes="end"
+      set_attributes="expiration duration remaining_duration" />
+  </class>
+
+</configure>

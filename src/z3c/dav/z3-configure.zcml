@@ -5,7 +5,7 @@
     -->
 
   <adapter
-     factory=".adapters.DAVSchemaAdapter"
+     factory=".adapters.DAVDublinCore"
      />
 
   <adapter

@@ -25,11 +25,15 @@ import zope.app.file.interfaces
 import z3c.dav.coreproperties
 
 
-class DAVSchemaAdapter(object):
+class DAVDublinCore(object):
     """
+    Common data model that uses zope.dublincore package to handle the
+    `{DAV:}creationdate`, `{DAV:}displayname` or title, and the
+    `{DAV:}getlastmodified` WebDAV properties.
+
       >>> from zope.app.file.file import File
       >>> file = File('some data for a file', 'text/plain')
-      >>> adapter = DAVSchemaAdapter(file, None)
+      >>> adapter = DAVDublinCore(file, None)
       >>> adapter.displayname is None
       True
       >>> adapter.creationdate is None
@@ -62,7 +66,7 @@ class DAVSchemaAdapter(object):
       >>> IWriteZopeDublinCore(file).modified = now = datetime.datetime(
       ...     2006, 5, 24, 0, 0, 58, tzinfo = tzinfo(60))
 
-      >>> adapter = DAVSchemaAdapter(file, None)
+      >>> adapter = DAVDublinCore(file, None)
       >>> adapter.creationdate == now
       True
       >>> adapter.displayname

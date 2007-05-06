@@ -23,6 +23,7 @@ import transaction
 from cStringIO import StringIO
 import os.path
 
+import z3c.dav.testing
 import z3c.dav.ftests.dav
 
 from zope import component
@@ -40,7 +41,7 @@ import z3c.etree
 from z3c.etree.testing import assertXMLEqual
 
 here = os.path.dirname(os.path.realpath(__file__))
-WebDAVLockingLayer = z3c.dav.ftests.dav.WebDAVLayerClass(
+WebDAVLockingLayer = z3c.dav.testing.WebDAVLayerClass(
    os.path.join(here, "ftesting-locking.zcml"), __name__, "WebDAVLockingLayer")
 
 
@@ -69,21 +70,24 @@ class LOCKNotAllowedTestCase(z3c.dav.ftests.dav.DAVTestCase):
         self.addResource("/testfile", "some file content",
                          contentType = "text/plain")
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/testfile", env = {"DEPTH": "0"},
             properties = """<D:prop>
 <D:supportedlock />
 <D:lockdiscovery />
 </D:prop>""")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        self.assertMSPropertyValue(response, "{DAV:}supportedlock",
-                                   status = 404)
-        self.assertMSPropertyValue(response, "{DAV:}lockdiscovery",
-                                   status = 404)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual(
+            '<supportedlock xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}supportedlock",
+                status = 404))
+        assertXMLEqual(
+            '<lockdiscovery xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}lockdiscovery",
+                status = 404))
 
 
 class LOCKTestCase(z3c.dav.ftests.dav.DAVTestCase):
@@ -416,34 +420,13 @@ class LOCKTestCase(z3c.dav.ftests.dav.DAVTestCase):
         locktoken = response.getHeader("lock-token")
         self.assert_(locktoken and locktoken[0] == "<" and locktoken[-1] == ">")
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/a/r2", env = {"DEPTH": "0", "CONTENT_TYPE": "text/xml"},
             properties = "<D:allprop />")
 
-        hrefs = xmlbody.findall("{DAV:}response/{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/a/r2")
-
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        propstat = response.findall("{DAV:}propstat")
-        self.assertEqual(len(propstat), 1)
-        propstat = propstat[0]
-
-        status = propstat.findall("{DAV:}status")
-        self.assertEqual(len(status), 1)
-        status = status[0]
-        self.assertEqual(status.text, "HTTP/1.1 200 OK")
-
-        props = propstat.findall("{DAV:}prop")
-        self.assertEqual(len(props), 1)
-        props = props[0]
-
-        supportedlock = props.findall("{DAV:}supportedlock")
-        self.assertEqual(len(supportedlock), 1)
-        assertXMLEqual(supportedlock[0], """<ns0:supportedlock xmlns:ns0="DAV:">
+        supportedlock = httpresponse.getMSProperty(
+            "http://localhost/a/r2", "{DAV:}supportedlock")
+        assertXMLEqual(supportedlock, """<ns0:supportedlock xmlns:ns0="DAV:">
 <ns0:lockentry xmlns:ns0="DAV:">
   <ns0:lockscope xmlns:ns0="DAV:"><ns0:exclusive xmlns:ns0="DAV:"/></ns0:lockscope>
   <ns0:locktype xmlns:ns0="DAV:"><ns0:write xmlns:ns0="DAV:"/></ns0:locktype>
@@ -453,9 +436,9 @@ class LOCKTestCase(z3c.dav.ftests.dav.DAVTestCase):
   <ns0:locktype xmlns:ns0="DAV:"><ns0:write xmlns:ns0="DAV:"/></ns0:locktype>
 </ns0:lockentry></ns0:supportedlock>""")
 
-        lockdiscovery = props.findall("{DAV:}lockdiscovery")
-        self.assertEqual(len(lockdiscovery), 1)
-        assertXMLEqual(lockdiscovery[0], """<ns0:lockdiscovery xmlns:ns0="DAV:">
+        lockdiscovery = httpresponse.getMSProperty(
+            "http://localhost/a/r2", "{DAV:}lockdiscovery")
+        assertXMLEqual(lockdiscovery, """<ns0:lockdiscovery xmlns:ns0="DAV:">
 <ns0:activelock xmlns:ns0="DAV:">
   <ns0:lockscope xmlns:ns0="DAV:"><ns0:exclusive xmlns:ns0="DAV:"/></ns0:lockscope>
   <ns0:locktype xmlns:ns0="DAV:"><ns0:write xmlns:ns0="DAV:"/></ns0:locktype>
@@ -779,23 +762,10 @@ class UNLOCKTestCase(z3c.dav.ftests.dav.DAVTestCase):
     def test_supportedlock_prop(self):
         file = self.addResource("/testfile", "some file content",
                                 contentType = "text/plain")
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/testfile", properties = "<D:prop><D:supportedlock /></D:prop>")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/testfile")
-
-        propstats = response.findall("{DAV:}propstat")
-        self.assertEqual(len(propstats), 1)
-        props = propstats[0].findall("{DAV:}prop")
-        self.assertEqual(len(props), 1)
-
-        self.assertEqual(len(props[0]), 1)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
         expected = """<D:supportedlock xmlns:D="DAV:">
 <D:lockentry>
@@ -806,9 +776,8 @@ class UNLOCKTestCase(z3c.dav.ftests.dav.DAVTestCase):
   <D:lockscope><D:shared /></D:lockscope>
   <D:locktype><D:write /></D:locktype>
 </D:lockentry></D:supportedlock>"""
-        self.assertMSPropertyValue(response, "{DAV:}supportedlock",
-                                   tag = "{DAV:}lockentry",
-                                   prop_element = expected)
+        assertXMLEqual(expected, httpresponse.getMSProperty(
+            "http://localhost/testfile", "{DAV:}supportedlock"))
 
 
 def test_suite():

@@ -28,7 +28,6 @@ import transaction
 from zope import interface
 from zope import component
 from zope import schema
-import zope.app.testing.functional
 
 from zope.security.proxy import removeSecurityProxy
 from zope.app.folder.folder import Folder
@@ -38,30 +37,15 @@ from zope.security.management import newInteraction, endInteraction
 from zope.security.testing import Principal, Participation
 from zope.dublincore.interfaces import IWriteZopeDublinCore
 
-import z3c.etree
-import z3c.etree.testing
 from z3c.dav.publisher import WebDAVRequest
 from z3c.dav.properties import DAVProperty
 from z3c.dav.tests.utils import TestMultiStatusBody
 
-
-class WebDAVLayerClass(zope.app.testing.functional.ZCMLLayer):
-    """
-    """
-
-    def setUp(self):
-        zope.app.testing.functional.ZCMLLayer.setUp(self)
-        z3c.etree.testing.etreeSetup()
-
-    def tearDown(self):
-        zope.app.testing.functional.ZCMLLayer.tearDown(self)
-        z3c.etree.testing.etreeTearDown()
+import z3c.dav.testing
 
 here = os.path.dirname(os.path.realpath(__file__))
-WebDAVLayer = WebDAVLayerClass(
-    os.path.join(here, "ftesting.zcml"),
-    __name__, "WebDAVLayer",
-    allow_teardown = True)
+WebDAVLayer = z3c.dav.testing.WebDAVLayerClass(
+    os.path.join(here, "ftesting.zcml"), __name__, "WebDAVLayer")
 
 
 class IExamplePropertyStorage(interface.Interface):
@@ -137,8 +121,7 @@ class TestWebDAVRequest(WebDAVRequest):
             self.xmlDataSource[0][0].append(elem)
 
 
-class DAVTestCase(zope.app.testing.functional.HTTPTestCase,
-                  TestMultiStatusBody):
+class DAVTestCase(z3c.dav.testing.WebDAVTestCase, TestMultiStatusBody):
 
     layer = WebDAVLayer
 
@@ -212,31 +195,6 @@ class DAVTestCase(zope.app.testing.functional.HTTPTestCase,
         self.addResource("/a/r3", "third resource", contentType = "text/plain")
         self.createObject("/b", Folder())
 
-    #
-    # Now some methods for creating, and publishing request.
-    #
-    def makeRequest(self, path = "", basic = None, form = None, env = {},
-                    instream = None):
-        """Create a new WebDAV request
-        """
-        if instream is None:
-            instream = ""
-        environment = {"HTTP_HOST": "localhost",
-                       "HTTP_REFERER": "localhost"}
-        environment.update(env)
-
-        if instream and not environment.has_key("CONTENT_LENGTH"):
-            if getattr(instream, "getvalue", None) is not None:
-                instream = instream.getvalue()
-            environment["CONTENT_LENGTH"] = len(instream)
-
-        app = zope.app.testing.functional.FunctionalTestSetup().getApplication()
-        request = app._request(path, instream, environment = environment,
-                               basic = basic, form = form,
-                               request = WebDAVRequest,
-                               publication = HTTPPublication)
-        return request
-
     def checkPropfind(self, path = "/", basic = None, env = {},
                       properties = None):
         # - properties if set is a string containing the contents of the
@@ -263,11 +221,7 @@ class DAVTestCase(zope.app.testing.functional.HTTPTestCase,
         self.assertEqual(response.getStatus(), 207)
         self.assertEqual(response.getHeader("content-type"), "application/xml")
 
-        respbody = response.getBody()
-        etree = z3c.etree.getEngine()
-        xmlbody = etree.fromstring(respbody)
-
-        return response, xmlbody
+        return response
 
     def checkProppatch(self, path = '/', basic = None, env = {},
                        set_properties = None, remove_properties = None,
@@ -308,8 +262,4 @@ class DAVTestCase(zope.app.testing.functional.HTTPTestCase,
         self.assertEqual(response.getStatus(), 207)
         self.assertEqual(response.getHeader("content-type"), "application/xml")
 
-        respbody = response.getBody()
-        etree = z3c.etree.getEngine()
-        xmlbody = etree.fromstring(respbody)
-
-        return response, xmlbody
+        return response

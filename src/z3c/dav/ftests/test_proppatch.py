@@ -16,6 +16,7 @@
 $Id$
 """
 
+import urllib
 import unittest
 from cStringIO import StringIO
 import transaction
@@ -79,14 +80,13 @@ class PROPPATCHTestCase(dav.DAVTestCase):
         set_properties = "<D:displayname>Test File</D:displayname>"
         self.addResource("/r", "some content", title = u"Test Resource")
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/r", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        self.assertMSPropertyValue(response, "{DAV:}displayname")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual('<displayname xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{DAV:}displayname"))
 
         title = IZopeDublinCore(self.getRootFolder()["r"]).title
         self.assertEqual(title, u"Test File")
@@ -95,18 +95,14 @@ class PROPPATCHTestCase(dav.DAVTestCase):
         set_properties = "<D:getcontentlength>10</D:getcontentlength>"
         self.addResource("/r", "some file content", title = u"Test Resource")
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/r", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r")
-
-        self.assertMSPropertyValue(response, "{DAV:}getcontentlength",
-                                   status = 403)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual(
+            '<getcontentlength xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{DAV:}getcontentlength", status = 403))
 
     def test_badinput(self):
         set_properties = """
@@ -114,19 +110,16 @@ class PROPPATCHTestCase(dav.DAVTestCase):
         """
         resource = self.addResource("/testresource", "some resource content")
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/testresource", basic = "mgr:mgrpw",
             set_properties = set_properties)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/testresource")
-
-        self.assertMSPropertyValue(response, "{DAVtest:}exampleintprop",
-                                   status = 409)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual(
+            '<exampleintprop xmlns="DAVtest:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testresource", "{DAVtest:}exampleintprop",
+                status = 409))
 
     def test_badinput_plus_faileddep(self):
         set_properties = """
@@ -144,21 +137,21 @@ class PROPPATCHTestCase(dav.DAVTestCase):
         exampleStorage.exampletextprop = u"Example Text Property"
         transaction.commit()
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/testresource", basic = "mgr:mgrpw",
             set_properties = set_properties)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/testresource")
-
-        self.assertMSPropertyValue(response, "{DAVtest:}exampletextprop",
-                                   status = 424)
-        self.assertMSPropertyValue(response, "{DAVtest:}exampleintprop",
-                                   409)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual(
+            '<exampletextprop xmlns="DAVtest:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testresource", "{DAVtest:}exampletextprop",
+                status = 424))
+        assertXMLEqual(
+            '<exampleintprop xmlns="DAVtest:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testresource", "{DAVtest:}exampleintprop",
+                status = 409))
 
         exampleStorage = component.getMultiAdapter((resource, request),
                                                    dav.IExamplePropertyStorage)
@@ -173,7 +166,7 @@ Jim Whitehead
         file = self.addResource("/r", "some content",
                                 title = u"Test Resource")
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/r", basic = "mgr:mgrpw", set_properties = set_properties)
 
         opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
@@ -194,7 +187,7 @@ Jim Whitehead
 
         file = self.addResource("/r", "some content", title = u"Test Resource")
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/r", basic = "mgr:mgrpw", set_properties = set_properties)
 
         opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
@@ -208,14 +201,14 @@ Jim Whitehead
         set_properties = "<D:displayname>%s</D:displayname>" % teststr
         self.addResource("/r", "some content", title = u"Test Resource")
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/r", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        self.assertMSPropertyValue(response, "{DAV:}displayname")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual(
+            '<displayname xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{DAV:}displayname"))
 
     def test_remove_live_prop(self):
         file = self.addResource("/r", "some content", title = u"Test Resource")
@@ -226,30 +219,17 @@ Jim Whitehead
 This is a dead property.</X:deadprop>""")
         transaction.commit()
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/r", basic = "mgr:mgrpw",
             remove_properties = """<E:exampleintprop xmlns:E="DAVtest:" />""")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r")
-
-        propstat = response.findall("{DAV:}propstat")
-        self.assertEqual(len(propstat), 1)
-        propstat = propstat[0]
-
-        self.assertEqual(len(propstat), 2)
-
-        props = propstat.findall("{DAV:}prop")
-        self.assertEqual(len(props), 1)
-        self.assertEqual(len(props[0]), 1) # there is only one property.
-
-        self.assertMSPropertyValue(response, "{DAVtest:}exampleintprop",
-                                   status = 409)
+        assertXMLEqual(
+            '<exampleintprop xmlns="DAVtest:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{DAVtest:}exampleintprop",
+                status = 409))
 
     def test_remove_dead_prop(self):
         proptag = "{deadprop:}deadprop"
@@ -261,15 +241,15 @@ This is a dead property.</X:deadprop>""")
 This is a dead property.</X:deadprop>""")
         transaction.commit()
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/r", basic = "mgr:mgrpw",
             remove_properties = """<X:deadprop xmlns:X="deadprop:" />""")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        self.assertMSPropertyValue(response, proptag)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual(
+            '<deadprop xmlns="deadprop:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{deadprop:}deadprop"))
 
         opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
         self.assertEqual(opaqueProperties.hasProperty(proptag), False)
@@ -279,15 +259,17 @@ This is a dead property.</X:deadprop>""")
         self.addResource(u"/" + teststr, "some file content",
                          title = u"Old title")
 
-        httpresponse, xmlbody = self.checkProppatch(
+        httpresponse = self.checkProppatch(
             "/" + teststr.encode("utf-8"), basic = "mgr:mgrpw",
             set_properties = "<D:displayname>%s</D:displayname>" % teststr)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        assertXMLEqual(
+            '<displayname xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/%s" % urllib.quote(teststr.encode("utf-8")),
+                "{DAV:}displayname"))
 
-        self.assertMSPropertyValue(response, "{DAV:}displayname")
         resourcetitle = IZopeDublinCore(self.getRootFolder()[teststr]).title
         self.assertEqual(resourcetitle, teststr)
 

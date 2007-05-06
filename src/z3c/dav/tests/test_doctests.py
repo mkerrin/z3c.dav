@@ -255,4 +255,8 @@ def test_suite():
                              setUp = z3c.etree.testing.etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
         doctest.DocTestSuite("z3c.dav.mkcol"),
+        doctest.DocTestSuite("z3c.dav.testing",
+                             checker = z3c.etree.testing.xmlOutputChecker,
+                             setUp = z3c.etree.testing.etreeSetup,
+                             tearDown = z3c.etree.testing.etreeTearDown),
         ))

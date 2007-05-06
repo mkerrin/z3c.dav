@@ -1,8 +1,10 @@
 <configure xmlns="http://namespaces.zope.org/zope">
 
-  <include package="z3c.dav.ftests" file="ftesting.zcml" />
+  <include package="z3c.dav" file="ftesting.zcml" />
 
+  <include package="zope.app.file" />
   <include package="zope.app.keyreference" />
+
   <include package="zope.locking" />
 
 </configure>

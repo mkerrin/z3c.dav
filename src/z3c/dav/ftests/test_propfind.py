@@ -17,6 +17,7 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
+import urllib
 import unittest
 from cStringIO import StringIO
 import transaction
@@ -24,6 +25,7 @@ import transaction
 import dav
 from zope import component
 import z3c.dav.interfaces
+import z3c.etree.testing
 
 class PROPFINDTests(dav.DAVTestCase):
 
@@ -71,238 +73,257 @@ class PROPFINDTests(dav.DAVTestCase):
     <ff0:resourcetype/>
   </ff0:prop>
 </ff0:propfind>"""
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/", env = {"DEPTH": "0", "CONTENT_TYPE": "text/xml"},
             properties = "<D:prop><D:resourcetype/></D:prop>")
-        hrefs = xmlbody.findall("{DAV:}response/{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        props = xmlbody.findall("{DAV:}response/{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1) # only one prop element
-        propel = props[0]
-
-        self.assertEqual(len(propel), 1) # only one property defined
-        self.assertEqual(propel[0].tag, "{DAV:}resourcetype")
-        self.assertEqual(propel[0].text, None)
-        self.assertEqual(len(propel[0]), 1)
-        self.assertEqual(propel[0][0].tag, "{DAV:}collection")
+        resourcetype = httpresponse.getMSProperty(
+            "http://localhost/", "{DAV:}resourcetype")
+        z3c.etree.testing.assertXMLEqual(
+            """<resourcetype xmlns="DAV:">
+                 <collection />
+               </resourcetype>""",
+            resourcetype)
 
     def test_propnames_on_collection(self):
         collection = self.addCollection("/coll")
         
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/coll", env = {"DEPTH": "0"}, properties = "<D:propname />")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/coll/")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        props = response.findall("{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1)
-        propel = props[0]
-
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype")
-        self.assertMSPropertyValue(response, "{DAV:}creationdate")
-        self.assertMSPropertyValue(response, "{DAV:}displayname")
-        self.assertMSPropertyValue(response, "{DAV:}getlastmodified")
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<creationdate xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}creationdate"))
+        z3c.etree.testing.assertXMLEqual(
+            '<displayname xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}displayname"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getlastmodified xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}getlastmodified"))
 
     def test_propnames_on_resource(self):
         self.addResource("/r1", "some content")
         
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r1", env = {"DEPTH": "0"}, properties = "<D:propname />")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r1")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        props = response.findall("{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1)
-
-        ## See README.txt for a list of properties defined for these tests.
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype")
-        self.assertMSPropertyValue(response, "{DAV:}creationdate")
-        self.assertMSPropertyValue(response, "{DAV:}displayname")
-        self.assertMSPropertyValue(response, "{DAV:}getlastmodified")
-        self.assertMSPropertyValue(response, "{DAV:}getcontenttype")
-        self.assertMSPropertyValue(response, "{DAV:}getcontentlength")
-        self.assertMSPropertyValue(response, "{DAV:}getcontentlanguage")
-        self.assertMSPropertyValue(response, "{DAV:}getetag")
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<creationdate xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}creationdate"))
+        z3c.etree.testing.assertXMLEqual(
+            '<displayname xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}displayname"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getlastmodified xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getlastmodified"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontenttype xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getcontenttype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontentlength xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getcontentlength"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontentlanguage xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getcontentlanguage"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getetag xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getetag"))
 
     def test_allprop(self):
         collection = self.addCollection("/coll", title = u"Test Collection")
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/coll", env = {"DEPTH": "0"}, properties = "<D:allprop />")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/coll/")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        props = response.findall("{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1) # only one prop element
-
-        ## See README.txt for a list of properties defined for these tests.
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype",
-                                   tag = "{DAV:}collection", text_value = None)
-        self.assertMSPropertyValue(response, "{DAV:}displayname",
-                                   text_value = "Test Collection")
+        z3c.etree.testing.assertXMLEqual(
+            """<resourcetype xmlns="DAV:">
+                 <collection />
+               </resourcetype>""",
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            """<displayname xmlns="DAV:">Test Collection</displayname>""",
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}displayname"))
 
     def test_allprop_on_resource(self):
         collection = self.addResource("/r1", "test resource content",
                                       title = u"Test Resource")
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r1", env = {"DEPTH": "0"}, properties = "<D:allprop />")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r1")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        props = response.findall("{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1) # only one prop element
-
-        ## See README.txt for a list of properties defined for these tests.
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype")
-        self.assertMSPropertyValue(response, "{DAV:}creationdate")
-        self.assertMSPropertyValue(response, "{DAV:}displayname",
-                                   text_value = "Test Resource")
-        self.assertMSPropertyValue(response, "{DAV:}getlastmodified")
-        self.assertMSPropertyValue(response, "{DAV:}getcontenttype")
-        self.assertMSPropertyValue(response, "{DAV:}getcontentlength",
-                                   text_value = "21")
-        self.assertMSPropertyValue(response, "{DAV:}getcontentlanguage")
-        self.assertMSPropertyValue(response, "{DAV:}getetag")
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<creationdate xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}creationdate"))
+        z3c.etree.testing.assertXMLEqual(
+            '<displayname xmlns="DAV:">Test Resource</displayname>',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}displayname"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getlastmodified xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getlastmodified"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontenttype xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getcontenttype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontentlength xmlns="DAV:">21</getcontentlength>',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getcontentlength"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontentlanguage xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getcontentlanguage"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getetag xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r1", "{DAV:}getetag"))
 
     def test_allprop_by_default(self):
         self.addCollection("/coll")
-        httpresponse, xmlbody = self.checkPropfind("/coll",
-                                                   env = {"DEPTH": "0"},
-                                                   properties = "<D:prop />")
-        # the rest is copied from the previous code.
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/coll/")
+        httpresponse = self.checkPropfind("/coll",
+                                          env = {"DEPTH": "0"},
+                                          properties = "<D:prop />")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        props = response.findall("{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1) # only one prop element
-
-        ## See README.txt for a list of properties defined for these tests.
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype",
-                                   tag = "{DAV:}collection", text_value = None)
-        self.assertMSPropertyValue(response, "{DAV:}displayname")
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:"><collection /></resourcetype>',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<displayname xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}displayname"))
 
     def test_nobody_propfind(self):
         self.addCollection("/coll", title = u"Test Collection")
         
-        httpresponse, xmlbody = self.checkPropfind("/coll",
-                                                   env = {"DEPTH": "0"})
-        # the rest is copied from the previous code.
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/coll/")
+        httpresponse = self.checkPropfind("/coll",
+                                          env = {"DEPTH": "0"})
 
-        props = response.findall("{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1) # only one prop element
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        ## See README.txt for a list of properties defined for these tests.
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype",
-                                   tag = "{DAV:}collection")
-        self.assertMSPropertyValue(response, "{DAV:}displayname",
-                                   text_value = "Test Collection")
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:"><collection /></resourcetype>',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<displayname xmlns="DAV:">Test Collection</displayname>',
+            httpresponse.getMSProperty(
+                "http://localhost/coll/", "{DAV:}displayname"))
 
     def test_notfound_property(self):
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/", env = {"DEPTH": "0"},
             properties = """<D:prop>
   <D:resourcetype />
   <D:missingproperty />
 </D:prop>""")
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/")
 
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype",
-                                   tag = "{DAV:}collection")
-        self.assertMSPropertyValue(response, "{DAV:}missingproperty",
-                                   status = 404)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:"><collection /></resourcetype>',
+            httpresponse.getMSProperty(
+                "http://localhost/", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<missingproperty xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/", "{DAV:}missingproperty", status = 404))
 
     def test_depthinf(self):
         self.createCollectionResourceStructure()
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/", env = {"DEPTH": "infinity"},
             properties = "<D:prop><D:resourcetype /></D:prop>")
 
-        responses = xmlbody.findall("{DAV:}response")
+        responses = httpresponse.getMSResponses()
         self.assertEqual(len(responses), 7)
 
-        # make sure we have all 200 status codes, and the hrefs differ
+        # make sure we have all 200 status codes, and collect all hrefs
+        allhrefs = []
         for response in responses:
             propstats  = response.findall("{DAV:}propstat")
             self.assertEqual(len(propstats), 1)
             statusresp = response.findall("{DAV:}propstat/{DAV:}status")
             self.assertEqual(len(statusresp), 1)
             self.assertEqual(statusresp[0].text, "HTTP/1.1 200 OK")
+            hrefs = response.findall("{DAV:}href")
+            self.assertEqual(len(hrefs), 1)
+            allhrefs.append(hrefs[0].text)
 
-        hrefs = [href.text for href in
-                 xmlbody.findall("{DAV:}response/{DAV:}href")]
-        hrefs.sort()
-        self.assertEqual(hrefs, ["http://localhost/",
-                                 "http://localhost/++etc++site/",
-                                 "http://localhost/a/",
-                                 "http://localhost/a/r2",
-                                 "http://localhost/a/r3",
-                                 "http://localhost/b/",
-                                 "http://localhost/r1"])
+        allhrefs.sort()
+
+        self.assertEqual(allhrefs, ["http://localhost/",
+                                    "http://localhost/++etc++site/",
+                                    "http://localhost/a/",
+                                    "http://localhost/a/r2",
+                                    "http://localhost/a/r3",
+                                    "http://localhost/b/",
+                                    "http://localhost/r1"])
 
     def test_depthone(self):
         self.createCollectionResourceStructure()
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/", env = {"DEPTH": "1"},
             properties = "<D:prop><D:resourcetype /></D:prop>")
 
-        responses = xmlbody.findall("{DAV:}response")
+        responses = httpresponse.getMSResponses()
         self.assertEqual(len(responses), 5)
 
-        # make sure we have all 200 status codes, and the hrefs differ
+        # make sure we have all 200 status codes, and collect all hrefs
+        allhrefs = []
         for response in responses:
             propstats  = response.findall("{DAV:}propstat")
             self.assertEqual(len(propstats), 1)
             statusresp = response.findall("{DAV:}propstat/{DAV:}status")
             self.assertEqual(len(statusresp), 1)
             self.assertEqual(statusresp[0].text, "HTTP/1.1 200 OK")
+            hrefs = response.findall("{DAV:}href")
+            self.assertEqual(len(hrefs), 1)
+            allhrefs.append(hrefs[0].text)
 
-        hrefs = [href.text for href in
-                 xmlbody.findall("{DAV:}response/{DAV:}href")]
-        hrefs.sort()
-        self.assertEqual(hrefs, ["http://localhost/",
-                                 "http://localhost/++etc++site/",
-                                 "http://localhost/a/",
-                                 "http://localhost/b/",
-                                 "http://localhost/r1"])
+        allhrefs.sort()
+
+        self.assertEqual(allhrefs, ["http://localhost/",
+                                    "http://localhost/++etc++site/",
+                                    "http://localhost/a/",
+                                    "http://localhost/b/",
+                                    "http://localhost/r1"])
 
     def test_opaque_properties(self):
         file = self.addResource("/r", "some file content",
@@ -318,25 +339,18 @@ class PROPFINDTests(dav.DAVTestCase):
 <D:resourcetype /><E:testdeadprop />
 </D:prop>
 """
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r", env = {"DEPTH": "0"}, properties = properties)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r")
-
-        propstats = response.findall("{DAV:}propstat")
-        self.assertEqual(len(propstats), 1)
-        props = propstats[0].findall("{DAV:}prop")
-        self.assertEqual(len(props), 1)
-
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype")
-        self.assertMSPropertyValue(response, "{examplens:}testdeadprop",
-                                   text_value = "TEST")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<testdeadprop xmlns="examplens:">TEST</testdeadprop>',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{examplens:}testdeadprop"))
 
     def test_allprop_with_opaque_properties(self):
         file = self.addResource("/r", "some file content",
@@ -349,7 +363,7 @@ class PROPFINDTests(dav.DAVTestCase):
         transaction.commit()
 
         properties = "<D:allprop />"
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r", env = {"DEPTH": "0"}, properties = properties)
 
     def test_unicode_title(self):
@@ -357,17 +371,17 @@ class PROPFINDTests(dav.DAVTestCase):
         file = self.addResource(u"/" + teststr, "some file content",
                                 title = teststr)
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/" + teststr.encode("utf-8"), env = {"DEPTH": "0",
                                                   "CONTENT_TYPE": "text/xml"},
             properties = "<D:prop><D:displayname /></D:prop>")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        self.assertMSPropertyValue(response, "{DAV:}displayname",
-                                   text_value = teststr)
+        want = '<displayname xmlns="DAV:">%s</displayname>' % teststr
+        z3c.etree.testing.assertXMLEqual(
+            want.encode("utf-8"), # needed in order for elementtree to parse
+            httpresponse.getMSProperty(
+                "http://localhost/%s" % urllib.quote(teststr.encode("utf-8")),
+                "{DAV:}displayname"))
 
     def test_allprop_with_deadprops(self):
         file = self.addResource("/r", "some content", title = u"Test Resource")
@@ -378,17 +392,16 @@ class PROPFINDTests(dav.DAVTestCase):
 This is a dead property.</X:deadprop>""")
         transaction.commit()
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r", env = {"DEPTH": "0", "CONTENT_TYPE": "text/xml"},
             properties = "<D:allprop />")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        self.assertMSPropertyValue(response, "{deadprop:}deadprop",
-                                   text_value = """
-This is a dead property.""")
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
+        z3c.etree.testing.assertXMLEqual(
+            """<deadprop xmlns="deadprop:">
+This is a dead property.</deadprop>""",
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{deadprop:}deadprop"))
 
     def test_allprop_with_restricted(self):
         file = self.addResource("/r", "some content", title = u"Test Resource")
@@ -398,20 +411,12 @@ This is a dead property.""")
         examplePropStorage.exampletextprop = "EXAMPLE TEXT PROP"
         transaction.commit()
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r", env = {"DEPTH": "0", "CONTENT_TYPE": "application/xml"},
             properties = "<D:allprop />")
 
-        hrefs = xmlbody.findall("{DAV:}response/{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r")
-
-        props = xmlbody.findall("{DAV:}response/{DAV:}propstat/{DAV:}prop")
-        self.assertEqual(len(props), 1) # only one prop element
-
-        self.assertEqual([prop.tag for prop in
-                          props[0] if prop.tag == "{DAVtest:}exampletextprop"],
-                         [])
+        self.assertRaises(KeyError, httpresponse.getMSProperty,
+                          "http://localhost/r", "{DAVtest:}exampletextprop")
 
     def test_allprop_with_include(self):
         file = self.addResource("/r", "some content", title = u"Test Resource")
@@ -425,7 +430,7 @@ This is a dead property.""")
                                         name = "{DAVtest:}exampletextprop")
         textprop.restricted = True
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r", env = {"DEPTH": "0", "CONTENT_TYPE": "application/xml"},
             properties = """<D:allprop />
 <D:include>
@@ -433,16 +438,11 @@ This is a dead property.""")
 </D:include>
 """)
 
-        hrefs = xmlbody.findall("{DAV:}response/{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r")
-
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        self.assertMSPropertyValue(response, "{DAVtest:}exampletextprop",
-                                   text_value = "EXAMPLE TEXT PROP")
+        z3c.etree.testing.assertXMLEqual(
+            """<exampletextprop
+                xmlns="DAVtest:">EXAMPLE TEXT PROP</exampletextprop>""",
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{DAVtest:}exampletextprop"))
 
     def test_allprop_with_include_on_unauthorized(self):
         file = self.addResource("/r", "some content", title = u"Test Resource")
@@ -455,7 +455,7 @@ This is a dead property.""")
   </D:include>
 </propfind>"""
 
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/r", env = {"DEPTH": "0", "CONTENT_TYPE": "application/xml"},
             properties = """<D:allprop />
 <D:include>
@@ -463,52 +463,54 @@ This is a dead property.""")
 </D:include>
 """)
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/r")
-
-        propstats = response.findall("{DAV:}propstat")
-        self.assertEqual(len(propstats), 2)
-        props = propstats[0].findall("{DAV:}prop")
-        self.assertEqual(len(props), 1)
-
-        self.assertMSPropertyValue(response, "{DAVtest:}unauthprop",
-                                   status = 401)
+        z3c.etree.testing.assertXMLEqual(
+            '<unauthprop xmlns="DAVtest:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/r", "{DAVtest:}unauthprop", status = 401))
 
     def test_propfind_onfile(self):
         self.addResource("/testfile", "some file content",
                          contentType = "text/plain")
-        httpresponse, xmlbody = self.checkPropfind(
+        httpresponse = self.checkPropfind(
             "/testfile", env = {"DEPTH": "0"}, properties = "<D:allprop />")
 
-        responses = xmlbody.findall("{DAV:}response")
-        self.assertEqual(len(responses), 1)
-        response = responses[0]
-
-        hrefs = response.findall("{DAV:}href")
-        self.assertEqual(len(hrefs), 1)
-        self.assertEqual(hrefs[0].text, "http://localhost/testfile")
-
-        propstats = response.findall("{DAV:}propstat")
-        self.assertEqual(len(propstats), 1)
-        props = propstats[0].findall("{DAV:}prop")
-        self.assertEqual(len(props), 1)
+        self.assertEqual(len(httpresponse.getMSResponses()), 1)
 
         # all properties should be defined on a file.
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype")
-        self.assertMSPropertyValue(response, "{DAV:}creationdate")
-        self.assertMSPropertyValue(response, "{DAV:}displayname")
-        self.assertMSPropertyValue(response, "{DAV:}getcontentlanguage")
-        self.assertMSPropertyValue(response, "{DAV:}getcontentlength",
-                                   text_value = "17")
-        self.assertMSPropertyValue(response, "{DAV:}getcontenttype",
-                                   text_value = "text/plain")
-        self.assertMSPropertyValue(response, "{DAV:}getetag")
-        self.assertMSPropertyValue(response, "{DAV:}getlastmodified")
+        z3c.etree.testing.assertXMLEqual(
+            '<resourcetype xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}resourcetype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<creationdate xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}creationdate"))
+        z3c.etree.testing.assertXMLEqual(
+            '<displayname xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}displayname"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontentlanguage xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}getcontentlanguage"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontentlength xmlns="DAV:">17</getcontentlength>',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}getcontentlength"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getcontenttype xmlns="DAV:">text/plain</getcontenttype>',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}getcontenttype"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getetag xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}getetag"))
+        z3c.etree.testing.assertXMLEqual(
+            '<getlastmodified xmlns="DAV:" />',
+            httpresponse.getMSProperty(
+                "http://localhost/testfile", "{DAV:}getlastmodified"))
 
 
 def test_suite():

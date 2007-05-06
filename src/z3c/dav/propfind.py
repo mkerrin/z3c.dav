@@ -217,12 +217,18 @@ class PROPFIND(object):
             except Unauthorized:
                 # Users don't have the permission to view this property and
                 # if they didn't explicitly ask for the named property
-                # we will silently ignore this property.
+                # we can silently ignore this property, pretending that it
+                # is a restricted property.g
                 if isIncluded:
                     self.handleException(
                         "{%s}%s" %(davprop.namespace, davprop.__name__),
-                        sys.exc_info(), req,
-                        response)
+                        sys.exc_info(), req, response)
+                else:
+                    # Considering that we just silently ignored this property
+                    # - log this exception with the error reporting utility
+                    # just in case this is a problem that needs sorting out.
+                    errUtility = component.getUtility(IErrorReportingUtility)
+                    errUtility.raising(sys.exc_info(), req)
             except Exception:
                 self.handleException(
                     "{%s}%s" %(davprop.namespace, davprop.__name__),

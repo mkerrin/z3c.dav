@@ -671,6 +671,12 @@ class PROPFINDTestRender(unittest.TestCase):
 </propstat>
 </response>""", response)
 
+        # Since we silenty ignored returning a property. We now log the
+        # Unauthorized exception so debuging and logging purposes.
+        self.assertEqual(len(self.errUtility.errors), 1)
+        exc_info = self.errUtility.errors[0]
+        self.assertEqual(isinstance(exc_info[0][1], Unauthorized), True)
+
     def test_renderAllProperties_unauthorized_included(self):
         # If we request to render all properties, and request to render a
         # property we ain't authorized via the 'include' element then we

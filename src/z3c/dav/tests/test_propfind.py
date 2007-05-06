@@ -46,7 +46,6 @@ import z3c.etree
 
 from test_proppatch import unauthProperty, UnauthorizedPropertyStorage, \
      IUnauthorizedPropertyStorage
-from utils import TestMultiStatusBody
 
 class TestRequest(z3c.dav.publisher.WebDAVRequest):
 
@@ -407,7 +406,7 @@ class ErrorReportingUtility(object):
         self.errors.append((exc_info, request))
 
 
-class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
+class PROPFINDTestRender(unittest.TestCase):
     # Test all the methods that render a resource into a `response' XML
     # element. We are going to need to register the DAV widgets for
     # text and int properties.
@@ -433,12 +432,6 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
         # call the response to render to an XML fragment.
         response = response()
-
-        self.assertMSPropertyValue(response, "{DAVtest:}exampletextprop")
-        self.assertMSPropertyValue(response, "{DAVtest:}exampleintprop")
-        self.assertMSPropertyValue(response, "{DAV:}resourcetype")
-        self.assertMSPropertyValue(response, "{DAVtest:}brokenprop")
-        self.assertMSPropertyValue(response, "{DAVtest:}unauthprop")
 
         assertXMLEqual(response, """<ns0:response xmlns:ns0="DAV:">
 <ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
@@ -596,8 +589,15 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
         response = propf.renderSelectedProperties(resource, request, props)
         response = response()
 
-        self.assertMSPropertyValue(response, "{DAVtest:}brokenprop",
-                                   status = 500)
+        assertXMLEqual("""<response xmlns="DAV:">
+<href>/resource</href>
+<propstat>
+  <prop>
+    <ns1:brokenprop xmlns:ns1="DAVtest:" />
+  </prop>
+  <status>HTTP/1.1 500 Internal Server Error</status>
+</propstat>
+</response>""", response)
 
         # now check that the error reporting utility caught the error.
         self.assertEqual(len(self.errUtility.errors), 1)
@@ -620,10 +620,21 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
 
         # The PROPFIND method should return a 401 when the user is unauthorized
         # to view a property.
-        self.assertMSPropertyValue(response, "{DAVtest:}exampletextprop",
-                                   text_value = "some text")
-        self.assertMSPropertyValue(response, "{DAVtest:}unauthprop",
-                                   status = 401)
+        assertXMLEqual("""<response xmlns="DAV:">
+<href>/resource</href>
+<propstat>
+  <prop>
+    <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
+  </prop>
+  <status>HTTP/1.1 200 OK</status>
+</propstat>
+<propstat>
+  <prop>
+    <ns1:unauthprop xmlns:ns1="DAVtest:" />
+  </prop>
+  <status>HTTP/1.1 401 Unauthorized</status>
+</propstat>
+</response>""", response)
 
         # PROPFIND does catch all exceptions during the main PROPFIND method
         # but instead we need to make sure that the renderSelectedProperties
@@ -647,17 +658,18 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
         response = propf.renderAllProperties(resource, request, None)
         response = response()
 
-        self.assertEqual(len(response.findall("{DAV:}propstat")), 1)
-        self.assertEqual(len(response.findall("{DAV:}propstat/{DAV:}prop")), 1)
-
-        foundUnauthProp = False
-        for prop in response.findall("{DAV:}propstat/{DAV:}prop")[0]:
-            if prop.tag == "{DAVtest:}unauthprop":
-                foundUnauthProp = True
-
-        self.assert_(not foundUnauthProp,
-                     "The unauthprop should not be included in the all " \
-                     "property response since it has security restrictions.")
+        # Note that the unauthprop is not included in the response.
+        assertXMLEqual("""<response xmlns="DAV:">
+<href>/resource</href>
+<propstat>
+  <prop>
+    <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
+    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
+    <resourcetype />
+  </prop>
+  <status>HTTP/1.1 200 OK</status>
+</propstat>
+</response>""", response)
 
     def test_renderAllProperties_unauthorized_included(self):
         # If we request to render all properties, and request to render a
@@ -676,10 +688,23 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
         response = propf.renderAllProperties(resource, request, includes)
         response = response()
 
-        self.assertEqual(len(response.findall("{DAV:}propstat")), 2)
-
-        self.assertMSPropertyValue(
-            response, "{DAVtest:}unauthprop", status = 401)
+        assertXMLEqual("""<response xmlns="DAV:">
+<href>/resource</href>
+<propstat>
+  <prop>
+    <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
+    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
+    <resourcetype />
+  </prop>
+  <status>HTTP/1.1 200 OK</status>
+</propstat>
+<propstat>
+  <prop>
+    <ns1:unauthprop xmlns:ns1="DAVtest:" />
+  </prop>
+  <status>HTTP/1.1 401 Unauthorized</status>
+</propstat>
+</response>""", response)
 
     def test_renderAllProperties_broken_included(self):
         # If we request to render all properties, and to forse render a
@@ -698,10 +723,23 @@ class PROPFINDTestRender(unittest.TestCase, TestMultiStatusBody):
         response = propf.renderAllProperties(resource, request, includes)
         response = response()
 
-        self.assertEqual(len(response.findall("{DAV:}propstat")), 2)
-
-        self.assertMSPropertyValue(
-            response, "{DAVtest:}brokenprop", status = 500)
+        assertXMLEqual("""<response xmlns="DAV:">
+<href>/resource</href>
+<propstat>
+  <prop>
+    <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
+    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
+    <resourcetype />
+  </prop>
+  <status>HTTP/1.1 200 OK</status>
+</propstat>
+<propstat>
+  <prop>
+    <ns1:brokenprop xmlns:ns1="DAVtest:" />
+  </prop>
+  <status>HTTP/1.1 500 Internal Server Error</status>
+</propstat>
+</response>""", response)
 
         self.assertEqual(len(self.errUtility.errors), 1)
         exc_info = self.errUtility.errors[0]
@@ -814,6 +852,7 @@ class PROPFINDRecuseTest(unittest.TestCase):
   </ns0:propstat>
 </ns0:response></ns0:multistatus>
         """)
+
 
 def test_suite():
     return unittest.TestSuite((

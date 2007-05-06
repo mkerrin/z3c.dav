@@ -39,7 +39,6 @@ from zope.dublincore.interfaces import IWriteZopeDublinCore
 
 from z3c.dav.publisher import WebDAVRequest
 from z3c.dav.properties import DAVProperty
-from z3c.dav.tests.utils import TestMultiStatusBody
 
 import z3c.dav.testing
 
@@ -121,7 +120,7 @@ class TestWebDAVRequest(WebDAVRequest):
             self.xmlDataSource[0][0].append(elem)
 
 
-class DAVTestCase(z3c.dav.testing.WebDAVTestCase, TestMultiStatusBody):
+class DAVTestCase(z3c.dav.testing.WebDAVTestCase):
 
     layer = WebDAVLayer
 

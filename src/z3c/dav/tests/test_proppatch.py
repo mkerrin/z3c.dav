@@ -602,6 +602,14 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         self.assertEqual(IObjectModifiedEvent.providedBy(self.events[0]), True)
         self.assertEqual(self.events[0].object, resource)
 
+    def test_unauthorized_proppatch(self):
+        request = TestRequest(
+            set_properties = """<Dt:unauthprop xmlns:Dt="DAVtest:">Example Text Prop</Dt:unauthprop>""")
+        resource = Resource("Text Prop", 10)
+
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(Unauthorized, propp.PROPPATCH)
+
 
 class DEADProperties(object):
     interface.implements(z3c.dav.interfaces.IOpaquePropertyStorage)

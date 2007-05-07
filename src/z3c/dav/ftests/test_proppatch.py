@@ -56,17 +56,18 @@ class PROPPATCHTestCase(dav.DAVTestCase):
         self.assertEqual(response.getBody(), "")
 
     def test_setdisplayname_unauthorized(self):
-        self.addResource("/r", "some content", title = u"Test Resource")
+        self.addCollection("/coll", title = u"Test collection")
         body = """<?xml version="1.0" encoding="utf-8" ?>
 <D:propertyupdate xmlns:D="DAV:" xmlns="DAV:">
   <D:set><D:prop>
-    <D:displayname>Test File</D:displayname>
+    <D:displayname>Big collection</D:displayname>
   </D:prop></D:set>
 </D:propertyupdate>"""
 
-        response = self.publish("/r", env = {"REQUEST_METHOD": "PROPPATCH",
-                                             "CONTENT_TYPE": "application/xml",
-                                             "CONTENT_LENGTH": len(body)},
+        response = self.publish("/coll",
+                                env = {"REQUEST_METHOD": "PROPPATCH",
+                                       "CONTENT_TYPE": "application/xml",
+                                       "CONTENT_LENGTH": len(body)},
                                 request_body = body,
                                 handle_errors = True)
 
@@ -77,49 +78,73 @@ class PROPPATCHTestCase(dav.DAVTestCase):
             'basic realm="Zope"')
 
     def test_setdisplayname(self):
-        set_properties = "<D:displayname>Test File</D:displayname>"
-        self.addResource("/r", "some content", title = u"Test Resource")
+        set_properties = "<D:displayname>Big collection</D:displayname>"
+        self.addCollection("/coll", title = u"Test collection")
 
         httpresponse = self.checkProppatch(
-            "/r", basic = "mgr:mgrpw", set_properties = set_properties)
+            "/coll", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
-        assertXMLEqual('<displayname xmlns="DAV:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/r", "{DAV:}displayname"))
+        assertXMLEqual(
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <displayname />
+    </prop>
+    <status>HTTP/1.1 200 OK</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
 
-        title = IZopeDublinCore(self.getRootFolder()["r"]).title
-        self.assertEqual(title, u"Test File")
+        title = IZopeDublinCore(self.getRootFolder()["coll"]).title
+        self.assertEqual(title, u"Big collection")
 
     def test_readonly_property(self):
-        set_properties = "<D:getcontentlength>10</D:getcontentlength>"
-        self.addResource("/r", "some file content", title = u"Test Resource")
+        set_properties = "<D:resourcetype><D:collection /></D:resourcetype>"
+        self.addCollection("/coll", title = u"Test collection")
 
         httpresponse = self.checkProppatch(
-            "/r", basic = "mgr:mgrpw", set_properties = set_properties)
+            "/coll/", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
         assertXMLEqual(
-            '<getcontentlength xmlns="DAV:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/r", "{DAV:}getcontentlength", status = 403))
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <resourcetype />
+    </prop>
+    <status>HTTP/1.1 403 Forbidden</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
 
     def test_badinput(self):
         set_properties = """
         <E:exampleintprop xmlns:E="DAVtest:">BAD INT</E:exampleintprop>
         """
-        resource = self.addResource("/testresource", "some resource content")
+        self.addCollection("/coll")
 
         httpresponse = self.checkProppatch(
-            "/testresource", basic = "mgr:mgrpw",
+            "/coll", basic = "mgr:mgrpw",
             set_properties = set_properties)
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
         assertXMLEqual(
-            '<exampleintprop xmlns="DAVtest:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/testresource", "{DAVtest:}exampleintprop",
-                status = 409))
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <ns1:exampleintprop xmlns:ns1="DAVtest:" />
+    </prop>
+    <status>HTTP/1.1 409 Conflict</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
 
     def test_badinput_plus_faileddep(self):
         set_properties = """
@@ -128,32 +153,40 @@ class PROPPATCHTestCase(dav.DAVTestCase):
           Test Property
         </E:exampletextprop>
         """
-        resource = self.addResource("/testresource", "some resource content")
+        coll = self.addCollection("/coll")
 
         request = WebDAVRequest(StringIO(""), {})
-        exampleStorage = component.getMultiAdapter((resource, request),
+        exampleStorage = component.getMultiAdapter((coll, request),
                                                    dav.IExamplePropertyStorage)
         # set up a default value to test later
         exampleStorage.exampletextprop = u"Example Text Property"
         transaction.commit()
 
         httpresponse = self.checkProppatch(
-            "/testresource", basic = "mgr:mgrpw",
+            "/coll", basic = "mgr:mgrpw",
             set_properties = set_properties)
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
         assertXMLEqual(
-            '<exampletextprop xmlns="DAVtest:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/testresource", "{DAVtest:}exampletextprop",
-                status = 424))
-        assertXMLEqual(
-            '<exampleintprop xmlns="DAVtest:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/testresource", "{DAVtest:}exampleintprop",
-                status = 409))
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <ns1:exampletextprop xmlns:ns1="DAVtest:" />
+    </prop>
+    <status>HTTP/1.1 424 Failed Dependency</status>
+  </propstat>
+  <propstat>
+    <prop>
+      <ns1:exampleintprop xmlns:ns1="DAVtest:" />
+    </prop>
+    <status>HTTP/1.1 409 Conflict</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
 
-        exampleStorage = component.getMultiAdapter((resource, request),
+        exampleStorage = component.getMultiAdapter((coll, request),
                                                    dav.IExamplePropertyStorage)
         self.assertEqual(exampleStorage.exampletextprop,
                          u"Example Text Property")
@@ -163,13 +196,26 @@ class PROPPATCHTestCase(dav.DAVTestCase):
 Jim Whitehead
 </Z:Author>
         """
-        file = self.addResource("/r", "some content",
-                                title = u"Test Resource")
+        coll = self.addCollection("/coll", title = u"Test collection")
 
         httpresponse = self.checkProppatch(
-            "/r", basic = "mgr:mgrpw", set_properties = set_properties)
+            "/coll", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
+        assertXMLEqual(
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <ns1:Author xmlns:ns1="http://ns.example.com/z39.50/" />
+    </prop>
+    <status>HTTP/1.1 200 OK</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
+
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(coll)
         self.assertEqual(opaqueProperties.hasProperty(
             "{http://ns.example.com/z39.50/}Author"), True)
         assertXMLEqual(opaqueProperties.getProperty(
@@ -185,12 +231,29 @@ Jim Whitehead
 <E:prop3 xmlns:E="example:">PROP0</E:prop3>
         """
 
-        file = self.addResource("/r", "some content", title = u"Test Resource")
+        coll = self.addCollection("/coll", title = u"Test collection")
 
         httpresponse = self.checkProppatch(
-            "/r", basic = "mgr:mgrpw", set_properties = set_properties)
+            "/coll", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
+        assertXMLEqual(
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <ns1:prop0 xmlns:ns1="example:" />
+      <ns1:prop1 xmlns:ns1="example:" />
+      <ns1:prop2 xmlns:ns1="example:" />
+      <ns1:prop3 xmlns:ns1="example:" />
+    </prop>
+    <status>HTTP/1.1 200 OK</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
+
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(coll)
         allprops = [tag for tag in opaqueProperties.getAllProperties()]
         allprops.sort()
         self.assertEqual(allprops, ["{example:}prop0", "{example:}prop1",
@@ -199,76 +262,106 @@ Jim Whitehead
     def test_unicode_title(self):
         teststr = u"copyright \xa9 me"
         set_properties = "<D:displayname>%s</D:displayname>" % teststr
-        self.addResource("/r", "some content", title = u"Test Resource")
+        coll = self.addCollection("/coll", title = u"Test Resource")
 
         httpresponse = self.checkProppatch(
-            "/r", basic = "mgr:mgrpw", set_properties = set_properties)
+            "/coll", basic = "mgr:mgrpw", set_properties = set_properties)
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
         assertXMLEqual(
-            '<displayname xmlns="DAV:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/r", "{DAV:}displayname"))
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <displayname />
+    </prop>
+    <status>HTTP/1.1 200 OK</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
+
+        self.assertEqual(IZopeDublinCore(coll).title, teststr)
 
     def test_remove_live_prop(self):
-        file = self.addResource("/r", "some content", title = u"Test Resource")
+        coll = self.addCollection("/coll", title = u"Test collection")
 
-        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(coll)
         opaqueProperties.setProperty("{deadprop:}deadprop",
                                      """<X:deadprop xmlns:X="deadprop:">
 This is a dead property.</X:deadprop>""")
         transaction.commit()
 
         httpresponse = self.checkProppatch(
-            "/r", basic = "mgr:mgrpw",
+            "/coll", basic = "mgr:mgrpw",
             remove_properties = """<E:exampleintprop xmlns:E="DAVtest:" />""")
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
-
         assertXMLEqual(
-            '<exampleintprop xmlns="DAVtest:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/r", "{DAVtest:}exampleintprop",
-                status = 409))
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <ns1:exampleintprop xmlns:ns1="DAVtest:" />
+    </prop>
+    <status>HTTP/1.1 409 Conflict</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
 
     def test_remove_dead_prop(self):
         proptag = "{deadprop:}deadprop"
-        file = self.addResource("/r", "some content", title = u"Test Resource")
+        coll = self.addCollection("/coll", title = u"Test collection")
 
-        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(coll)
         opaqueProperties.setProperty(proptag,
                                      """<X:deadprop xmlns:X="deadprop:">
 This is a dead property.</X:deadprop>""")
         transaction.commit()
 
         httpresponse = self.checkProppatch(
-            "/r", basic = "mgr:mgrpw",
+            "/coll", basic = "mgr:mgrpw",
             remove_properties = """<X:deadprop xmlns:X="deadprop:" />""")
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
         assertXMLEqual(
-            '<deadprop xmlns="deadprop:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/r", "{deadprop:}deadprop"))
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/coll/</href>
+  <propstat>
+    <prop>
+      <ns1:deadprop xmlns:ns1="deadprop:" />
+    </prop>
+    <status>HTTP/1.1 200 OK</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
 
-        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(file)
+        opaqueProperties = z3c.dav.interfaces.IOpaquePropertyStorage(coll)
         self.assertEqual(opaqueProperties.hasProperty(proptag), False)
 
     def test_setting_unicode_title(self):
         teststr = u"copyright \xa9 me"
-        self.addResource(u"/" + teststr, "some file content",
-                         title = u"Old title")
+        coll = self.addCollection(u"/" + teststr, title = u"Old title")
 
         httpresponse = self.checkProppatch(
             "/" + teststr.encode("utf-8"), basic = "mgr:mgrpw",
             set_properties = "<D:displayname>%s</D:displayname>" % teststr)
 
-        self.assertEqual(len(httpresponse.getMSResponses()), 1)
         assertXMLEqual(
-            '<displayname xmlns="DAV:" />',
-            httpresponse.getMSProperty(
-                "http://localhost/%s" % urllib.quote(teststr.encode("utf-8")),
-                "{DAV:}displayname"))
+            """<multistatus xmlns="DAV:">
+<response>
+  <href>http://localhost/copyright%20%C2%A9%20me/</href>
+  <propstat>
+    <prop>
+      <displayname />
+    </prop>
+    <status>HTTP/1.1 200 OK</status>
+  </propstat>
+</response>
+</multistatus>""",
+            httpresponse.getBody())
 
         resourcetitle = IZopeDublinCore(self.getRootFolder()[teststr]).title
         self.assertEqual(resourcetitle, teststr)
@@ -278,6 +371,3 @@ def test_suite():
     return unittest.TestSuite((
             unittest.makeSuite(PROPPATCHTestCase),
             ))
-
-if __name__ == "__main__":
-    unittest.main(defaultTest = "test_suite")

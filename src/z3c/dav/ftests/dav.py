@@ -31,7 +31,6 @@ from zope import schema
 
 from zope.security.proxy import removeSecurityProxy
 from zope.app.folder.folder import Folder
-from zope.app.file.file import File
 from zope.app.publication.http import HTTPPublication
 from zope.security.management import newInteraction, endInteraction
 from zope.security.testing import Principal, Participation
@@ -120,6 +119,19 @@ class TestWebDAVRequest(WebDAVRequest):
             self.xmlDataSource[0][0].append(elem)
 
 
+class IResource(interface.Interface):
+
+    title = interface.Attribute("Title of resource")
+
+class Resource(object):
+    interface.implements(IResource)
+
+    def __init__(self, data, contentType, title = None):
+        self.data = data
+        self.contentType = contentType
+        self.title = title
+
+
 class DAVTestCase(z3c.dav.testing.WebDAVTestCase):
 
     layer = WebDAVLayer
@@ -159,9 +171,8 @@ class DAVTestCase(z3c.dav.testing.WebDAVTestCase):
         return collection[id]
 
     def addResource(self, path, content, title = None, contentType = ''):
-        resource = File(data = content, contentType = contentType)
-        if title is not None:
-            IWriteZopeDublinCore(resource).title = title
+        resource = Resource(data = content, contentType = contentType,
+                            title = title)
         return self.createObject(path, resource)
 
     def addCollection(self, path, title = None):
@@ -195,7 +206,7 @@ class DAVTestCase(z3c.dav.testing.WebDAVTestCase):
         self.createObject("/b", Folder())
 
     def checkPropfind(self, path = "/", basic = None, env = {},
-                      properties = None):
+                      properties = None, handle_errors = True):
         # - properties if set is a string containing the contents of the
         #   propfind XML element has specified in the WebDAV spec.
         if properties is not None:
@@ -215,7 +226,8 @@ class DAVTestCase(z3c.dav.testing.WebDAVTestCase):
             env["REQUEST_METHOD"] = "PROPFIND"
 
         response = self.publish(path, basic = basic, env = env,
-                                request_body = body)
+                                request_body = body,
+                                handle_errors = handle_errors)
 
         self.assertEqual(response.getStatus(), 207)
         self.assertEqual(response.getHeader("content-type"), "application/xml")

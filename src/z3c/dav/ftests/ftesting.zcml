@@ -2,8 +2,6 @@
 
   <include package="z3c.dav" file="ftesting.zcml" />
 
-  <include package="zope.app.file" />
-
   <!--
       Some random bits.
     -->
@@ -11,6 +9,7 @@
      name="{DAVtest:}unauthprop"
      component="z3c.dav.tests.test_proppatch.unauthProperty"
      />
+
   <adapter
      factory="z3c.dav.tests.test_proppatch.UnauthorizedPropertyStorage"
      for="zope.interface.Interface
@@ -22,10 +21,12 @@
      name="{DAVtest:}exampletextprop"
      component="z3c.dav.ftests.dav.exampleTextProperty"
      />
+
   <utility
      name="{DAVtest:}exampleintprop"
      component="z3c.dav.ftests.dav.exampleIntProperty"
      />
+
   <adapter
      factory="z3c.dav.ftests.dav.ExamplePropertyStorage"
      for="zope.interface.Interface

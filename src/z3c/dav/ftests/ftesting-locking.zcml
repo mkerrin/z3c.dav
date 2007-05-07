@@ -2,7 +2,6 @@
 
   <include package="z3c.dav" file="ftesting.zcml" />
 
-  <include package="zope.app.file" />
   <include package="zope.app.keyreference" />
 
   <include package="zope.locking" />

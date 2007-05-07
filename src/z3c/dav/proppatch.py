@@ -42,7 +42,8 @@ class PROPPATCH(object):
         self.request = request
 
     def PROPPATCH(self):
-        if self.request.content_type not in ("text/xml", "application/xml"):
+        if self.request.content_type not in ("text/xml", "application/xml") \
+               or self.request.xmlDataSource is None:
             raise z3c.dav.interfaces.BadRequest(
                 self.request,
                 message = "All PROPPATCH requests needs a XML body")
@@ -122,15 +123,15 @@ class PROPPATCH(object):
         davprop, adapter = z3c.dav.properties.getProperty(
             self.context, self.request, prop.tag)
 
-        widget = z3c.dav.properties.getWidget(
-            davprop, adapter, self.request,
-            type = z3c.dav.interfaces.IDAVInputWidget)
-
+        # Not all properties have a IDAVInputWidget defined
         field = davprop.field.bind(adapter)
-
         if field.readonly:
             raise z3c.dav.interfaces.ForbiddenError(
                 self.context, prop.tag, message = u"readonly field")
+
+        widget = z3c.dav.properties.getWidget(
+            davprop, adapter, self.request,
+            type = z3c.dav.interfaces.IDAVInputWidget)
 
         value = widget.getInputValue()
         field.validate(value)

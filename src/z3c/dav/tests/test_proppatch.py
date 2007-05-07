@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Test WebDAV propfind method.
+"""Test WebDAV proppatch method.
 
 It is easier to do this has a unit test has we have complete control over
 what properties are defined or not.
@@ -31,6 +31,7 @@ from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.security.interfaces import Unauthorized
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
+import z3c.dav.coreproperties
 import z3c.dav.proppatch
 import z3c.dav.publisher
 import z3c.dav.interfaces
@@ -146,6 +147,14 @@ class PROPPATCHXmlParsing(unittest.TestCase):
 
     def test_noxml(self):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
+        request.processInputs()
+        propp = PROPPATCHHandler(Resource(), request)
+        self.assertRaises(z3c.dav.interfaces.BadRequest, propp.PROPPATCH)
+
+    def test_nodata_but_xmlcontenttype(self):
+        request = z3c.dav.publisher.WebDAVRequest(
+            StringIO(""), {"CONTENT_TYPE": "application/xml"})
+        request.processInputs()
         propp = PROPPATCHHandler(Resource(), request)
         self.assertRaises(z3c.dav.interfaces.BadRequest, propp.PROPPATCH)
 
@@ -426,6 +435,11 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         gsm.registerAdapter(DummyResourceURL,
                             (IResource, z3c.dav.interfaces.IWebDAVRequest))
 
+        # PROPPATCH and the resourcetype properties highlighted a bug
+        gsm.registerUtility(z3c.dav.coreproperties.resourcetype,
+                            name = "{DAV:}resourcetype")
+        gsm.registerAdapter(z3c.dav.coreproperties.ResourceTypeAdapter)
+
         self.events = []
         zope.event.subscribers.append(self.eventLog)
 
@@ -461,6 +475,10 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         gsm.unregisterAdapter(DummyResourceURL,
                               (IResource,
                                z3c.dav.interfaces.IWebDAVRequest))
+
+        gsm.unregisterUtility(z3c.dav.coreproperties.resourcetype,
+                              name = "{DAV:}resourcetype")
+        gsm.unregisterAdapter(z3c.dav.coreproperties.ResourceTypeAdapter)
 
         self.events = []
         zope.event.subscribers.remove(self.eventLog)
@@ -609,6 +627,32 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
         self.assertRaises(Unauthorized, propp.PROPPATCH)
+
+    def test_set_readonly_resourcetype(self):
+        # When trying to set a value on the `{DAV:}resourcetype` property
+        # we need to first check that the field is readonly as the resourcetype
+        # property has no input widget registered for it.
+        etree = z3c.etree.getEngine()
+        resourcetype = etree.Element("{DAV:}resourcetype")
+        resourcetype.append(etree.Element("{DAV:}collection"))
+        request = TestRequest(set_properties = """<D:resourcetype />""")
+        resource = Resource("Test prop", 10)
+
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.ForbiddenError,
+                          propp.handleSet, resourcetype)
+
+    def test_set_readonly_resourcetype_samevalue(self):
+        # Make sure we get the same error as the previous test but this time
+        # trying to set the resourcetype to same value.
+        etree = z3c.etree.getEngine()
+        resourcetype = etree.Element("{DAV:}resourcetype")
+        request = TestRequest(set_properties = """<D:resourcetype />""")
+        resource = Resource("Test prop", 10)
+
+        propp = z3c.dav.proppatch.PROPPATCH(resource, request)
+        self.assertRaises(z3c.dav.interfaces.ForbiddenError,
+                          propp.handleSet, resourcetype)
 
 
 class DEADProperties(object):

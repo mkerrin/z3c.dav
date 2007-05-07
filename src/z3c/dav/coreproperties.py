@@ -237,7 +237,7 @@ class IDAVResourcetype(interface.Interface):
                            This element MUST NOT contain text or mixed content.
                            Any custom child element is considered to be an
                            identifier for a resource type."""),
-        readonly = False)
+        readonly = True)
 
 
 class IDAVSupportedlock(interface.Interface):
@@ -410,11 +410,19 @@ supportedlock = DAVProperty("{DAV:}supportedlock", IDAVSupportedlock)
 
 class ResourceTypeAdapter(object):
     """
-      >>> from zope.app.file.file import File
-      >>> file = File('some data for a file', 'text/plain')
-      >>> adapter = ResourceTypeAdapter(file, None)
+
+    All content that doesn't implement the IReadContainer interface, their
+    resourcetype value is None.
+
+      >>> class Resource(object):
+      ...    pass
+      >>> resource = Resource()
+      >>> adapter = ResourceTypeAdapter(resource, None)
       >>> adapter.resourcetype is None
       True
+
+    If a content object implements IReadContainer then it value is a list
+    of types, just 'collection' in this case.
 
       >>> from zope.app.folder.folder import Folder
       >>> folder = Folder()

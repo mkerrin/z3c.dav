@@ -341,8 +341,12 @@ class WebDAVCaller(zope.app.testing.functional.HTTPCaller):
 
 
 def functionalSetUp(test):
+    test.globs["http"] = zope.app.testing.functional.HTTPCaller()
     test.globs["webdav"] = WebDAVCaller()
+    test.globs["getRootFolder"] = zope.app.testing.functional.getRootFolder
 
 
 def functionalTearDown(test):
+    del test.globs["http"]
     del test.globs["webdav"]
+    del test.globs["getRootFolder"]

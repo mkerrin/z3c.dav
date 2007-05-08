@@ -244,7 +244,6 @@ def test_suite():
                              checker = z3c.etree.testing.xmlOutputChecker,
                              setUp = lockingSetUp,
                              tearDown = lockingTearDown),
-        doctest.DocTestSuite("z3c.dav.deadproperties"),
         doctest.DocTestSuite("z3c.dav.adapters"),
         doctest.DocTestSuite("z3c.dav.locking",
                              checker = z3c.etree.testing.xmlOutputChecker,

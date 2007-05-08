@@ -15,12 +15,12 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
-from zope import component
+from BTrees.OOBTree import OOBTree
+
 from zope import interface
-import zope.publisher.interfaces.http
+from zope import component
+import zope.annotation.interfaces
 from zope.dublincore.interfaces import IDCTimes, IDCDescriptiveProperties
-from zope.annotation.interfaces import IAnnotatable
-import zope.app.file.interfaces
 
 import z3c.dav.coreproperties
 
@@ -31,9 +31,21 @@ class DAVDublinCore(object):
     `{DAV:}creationdate`, `{DAV:}displayname` or title, and the
     `{DAV:}getlastmodified` WebDAV properties.
 
-      >>> from zope.app.file.file import File
-      >>> file = File('some data for a file', 'text/plain')
-      >>> adapter = DAVDublinCore(file, None)
+      >>> from zope.dublincore.annotatableadapter import ZDCAnnotatableAdapter
+      >>> from zope.dublincore.interfaces import IWriteZopeDublinCore
+      >>> from zope.annotation.attribute import AttributeAnnotations
+      >>> import datetime
+      >>> from zope.datetime import tzinfo
+
+    Create some sample content
+
+      >>> class Resource(object):
+      ...    pass
+      >>> resource = Resource()
+
+    With no IZopeDublinCore adapters register all properties return None.
+
+      >>> adapter = DAVDublinCore(resource, None)
       >>> adapter.displayname is None
       True
       >>> adapter.creationdate is None
@@ -45,28 +57,22 @@ class DAVDublinCore(object):
       >>> adapter.getlastmodified is None
       True
 
-      >>> from zope.dublincore.annotatableadapter import ZDCAnnotatableAdapter
-      >>> from zope.dublincore.interfaces import IWriteZopeDublinCore
-      >>> from zope.annotation.attribute import AttributeAnnotations
-      >>> from zope.annotation.interfaces import IAnnotations
-      >>> from zope.annotation.interfaces import IAttributeAnnotatable
-      >>> import datetime
-      >>> from zope.datetime import tzinfo
+    Now define the IZopeDublinCore adapters, the properties can now have
+    non None values.
 
-      >>> interface.classImplements(File, IAttributeAnnotatable)
+      >>> interface.classImplements(Resource,
+      ...    zope.annotation.interfaces.IAttributeAnnotatable)
       >>> component.getGlobalSiteManager().registerAdapter(
       ...     AttributeAnnotations)
       >>> component.getGlobalSiteManager().registerAdapter(
       ...     ZDCAnnotatableAdapter, provided = IWriteZopeDublinCore)
 
-      >>> file = File('some data for a file', 'text/plain')
-      >>> IWriteZopeDublinCore(file).created = now = datetime.datetime(
+      >>> IWriteZopeDublinCore(resource).created = now = datetime.datetime(
       ...     2006, 5, 24, 0, 0, 58, tzinfo = tzinfo(60))
-      >>> IWriteZopeDublinCore(file).title = u'Example Test File'
-      >>> IWriteZopeDublinCore(file).modified = now = datetime.datetime(
+      >>> IWriteZopeDublinCore(resource).title = u'Example Test File'
+      >>> IWriteZopeDublinCore(resource).modified = now = datetime.datetime(
       ...     2006, 5, 24, 0, 0, 58, tzinfo = tzinfo(60))
 
-      >>> adapter = DAVDublinCore(file, None)
       >>> adapter.creationdate == now
       True
       >>> adapter.displayname
@@ -74,11 +80,14 @@ class DAVDublinCore(object):
       >>> adapter.getlastmodified == now
       True
       >>> adapter.displayname = u'Changed Test File Title'
-      >>> IWriteZopeDublinCore(file).title
+      >>> IWriteZopeDublinCore(resource).title
       u'Changed Test File Title'
 
+    Cleanup
+
       >>> component.getGlobalSiteManager().unregisterAdapter(
-      ...     AttributeAnnotations, provided = IAnnotations)
+      ...     AttributeAnnotations,
+      ...     provided = zope.annotation.interfaces.IAnnotations)
       True
       >>> component.getGlobalSiteManager().unregisterAdapter(
       ...     ZDCAnnotatableAdapter, provided = IWriteZopeDublinCore)
@@ -86,8 +95,6 @@ class DAVDublinCore(object):
 
     """
     interface.implements(z3c.dav.coreproperties.IDAVCoreSchema)
-    component.adapts(IAnnotatable,
-                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -121,73 +128,127 @@ class DAVDublinCore(object):
         return dc.modified
 
 
-class DAVFileGetSchema(object):
-    """
-      >>> from zope.app.file.file import File
-      >>> from zope.interface.verify import verifyObject
-      >>> file = File('some data for the file', 'text/plain')
-      >>> adapter = DAVFileGetSchema(file, None)
-      >>> verifyObject(z3c.dav.coreproperties.IDAVGetSchema, adapter)
-      True
-      >>> adapter.getcontentlanguage is None
-      True
-      >>> adapter.getcontentlength
-      22
-      >>> adapter.getcontenttype
-      'text/plain'
+_opaque_namespace_key = "z3c.dav.deadproperties.DAVOpaqueProperties"
 
-      >>> from zope.dublincore.annotatableadapter import ZDCAnnotatableAdapter
-      >>> from zope.dublincore.interfaces import IWriteZopeDublinCore
+class OpaqueProperties(object):
+    """
       >>> from zope.annotation.attribute import AttributeAnnotations
-      >>> from zope.annotation.interfaces import IAnnotations
-      >>> from zope.annotation.interfaces import IAttributeAnnotatable
-      >>> from zope.datetime import tzinfo
-      >>> import datetime
-      >>> interface.classImplements(File, IAttributeAnnotatable)
+      >>> from zope.interface.verify import verifyObject
       >>> component.getGlobalSiteManager().registerAdapter(
-      ...     AttributeAnnotations)
-      >>> component.getGlobalSiteManager().registerAdapter(
-      ...     ZDCAnnotatableAdapter, provided = IWriteZopeDublinCore)
+      ...     AttributeAnnotations,
+      ...     (zope.annotation.interfaces.IAnnotatable,),
+      ...      zope.annotation.interfaces.IAnnotations)
 
-      >>> file = File('some data for the file', 'text/plain')
-      >>> adapter = DAVFileGetSchema(file, None)
+    Initiial the object contains no dead properties.
 
-      >>> adapter.getcontentlanguage is None
+      >>> class DemoContent(object):
+      ...     interface.implements(zope.annotation.interfaces.IAnnotatable)
+      >>> resource = DemoContent()
+      >>> opaqueProperties = OpaqueProperties(resource)
+      >>> verifyObject(z3c.dav.interfaces.IOpaquePropertyStorage,
+      ...              opaqueProperties)
       True
-      >>> adapter.getcontentlength
-      22
-      >>> adapter.getcontenttype
-      'text/plain'
-      >>> adapter.getetag is None # etag is None for now.
+      >>> annotations = zope.annotation.interfaces.IAnnotations(resource)
+      >>> list(annotations)
+      []
+      >>> list(opaqueProperties.getAllProperties())
+      []
+
+    `hasProperty` returns None since we haven't set any properties yet.
+
+      >>> opaqueProperties.hasProperty('{example:}testprop')
+      False
+      >>> opaqueProperties.getProperty('{example:}testprop') is None
       True
+      >>> annotations = zope.annotation.interfaces.IAnnotations(resource)
+      >>> list(annotations)
+      []
+
+    Set the testprop property
+
+      >>> opaqueProperties.setProperty('{examplens:}testprop',
+      ...   '<E:testprop xmlns:E="examplens:">Test Property Value</E:testprop>')
+      >>> annotations = zope.annotation.interfaces.IAnnotations(resource)
+      >>> list(annotations[_opaque_namespace_key])
+      ['{examplens:}testprop']
+      >>> annotations[_opaque_namespace_key]['{examplens:}testprop']
+      '<E:testprop xmlns:E="examplens:">Test Property Value</E:testprop>'
+      >>> opaqueProperties.hasProperty('{examplens:}testprop')
+      True
+      >>> opaqueProperties.getProperty('{examplens:}testprop')
+      '<E:testprop xmlns:E="examplens:">Test Property Value</E:testprop>'
+      >>> list(opaqueProperties.getAllProperties())
+      ['{examplens:}testprop']
+      >>> opaqueProperties.hasProperty('{examplens:}testbadprop')
+      False
+
+    Now we will remove the property we just set up.
+
+      >>> opaqueProperties.removeProperty('{examplens:}testprop')
+      >>> annotations = zope.annotation.interfaces.IAnnotations(resource)
+      >>> list(annotations[_opaque_namespace_key])
+      []
+
+    Test multiple sets to this value.
+
+      >>> opaqueProperties.setProperty('{examplens:}prop0',
+      ...    '<E:prop0 xmlns:E="examplens:">PROP0</E:prop0>')
+      >>> opaqueProperties.setProperty('{examplens:}prop1',
+      ...    '<E:prop1 xmlns:E="examplens:">PROP1</E:prop1>')
+      >>> opaqueProperties.setProperty('{examplens:}prop2',
+      ...    '<E:prop2 xmlns:E="examplens:">PROP2</E:prop2>')
+      >>> list(opaqueProperties.getAllProperties())
+      ['{examplens:}prop0', '{examplens:}prop1', '{examplens:}prop2']
+
+      >>> opaqueProperties.removeProperty('{examplens:}prop0')
+      >>> opaqueProperties.removeProperty('{examplens:}prop1')
+      >>> list(opaqueProperties.getAllProperties())
+      ['{examplens:}prop2']
+
+    Cleanup this test.
 
       >>> component.getGlobalSiteManager().unregisterAdapter(
-      ...     AttributeAnnotations, provided = IAnnotations)
-      True
-      >>> component.getGlobalSiteManager().unregisterAdapter(
-      ...     ZDCAnnotatableAdapter, provided = IWriteZopeDublinCore)
+      ...     AttributeAnnotations,
+      ...     (zope.annotation.interfaces.IAnnotatable,),
+      ...      zope.annotation.interfaces.IAnnotations)
       True
 
     """
-    interface.implements(z3c.dav.coreproperties.IDAVGetSchema)
-    component.adapts(zope.app.file.interfaces.IFile,
-                     zope.publisher.interfaces.http.IHTTPRequest)
+    interface.implements(z3c.dav.interfaces.IOpaquePropertyStorage)
 
-    def __init__(self, context, request):
-        self.context = context
+    _annotations = None
 
-    @property
-    def getcontentlanguage(self):
-        return None
+    def __init__(self, context):
+        # __parent__ must be set in order for the security to work
+        self.__parent__ = context
+        annotations = zope.annotation.interfaces.IAnnotations(context)
+        oprops = annotations.get(_opaque_namespace_key)
+        if oprops is None:
+            self._annotations = annotations
+            oprops = OOBTree()
 
-    @property
-    def getetag(self):
-        return None
+        self._mapping = oprops
 
-    @property
-    def getcontentlength(self):
-        return self.context.getSize()
+    def _changed(self):
+        if self._annotations is not None:
+            self._annotations[_opaque_namespace_key] = self._mapping
+            self._annotations = None
 
-    @property
-    def getcontenttype(self):
-        return self.context.contentType
+    def getAllProperties(self):
+        for tag in self._mapping.keys():
+            yield tag
+
+    def hasProperty(self, tag):
+        return tag in self._mapping
+
+    def getProperty(self, tag):
+        """Returns None."""
+        return self._mapping.get(tag, None)
+
+    def setProperty(self, tag, value):
+        self._mapping[tag] = value
+        self._changed()
+
+    def removeProperty(self, tag):
+        del self._mapping[tag]
+        self._changed()

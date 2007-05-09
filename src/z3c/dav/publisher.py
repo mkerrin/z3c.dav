@@ -47,25 +47,28 @@ class WebDAVRequest(HTTPRequest):
 
     def processInputs(self):
         """See IPublisherRequest."""
-        content_type = self.getHeader('content-type', '')
+        content_type = self.getHeader("content-type", None)
         content_type_params = None
-        if ';' in content_type:
-            parts = content_type.split(';', 1)
+        if content_type and ";" in content_type:
+            parts = content_type.split(";", 1)
             content_type = parts[0].strip().lower()
             content_type_params = parts[1].strip()
 
-        self.content_type = content_type
-
-        if content_type in ("text/xml", "application/xml") and \
+        if content_type in ("text/xml", "application/xml", None) and \
                self.getHeader("content-length", 0) > 0:
             etree = z3c.etree.getEngine()
             try:
                 self.xmlDataSource = etree.parse(self.bodyStream).getroot()
             except:
                 # There was an error parsing the body stream so this is a
-                # bad request.
-                raise interfaces.BadRequest(
-                    self, u"Invalid xml data passed")
+                # bad request if the content was declared as xml
+                if content_type is not None:
+                    raise interfaces.BadRequest(
+                        self, u"Invalid xml data passed")
+            else:
+                self.content_type = content_type or "application/xml"
+        else:
+            self.content_type = content_type
 
     def _createResponse(self):
         """Create a specific WebDAV response object."""

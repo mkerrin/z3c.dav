@@ -98,6 +98,17 @@ class TestWebDAVPublisher(unittest.TestCase):
         request = create_request()
         self.assert_(verifyObject(IWebDAVResponse, request.response))
 
+    def test_nonxmlbody_type(self):
+        body = """<?xml version="1.0" encoding="utf-8" ?>
+        <somedoc>Bad End Tag</anotherdoc>
+        """
+        request = create_request(body, {"CONTENT_TYPE": "application/badxml",
+                                        "CONTENT_LENGTH": len(body)})
+        request.processInputs()
+
+        self.assertEqual(request.content_type, "application/badxml")
+        self.assertEqual(request.xmlDataSource, None)
+
     def test_invalidxml(self):
         body = """<?xml version="1.0" encoding="utf-8" ?>
         <somedoc>Bad End Tag</anotherdoc>
@@ -105,6 +116,7 @@ class TestWebDAVPublisher(unittest.TestCase):
         request = create_request(body, {"CONTENT_TYPE": "application/xml",
                                         "CONTENT_LENGTH": len(body)})
         self.assertRaises(BadRequest, request.processInputs)
+        self.assertEqual(request.content_type, None)
 
 
 def test_suite():

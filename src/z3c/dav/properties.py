@@ -95,13 +95,48 @@ class OpaqueWidget(z3c.dav.widgets.DAVWidget):
 
 
 class OpaqueInputWidget(z3c.dav.widgets.DAVInputWidget):
+    """
+
+      >>> class Storage(object):
+      ...    interface.implements(IOpaquePropertyStorage)
+      ...    def __init__(self):
+      ...        self.data = {}
+      ...    def setProperty(self, tag, value):
+      ...        self.data[tag] = value
+      ...    def removeProperty(self, tag):
+      ...        del self.data[tag]
+      ...    def getProperty(self, tag):
+      ...        return self.data[tag]
+      >>> storage = Storage()
+
+      >>> from cStringIO import StringIO
+      >>> from z3c.dav.publisher import WebDAVRequest
+      >>> reqdata = '''<propertyupdate xmlns="DAV:">
+      ... <set>
+      ...   <prop>
+      ...     <high-unicode xmlns="http://webdav.org/neon/litmus/">&#65536;</high-unicode>
+      ...   </prop>
+      ... </set>
+      ... </propertyupdate>'''
+      >>> request = WebDAVRequest(StringIO(reqdata),
+      ...    {'CONTENT_LENGTH': len(reqdata)})
+      >>> request.processInputs()
+
+      >>> prop = OpaqueProperty('{http://webdav.org/neon/litmus/}high-unicode')
+      >>> widget = getWidget(prop, storage, request, type = IDAVInputWidget)
+
+      >>> print widget.getInputValue() #doctest:+XMLDATA
+      <ns0:high-unicode xmlns:ns0="http://webdav.org/neon/litmus/">\xf0\x90\x80\x80</ns0:high-unicode>
+
+    """
 
     def getInputValue(self):
-        el = self.getProppatchElement()
+        el = self.request.xmlDataSource.findall(
+            "{DAV:}set/{DAV:}prop/%s" % self.context.tag)
 
         etree = z3c.etree.getEngine()
         # XXX - ascii seems a bit wrong here
-        return etree.tostring(el[0], 'ascii')
+        return etree.tostring(el[-1], "utf-8")
 
 
 class IOpaqueField(IField):
@@ -109,18 +144,52 @@ class IOpaqueField(IField):
     namespace = schema.BytesLine( # should this be schema.URI
         title = u"Namespace",
         description = u"Namespace to which the value belongs",
+        required = False)
+
+    tag = schema.BytesLine(
+        title = u"ElementTree tag",
+        description = u"This is the key used by the opaque properties storage",
         required = True)
 
 
 class OpaqueField(schema.Field):
+    """
+
+      >>> from zope.interface.verify import verifyObject
+      >>> field = OpaqueField(__name__ = 'test',
+      ...    title = u'Test opaque field',
+      ...    namespace = 'testns:',
+      ...    tag = '{testns:}test')
+
+      >>> IOpaqueField.providedBy(field)
+      True
+      >>> field.namespace
+      'testns:'
+      >>> field.tag
+      '{testns:}test'
+
+      >>> from zope.interface.verify import verifyObject
+      >>> field = OpaqueField(__name__ = 'test',
+      ...    title = u'Test opaque field',
+      ...    namespace = None,
+      ...    tag = 'test')
+      >>> IOpaqueField.providedBy(field)
+      True
+      >>> field.namespace is None
+      True
+      >>> field.tag
+      'test'
+
+    """
     interface.implements(IOpaqueField)
 
-    namespace = FieldProperty(IOpaqueField['namespace'])
+    namespace = FieldProperty(IOpaqueField["namespace"])
+    tag = FieldProperty(IOpaqueField["tag"])
 
-    def __init__(self, namespace = None, **kw):
+    def __init__(self, tag, namespace = None, **kw):
         super(OpaqueField, self).__init__(**kw)
         self.namespace = namespace
-        self.tag = "{%s}%s" %(self.namespace, self.__name__)
+        self.tag = tag
 
     def get(self, obj):
         return obj.getProperty(self.tag)
@@ -131,10 +200,26 @@ class OpaqueField(schema.Field):
 
 class OpaqueProperty(object):
     """
+
       >>> from zope.interface.verify import verifyObject
       >>> prop = OpaqueProperty('{examplens:}testprop')
       >>> verifyObject(IDAVProperty, prop)
       True
+      >>> IOpaqueField.providedBy(prop.field)
+      True
+      >>> prop.namespace
+      'examplens:'
+
+    The namespace part of a opaque property can be None.
+
+      >>> prop = OpaqueProperty('testprop')
+      >>> verifyObject(IDAVProperty, prop)
+      True
+      >>> IOpaqueField.providedBy(prop.field)
+      True
+      >>> prop.namespace is None
+      True
+
     """
     interface.implements(IDAVProperty)
 
@@ -146,9 +231,10 @@ class OpaqueProperty(object):
         self.field = OpaqueField(
             __name__ = name,
             namespace = namespace,
+            tag = tag,
             title = u"",
             description = u"")
-        self.custom_widget       = OpaqueWidget
+        self.custom_widget = OpaqueWidget
         self.custom_input_widget = OpaqueInputWidget
         self.restricted = False
 

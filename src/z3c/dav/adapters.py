@@ -205,6 +205,19 @@ class OpaqueProperties(object):
       >>> list(opaqueProperties.getAllProperties())
       ['{examplens:}prop2']
 
+    The key for the opaque storage is the ElementTree tag. The namespace
+    part of this key can be None.
+
+      >>> opaqueProperties.setProperty('prop2',
+      ...    '<E:prop2 xmlns:E="examplens:">PROP2</E:prop2>')
+      >>> opaqueProperties.hasProperty('prop2')
+      True
+      >>> opaqueProperties.getProperty('prop2')
+      '<E:prop2 xmlns:E="examplens:">PROP2</E:prop2>'
+      >>> opaqueProperties.removeProperty('prop2')
+      >>> list(opaqueProperties.getAllProperties())
+      ['{examplens:}prop2']
+
     Cleanup this test.
 
       >>> component.getGlobalSiteManager().unregisterAdapter(

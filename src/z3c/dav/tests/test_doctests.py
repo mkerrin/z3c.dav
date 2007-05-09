@@ -117,11 +117,13 @@ class DemoAbsoluteURL(object):
 
 
 def contentSetup(test):
+    z3c.etree.testing.etreeSetup(test)
     test.globs["Demo"] = Demo
     test.globs["DemoFolder"] = DemoFolder
 
 
 def contentTeardown(test):
+    z3c.etree.testing.etreeTearDown(test)
     del test.globs["Demo"]
     del test.globs["DemoFolder"]
 
@@ -227,7 +229,9 @@ def lockingTearDown(test):
 def test_suite():
     return unittest.TestSuite((
         doctest.DocTestSuite("z3c.dav.properties",
-                             setUp = contentSetup, tearDown = contentTeardown),
+                             checker = z3c.etree.testing.xmlOutputChecker,
+                             setUp = contentSetup,
+                             tearDown = contentTeardown),
         doctest.DocTestSuite("z3c.dav.utils",
                              checker = z3c.etree.testing.xmlOutputChecker,
                              setUp = z3c.etree.testing.etreeSetup,

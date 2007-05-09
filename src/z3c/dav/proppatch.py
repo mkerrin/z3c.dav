@@ -153,10 +153,8 @@ class PROPPATCH(object):
         deadproperties = z3c.dav.interfaces.IOpaquePropertyStorage(
             self.context, None)
 
-        if deadproperties is None or not deadproperties.hasProperty(prop.tag):
-            raise z3c.dav.interfaces.ConflictError(
-                self.context, prop.tag, message = u"property doesn't exist")
+        if deadproperties is not None and deadproperties.hasProperty(prop.tag):
+            deadproperties.removeProperty(prop.tag)
+            return True
 
-        deadproperties.removeProperty(prop.tag)
-
-        return True
+        return False

@@ -575,9 +575,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(z3c.dav.interfaces.ConflictError,
-                          propp.handleRemove,
-                          propel)
+        self.assertEqual(propp.handleRemove(propel), False)
 
     def test_event_onsetProperty(self):
         request = TestRequest(
@@ -720,9 +718,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(z3c.dav.interfaces.ConflictError,
-                          propp.handleRemove,
-                          propel)
+        self.assertEqual(propp.handleRemove(propel), False)
 
     def test_remove_not_there(self):
         etree = z3c.etree.getEngine()
@@ -734,9 +730,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertRaises(z3c.dav.interfaces.ConflictError,
-                          propp.handleRemove,
-                          propel)
+        self.assertEqual(propp.handleRemove(propel), False)
         self.assertEqual(self.events, [])
 
     def test_remove_prop(self):

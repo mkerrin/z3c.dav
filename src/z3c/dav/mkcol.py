@@ -15,13 +15,13 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
-from zope import interface
 from zope import component
 from zope.filerepresentation.interfaces import IWriteDirectory
 from zope.filerepresentation.interfaces import IDirectoryFactory
 import zope.event
 from zope.lifecycleevent import ObjectCreatedEvent
 import zope.app.http.interfaces
+import zope.publisher.interfaces.http
 
 import z3c.dav.interfaces
 
@@ -31,6 +31,7 @@ class MKCOL(object):
     unmapped urls.
 
       >>> from cStringIO import StringIO
+      >>> import zope.interface
       >>> from zope import component
       >>> from zope.publisher.browser import TestRequest
       >>> from zope.app.http.put import NullResource
@@ -79,7 +80,7 @@ class MKCOL(object):
     new collection object) so again this operation is forbidden.
 
       >>> class WriteDirectory(object):
-      ...    interface.implements(IWriteDirectory)
+      ...    zope.interface.implements(IWriteDirectory)
       ...    component.adapts(IFolder)
       ...    def __init__(self, context):
       ...        self.context = context
@@ -104,7 +105,7 @@ class MKCOL(object):
     collection.
 
       >>> class DirectoryFactory(object):
-      ...    interface.implements(IDirectoryFactory)
+      ...    zope.interface.implements(IDirectoryFactory)
       ...    component.adapts(IFolder)
       ...    def __init__(self, context):
       ...        pass
@@ -147,9 +148,8 @@ class MKCOL(object):
       >>> zope.event.subscribers.remove(eventLog)
 
     """
-    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     component.adapts(zope.app.http.interfaces.INullResource,
-                     z3c.dav.interfaces.IWebDAVRequest)
+                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

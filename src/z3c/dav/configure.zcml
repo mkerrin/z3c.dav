@@ -7,11 +7,15 @@
   <!--
       Support for integrating the protocol request handlers found in
       the webdav package with the Zope3 publisher.
+
+      The MKCOL, COPY, and MOVE methods are plain HTTP methods with no
+      need for XML processing of there request bodies, so use the default
+      HTTPRequestFactory method for them.
     -->
   <publisher
      name="WEBDAV"
      factory=".publisher.WebDAVRequestFactory"
-     methods="PROPFIND PROPPATCH MKCOL LOCK UNLOCK COPY MOVE"
+     methods="PROPFIND PROPPATCH LOCK UNLOCK"
      priority="30"
      />
 
@@ -27,16 +31,19 @@
 
   <adapter
      factory=".mkcol.MKCOL"
+     provides="zope.interface.Interface"
      name="MKCOL"
      />
 
   <adapter
      factory=".copymove.COPY"
+     provides="zope.interface.Interface"
      name="COPY"
      />
 
   <adapter
      factory=".copymove.MOVE"
+     provides="zope.interface.Interface"
      name="MOVE"
      />
 

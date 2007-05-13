@@ -141,11 +141,6 @@ class OpaqueInputWidget(z3c.dav.widgets.DAVInputWidget):
 
 class IOpaqueField(IField):
 
-    namespace = schema.BytesLine( # should this be schema.URI
-        title = u"Namespace",
-        description = u"Namespace to which the value belongs",
-        required = False)
-
     tag = schema.BytesLine(
         title = u"ElementTree tag",
         description = u"This is the key used by the opaque properties storage",
@@ -158,24 +153,18 @@ class OpaqueField(schema.Field):
       >>> from zope.interface.verify import verifyObject
       >>> field = OpaqueField(__name__ = 'test',
       ...    title = u'Test opaque field',
-      ...    namespace = 'testns:',
       ...    tag = '{testns:}test')
 
       >>> IOpaqueField.providedBy(field)
       True
-      >>> field.namespace
-      'testns:'
       >>> field.tag
       '{testns:}test'
 
       >>> from zope.interface.verify import verifyObject
       >>> field = OpaqueField(__name__ = 'test',
       ...    title = u'Test opaque field',
-      ...    namespace = None,
       ...    tag = 'test')
       >>> IOpaqueField.providedBy(field)
-      True
-      >>> field.namespace is None
       True
       >>> field.tag
       'test'
@@ -183,12 +172,10 @@ class OpaqueField(schema.Field):
     """
     interface.implements(IOpaqueField)
 
-    namespace = FieldProperty(IOpaqueField["namespace"])
     tag = FieldProperty(IOpaqueField["tag"])
 
-    def __init__(self, tag, namespace = None, **kw):
+    def __init__(self, tag, **kw):
         super(OpaqueField, self).__init__(**kw)
-        self.namespace = namespace
         self.tag = tag
 
     def get(self, obj):
@@ -230,7 +217,6 @@ class OpaqueProperty(object):
         self.iface = IOpaquePropertyStorage
         self.field = OpaqueField(
             __name__ = name,
-            namespace = namespace,
             tag = tag,
             title = u"",
             description = u"")

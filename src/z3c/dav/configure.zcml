@@ -228,9 +228,39 @@
      />
 
   <!--
-      Zope3 support for WebDAV
+      Zope3 support for WebDAV. Since zope.app.folder is the only content
+      component that is a dependency of zope.app.zcmlfiles we will include
+      support for it directly in this package. The default ZODB root folder
+      is also a zope.app.folder object so that is another reason this is the
+      only content object supported directly by z3c.dav.
+
+      Other content objects are supported from within the z3c.davapp namespace.
+      Although you will probable need to do some work to support any custom
+      content types.
     -->
-  <include file="z3-configure.zcml" />
+  <adapter
+     for="zope.app.folder.interfaces.IFolder
+          zope.publisher.interfaces.http.IHTTPRequest"
+     factory=".adapters.DAVDublinCore"
+     />
+
+  <adapter
+     for="zope.app.folder.interfaces.IFolder"
+     factory=".adapters.OpaqueProperties"
+     trusted="1"
+     />
+
+  <class class=".adapters.OpaqueProperties">
+    <require
+       permission="zope.Public"
+       attributes="getAllProperties hasProperty getProperty"
+       />
+
+    <require
+       permission="zope.ManageContent"
+       attributes="setProperty removeProperty"
+       />
+  </class>
 
   <configure
      xmlns:zcml="http://namespaces.zope.org/zcml"

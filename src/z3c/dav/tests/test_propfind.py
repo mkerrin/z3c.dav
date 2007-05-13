@@ -439,9 +439,9 @@ class PROPFINDTestRender(unittest.TestCase):
   <ns0:prop xmlns:ns0="DAV:">
     <ns1:brokenprop xmlns:ns1="DAVtest:"/>
     <ns1:exampletextprop xmlns:ns1="DAVtest:"/>
+    <ns0:resourcetype />
     <ns1:exampleintprop xmlns:ns1="DAVtest:"/>
     <ns1:unauthprop xmlns:ns1="DAVtest:"/>
-    <ns0:resourcetype />
   </ns0:prop>
   <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
 </ns0:propstat></ns0:response>""")
@@ -508,8 +508,8 @@ class PROPFINDTestRender(unittest.TestCase):
 <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
   <ns0:prop xmlns:ns0="DAV:">
     <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
     <ns0:resourcetype />
+    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
   <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
 </ns0:propstat></ns0:response>""")
@@ -530,8 +530,8 @@ class PROPFINDTestRender(unittest.TestCase):
 <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
   <ns0:prop xmlns:ns0="DAV:">
     <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
     <ns0:resourcetype />
+    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
   <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
 </ns0:propstat></ns0:response>""")
@@ -548,8 +548,8 @@ class PROPFINDTestRender(unittest.TestCase):
 <ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
 <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
   <ns0:prop xmlns:ns0="DAV:">
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
     <ns0:resourcetype />
+    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
   <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
 </ns0:propstat></ns0:response>""")
@@ -571,8 +571,8 @@ class PROPFINDTestRender(unittest.TestCase):
 <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
   <ns0:prop xmlns:ns0="DAV:">
     <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
     <ns0:resourcetype />
+    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
   <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
 </ns0:propstat></ns0:response>""")
@@ -664,8 +664,8 @@ class PROPFINDTestRender(unittest.TestCase):
 <propstat>
   <prop>
     <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
-    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
     <resourcetype />
+    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
   </prop>
   <status>HTTP/1.1 200 OK</status>
 </propstat>
@@ -699,8 +699,8 @@ class PROPFINDTestRender(unittest.TestCase):
 <propstat>
   <prop>
     <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
-    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
     <resourcetype />
+    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
   </prop>
   <status>HTTP/1.1 200 OK</status>
 </propstat>
@@ -734,8 +734,8 @@ class PROPFINDTestRender(unittest.TestCase):
 <propstat>
   <prop>
     <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
-    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
     <resourcetype />
+    <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
   </prop>
   <status>HTTP/1.1 200 OK</status>
 </propstat>
@@ -840,8 +840,8 @@ class PROPFINDRecuseTest(unittest.TestCase):
   <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
     <ns0:prop xmlns:ns0="DAV:">
       <ns01:exampletextprop xmlns:ns0="DAVtest:">some text - r2</ns01:exampletextprop>
-      <ns01:exampleintprop xmlns:ns0="DAVtest:">4</ns01:exampleintprop>
       <ns0:resourcetype xmlns:ns0="DAV:"/>
+      <ns01:exampleintprop xmlns:ns0="DAVtest:">4</ns01:exampleintprop>
     </ns0:prop>
     <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
   </ns0:propstat>
@@ -851,8 +851,8 @@ class PROPFINDRecuseTest(unittest.TestCase):
   <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
     <ns0:prop xmlns:ns0="DAV:">
       <ns01:exampletextprop xmlns:ns0="DAVtest:">some text - r1</ns01:exampletextprop>
-      <ns01:exampleintprop xmlns:ns0="DAVtest:">2</ns01:exampleintprop>
       <ns0:resourcetype xmlns:ns0="DAV:"/>
+      <ns01:exampleintprop xmlns:ns0="DAVtest:">2</ns01:exampleintprop>
     </ns0:prop>
     <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
   </ns0:propstat>

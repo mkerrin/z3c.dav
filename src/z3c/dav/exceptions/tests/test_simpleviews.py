@@ -18,7 +18,6 @@ $Id$
 __docformat__ = 'restructuredtext'
 
 import unittest
-from cStringIO import StringIO
 from zope.app.testing.placelesssetup import PlacelessSetup
 from zope import component
 from zope import interface
@@ -27,13 +26,12 @@ from zope.formlib.namedtemplate import INamedTemplate
 import z3c.dav.interfaces
 import z3c.dav.exceptions
 import z3c.dav.exceptions.browser
-from z3c.dav.publisher import WebDAVRequest
-from test_multiviews import TestRequest
+from zope.publisher.browser import TestRequest
 
 class TestExceptionViews(PlacelessSetup, unittest.TestCase):
 
     def test_unprocessable(self):
-        request = WebDAVRequest(StringIO(""), {})
+        request = TestRequest()
         error = z3c.dav.interfaces.UnprocessableError(None)
         view = z3c.dav.exceptions.UnprocessableError(error, request)
 
@@ -43,7 +41,7 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
         self.assertEqual(result, "")
 
     def test_precondition(self):
-        request = WebDAVRequest(StringIO(""), {})
+        request = TestRequest()
         error = z3c.dav.interfaces.PreconditionFailed(None)
         view = z3c.dav.exceptions.PreconditionFailed(error, request)
 
@@ -53,7 +51,7 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
         self.assertEqual(result, "")
 
     def test_badgateway(self):
-        request = WebDAVRequest(StringIO(""), {})
+        request = TestRequest()
         error = z3c.dav.interfaces.BadGateway(None, request)
         view = z3c.dav.exceptions.BadGateway(error, request)
 
@@ -63,7 +61,7 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
         self.assertEqual(result, "")
 
     def test_conflicterror(self):
-        request = WebDAVRequest(StringIO(""), {})
+        request = TestRequest()
         error = z3c.dav.interfaces.ConflictError(None, request)
         view = z3c.dav.exceptions.HTTPConflictError(error, request)
 
@@ -73,7 +71,7 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
         self.assertEqual(result, "")
 
     def test_forbiddenerror(self):
-        request = WebDAVRequest(StringIO(""), {})
+        request = TestRequest()
         error = z3c.dav.interfaces.ForbiddenError(None, request)
         view = z3c.dav.exceptions.HTTPForbiddenError(error, request)
 
@@ -83,7 +81,7 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
         self.assertEqual(result, "")
 
     def test_unsupportedmediatype(self):
-        request = WebDAVRequest(StringIO(""), {})
+        request = TestRequest()
         error = z3c.dav.interfaces.UnsupportedMediaType(None, request)
         view = z3c.dav.exceptions.HTTPUnsupportedMediaTypeError(
             error, request)
@@ -91,6 +89,16 @@ class TestExceptionViews(PlacelessSetup, unittest.TestCase):
         result = view()
 
         self.assertEqual(request.response.getStatus(), 415)
+        self.assertEqual(result, "")
+
+    def test_alreadylocked(self):
+        request = TestRequest()
+        error = z3c.dav.interfaces.AlreadyLocked(None, "Alread locked")
+        view = z3c.dav.exceptions.AlreadyLockedErrorView(error, request)
+
+        result = view()
+
+        self.assertEqual(request.response.getStatus(), 423)
         self.assertEqual(result, "")
 
 

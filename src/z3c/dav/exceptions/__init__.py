@@ -25,6 +25,7 @@ __docformat__ = 'restructuredtext'
 from zope import interface
 from zope import schema
 from zope import component
+import zope.publisher.interfaces.http
 from zope.app.http.interfaces import IHTTPException
 
 import z3c.dav.interfaces
@@ -165,7 +166,7 @@ class WebDAVPropstatErrorView(object):
 class HTTPForbiddenError(object):
     interface.implements(IHTTPException)
     component.adapts(z3c.dav.interfaces.IForbiddenError,
-                     z3c.dav.interfaces.IHTTPRequest)
+                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, error, request):
         self.error = error
@@ -179,7 +180,7 @@ class HTTPForbiddenError(object):
 class HTTPConflictError(object):
     interface.implements(IHTTPException)
     component.adapts(z3c.dav.interfaces.IConflictError,
-                     z3c.dav.interfaces.IHTTPRequest)
+                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, error, request):
         self.error = error
@@ -193,7 +194,7 @@ class HTTPConflictError(object):
 class PreconditionFailed(object):
     interface.implements(IHTTPException)
     component.adapts(z3c.dav.interfaces.IPreconditionFailed,
-                     z3c.dav.interfaces.IHTTPRequest)
+                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, error, request):
         self.error = error
@@ -207,7 +208,7 @@ class PreconditionFailed(object):
 class HTTPUnsupportedMediaTypeError(object):
     interface.implements(IHTTPException)
     component.adapts(z3c.dav.interfaces.IUnsupportedMediaType,
-                     z3c.dav.interfaces.IHTTPRequest)
+                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, error, request):
         self.error = error
@@ -221,7 +222,7 @@ class HTTPUnsupportedMediaTypeError(object):
 class UnprocessableError(object):
     interface.implements(IHTTPException)
     component.adapts(z3c.dav.interfaces.IUnprocessableError,
-                     z3c.dav.interfaces.IHTTPRequest)
+                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -232,10 +233,23 @@ class UnprocessableError(object):
         return ""
 
 
+class AlreadyLockedErrorView(object):
+    interface.implements(IHTTPException)
+    component.adapts(z3c.dav.interfaces.IAlreadyLocked,
+                     zope.publisher.interfaces.http.IHTTPRequest)
+
+    def __init__(self, context, request):
+        self.request = request
+
+    def __call__(self):
+        self.request.response.setStatus(423)
+        return ""
+
+
 class BadGateway(object):
     interface.implements(IHTTPException)
     component.adapts(z3c.dav.interfaces.IBadGateway,
-                     z3c.dav.interfaces.IHTTPRequest)
+                     zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, error, request):
         self.error = error

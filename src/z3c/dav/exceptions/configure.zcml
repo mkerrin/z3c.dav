@@ -159,6 +159,20 @@
      name="index.html"
      />
 
+  <view
+     for="z3c.dav.interfaces.IAlreadyLocked"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="z3c.dav.exceptions.AlreadyLockedErrorView"
+     />
+
+  <defaultView
+     for="z3c.dav.interfaces.IAlreadyLocked"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     />
+
   <adapter
      factory=".browser.default_template"
      name="default"

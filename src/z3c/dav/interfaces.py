@@ -201,6 +201,10 @@ class AlreadyLocked(Exception):
         self.propertyname = None
         self.message = None
 
+    def __str__(self):
+        # This stops zope.app.error.error from failing in getPrintable
+        return "%r: %r" %(self.resource, self.message)
+
 
 class IWebDAVErrors(IFiniteSequence, IException):
     """

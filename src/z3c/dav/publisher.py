@@ -22,6 +22,7 @@ from zope.app.publication.http import HTTPPublication
 from zope.app.publication.interfaces import IRequestPublicationFactory
 
 import z3c.etree
+import z3c.conditionalviews
 import interfaces
 
 
@@ -29,7 +30,7 @@ class WebDAVResponse(HTTPResponse):
     implements(interfaces.IWebDAVResponse)
 
 
-class WebDAVRequest(HTTPRequest):
+class WebDAVRequest(z3c.conditionalviews.ConditionalHTTPRequest):
     implements(interfaces.IWebDAVRequest)
 
     __slot__ = (

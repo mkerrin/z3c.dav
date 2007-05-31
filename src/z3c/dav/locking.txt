@@ -19,12 +19,16 @@ Setup
 =====
 
   >>> import UserDict
+  >>> import UserDict
   >>> from cStringIO import StringIO
   >>> import zope.interface
   >>> from zope.interface.verify import verifyObject
   >>> import zope.component
+  >>> import zope.annotation.interfaces
+  >>> import zope.publisher.interfaces.http
   >>> import zope.app.container.interfaces
   >>> import z3c.dav.interfaces
+  >>> from zope.traversing.interfaces import IPhysicallyLocatable
 
 Define a test request object and a content type against which to run the
 tests.
@@ -43,9 +47,24 @@ tests.
 
   >>> class Resource(object):
   ...    zope.interface.implements(IResource)
+  ...    _path = '/test'
   ...    _lockinfo = None
 
+  >>> class ResourcePhysicallyLocatable(object):
+  ...    zope.interface.implements(IPhysicallyLocatable)
+  ...    def __init__(self, context):
+  ...        self.context = context
+  ...    def getPath(self):
+  ...        return self.context._path
+
   >>> gsm = zope.component.getGlobalSiteManager()
+
+  >>> gsm.registerAdapter(ResourcePhysicallyLocatable, (IResource,))
+
+The `IF` validator annotes the request object.
+
+  >>> from z3c.dav import ifvalidator
+  >>> validator = ifvalidator.IFValidator()
 
 LOCK Method
 ===========
@@ -383,6 +402,11 @@ transaction.
   ...    def lockdiscovery(self):
   ...        return [Activelock(self.context, self.request)]
 
+  >>> gsm.registerAdapter(ifvalidator.StateTokens,
+  ...    (IResource,
+  ...     zope.publisher.interfaces.http.IHTTPRequest,
+  ...     zope.interface.Interface))
+
 We need the following setup in-order for the LOCK method to render the
 `{DAV:}lockdiscovery` widget.
 
@@ -519,6 +543,14 @@ Lock token can be refreshed by submitting a request without a body. In this
 case the `handleLock` method is not called but the `handleLockRefresh` is
 called.
 
+  >>> class ReqAnnotation(UserDict.IterableUserDict):
+  ...    zope.interface.implements(zope.annotation.interfaces.IAnnotations)
+  ...    def __init__(self, request):
+  ...        self.data = request._environ.setdefault('annoations', {})
+
+  >>> gsm.registerAdapter(ReqAnnotation,
+  ...    (zope.publisher.interfaces.http.IHTTPRequest,))
+
   >>> LOCK(resource, TestWebDAVRequest()).handleLockRefresh()
   Traceback (most recent call last):
   ...
@@ -534,6 +566,19 @@ Now refresh the lock info but without a timeout so it doesn't change.
 
   >>> LOCK(resource, TestWebDAVRequest(
   ...    environ = {'IF': '<urn:resourcelocktoken>'})).handleLockRefresh()
+  Traceback (most recent call last):
+  ...
+  PreconditionFailed: Lock-Token doesn't match request uri
+
+We need to call the if validators valid method which will annotate the
+request object after parsing the if header, with the results of the
+conditional.
+
+  >>> request = TestWebDAVRequest(
+  ...    environ = {'IF': '(<urn:resourcelocktoken>)'})
+  >>> validator.valid(resource, request, None)
+  True
+  >>> LOCK(resource, request).handleLockRefresh()
   Refreshed lock token.
   >>> resource._lockinfo['duration']
   datetime.timedelta(0, 720)
@@ -544,9 +589,12 @@ Now refresh the lock info but without a timeout so it doesn't change.
   >>> resource._lockinfo['depth']
   'infinity'
 
-  >>> LOCK(resource, TestWebDAVRequest(
-  ...    environ = {'IF': '<urn:resourcelocktoken>',
-  ...               'TIMEOUT': 'Second-1440'})).handleLockRefresh()
+  >>> request = TestWebDAVRequest(
+  ...    environ = {'IF': '(<urn:resourcelocktoken>)',
+  ...               'TIMEOUT': 'Second-1440'})
+  >>> validator.valid(resource, request, None)
+  True
+  >>> LOCK(resource, request).handleLockRefresh()
   Refreshed lock token.
   >>> resource._lockinfo['duration']
   datetime.timedelta(0, 1440)
@@ -562,7 +610,9 @@ method is called and assuming that everything else is OK then the lock token
 gets refreshed and the `{DAV:}lockdiscovery` property is rendered and
 returned.
 
-  >>> request = TestWebDAVRequest(environ = {'IF': '<urn:resourcelocktoken>'})
+  >>> request = TestWebDAVRequest(environ = {'IF': '(<urn:resourcelocktoken>)'})
+  >>> validator.valid(resource, request, None)
+  True
   >>> respbody = LOCK(resource, request).LOCK()
   Refreshed lock token.
 
@@ -606,8 +656,10 @@ and the lock token timeout is updated with this value.
 
 Similar if we specify a timeout header.
 
-  >>> request = TestWebDAVRequest(environ = {'IF': '<urn:resourcelocktoken>',
+  >>> request = TestWebDAVRequest(environ = {'IF': '(<urn:resourcelocktoken>)',
   ...                                  'TIMEOUT': 'Second-1440'})
+  >>> validator.valid(resource, request, None)
+  True
   >>> respbody = LOCK(resource, request).LOCK()
   Refreshed lock token.
   >>> resource._lockinfo['duration']
@@ -736,9 +788,18 @@ implementation registered with the system.
 Cleanup
 -------
 
+  >>> gsm.unregisterAdapter(ResourcePhysicallyLocatable, (IResource,))
+  True
+
   >>> gsm.unregisterAdapter(Supportedlock)
   True
   >>> gsm.unregisterAdapter(Activelock)
+  True
+
+  >>> gsm.unregisterAdapter(ifvalidator.StateTokens,
+  ...    (IResource,
+  ...     zope.publisher.interfaces.http.IHTTPRequest,
+  ...     zope.interface.Interface))
   True
 
   >>> gsm.unregisterAdapter(z3c.dav.widgets.ListDAVWidget,
@@ -766,4 +827,7 @@ Cleanup
   ...                       name = "{DAV:}lockdiscovery")
   True
   >>> gsm.unregisterAdapter(Lockdiscovery)
+  True
+  >>> gsm.unregisterAdapter(ReqAnnotation,
+  ...    (zope.publisher.interfaces.http.IHTTPRequest,))
   True

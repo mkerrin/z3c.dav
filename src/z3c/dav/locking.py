@@ -49,32 +49,10 @@ import z3c.dav.interfaces
 import z3c.dav.properties
 from z3c.dav.coreproperties import IActiveLock, IDAVSupportedlock
 import z3c.dav.utils
+import ifvalidator
 
 MAXTIMEOUT = (2L ** 32) - 1
 DEFAULTTIMEOUT = 12 * 60L
-
-def getIfHeader(request):
-    """
-    Parse the `If` HTTP header in this request and return a list of lock tokens
-    and entity tags.
-
-    XXX - This implementation is overly simplicitic.
-
-      >>> from zope.publisher.browser import TestRequest
-
-      >>> getIfHeader(TestRequest()) is None
-      True
-      >>> getIfHeader(TestRequest(environ = {'IF': 'xxx'})) is None
-      True
-      >>> getIfHeader(TestRequest(environ = {'IF': '<xxx>'}))
-      'xxx'
-
-    """
-    headervalue = request.get("IF", "")
-    if headervalue and headervalue[0] == "<" and headervalue[-1] == ">":
-        return headervalue[1:-1]
-    return None
-
 
 @component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 @interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
@@ -295,12 +273,7 @@ class LOCKMethod(object):
             raise z3c.dav.interfaces.PreconditionFailed(
                 self.context, message = u"Context is not locked.")
 
-        locktoken = component.getMultiAdapter((self.context, self.request),
-                                              IActiveLock).locktoken[0]
-        request_uri = self.request.getHeader("IF", "")
-        if not request_uri or \
-               request_uri[0] != "<" or request_uri[-1] != ">" or \
-               request_uri[1:-1] != locktoken:
+        if not ifvalidator.matchesIfHeader(self.context, self.request):
             raise z3c.dav.interfaces.PreconditionFailed(
                 self.context, message = u"Lock-Token doesn't match request uri")
 

@@ -102,4 +102,5 @@ def test_suite():
                              checker = z3c.etree.testing.xmlOutputChecker,
                              setUp = z3c.etree.testing.etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
+        doctest.DocTestSuite("z3c.dav.ifvalidator"),
         ))

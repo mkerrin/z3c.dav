@@ -63,6 +63,23 @@
      name="UNLOCK"
      />
 
+  <utility
+     factory=".ifvalidator.IFValidator"
+     name="webdav.ifheader"
+     />
+
+  <utility
+     component="z3c.conditionalviews.ConditionalHTTPRequest"
+     provides="zope.app.publication.interfaces.IHTTPRequestFactory"
+     />
+
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.http.IHTTPRequest
+          zope.interface.Interface"
+     factory=".ifvalidator.StateTokens"
+     />
+
   <!--
       Collection of display widget definitions.
     -->

@@ -67,7 +67,7 @@ def LOCK(context, request):
     if not lockmanager.islockable():
         return None
 
-    return LOCKMethod(context, request)
+    return LOCKMethod(context, request, lockmanager)
 
 
 class LOCKMethod(object):
@@ -77,9 +77,10 @@ class LOCKMethod(object):
     interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
-    def __init__(self, context, request):
+    def __init__(self, context, request, lockmanager):
         self.context = context
         self.request = request
+        self.lockmanager = lockmanager
 
     def getTimeout(self):
         """
@@ -100,40 +101,46 @@ class LOCKMethod(object):
 
         No supplied value -> default value.
 
-          >>> LOCKMethod(None, TestRequest(environ = {})).getTimeout()
+          >>> LOCKMethod(None, TestRequest(environ = {}), None).getTimeout()
           datetime.timedelta(0, 720)
 
         Infinity lock timeout is too long so revert to the default timeout.
 
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': 'infinity'})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': 'infinity'}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 720)
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': 'infinite'})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': 'infinite'}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 720)
 
         Specify a lock timeout of 500 seconds.
 
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': 'Second-500'})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': 'Second-500'}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 500)
 
         Invalid and invalid second.
 
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': 'XXX500'})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': 'XXX500'}),
+          ...    None).getTimeout()
           Traceback (most recent call last):
           ...
           BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, u'Invalid TIMEOUT header'
 
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': 'XXX-500'})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': 'XXX-500'}),
+          ...    None).getTimeout()
           Traceback (most recent call last):
           ...
           BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, u'Invalid TIMEOUT header'
 
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': 'Second-500x'})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': 'Second-500x'}),
+          ...    None).getTimeout()
           Traceback (most recent call last):
           ...
           BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, u'Invalid TIMEOUT header'
@@ -142,33 +149,39 @@ class LOCKMethod(object):
 
           >>> timeout = 'Second-%d' %(MAXTIMEOUT + 100)
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': timeout})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': timeout}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 720)
 
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': 'Second-3600'})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': 'Second-3600'}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 3600)
 
         Specify multiple timeout values. The first applicable time type value
         is choosen.
 
           >>> LOCKMethod(None, TestRequest(
-          ...    environ = {'TIMEOUT': 'Infinity, Second-3600'})).getTimeout()
+          ...    environ = {'TIMEOUT': 'Infinity, Second-3600'}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 3600)
 
           >>> timeout = 'Infinity, Second-%d' %(MAXTIMEOUT + 10)
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': timeout})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': timeout}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 720)
 
           >>> timeout = 'Second-1200, Second-450, Second-500'
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': timeout})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': timeout}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 1200)
 
           >>> timeout = 'Second-%d, Second-450' %(MAXTIMEOUT + 10)
           >>> LOCKMethod(None,
-          ...    TestRequest(environ = {'TIMEOUT': timeout})).getTimeout()
+          ...    TestRequest(environ = {'TIMEOUT': timeout}),
+          ...    None).getTimeout()
           datetime.timedelta(0, 450)
 
         """
@@ -210,15 +223,16 @@ class LOCKMethod(object):
 
           >>> from zope.publisher.browser import TestRequest
 
-          >>> LOCKMethod(None, TestRequest()).getDepth()
+          >>> LOCKMethod(None, TestRequest(), None).getDepth()
           'infinity'
-          >>> LOCKMethod(None, TestRequest(environ = {'DEPTH': '0'})).getDepth()
+          >>> LOCKMethod(
+          ...    None, TestRequest(environ = {'DEPTH': '0'}), None).getDepth()
           '0'
           >>> LOCKMethod(None, TestRequest(
-          ...    environ = {'DEPTH': 'infinity'})).getDepth()
+          ...    environ = {'DEPTH': 'infinity'}), None).getDepth()
           'infinity'
           >>> LOCKMethod(None, TestRequest(
-          ...    environ = {'DEPTH': '1'})).getDepth()
+          ...    environ = {'DEPTH': '1'}), None).getDepth()
           Traceback (most recent call last):
           ...
           BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, u"Invalid depth header. Must be either '0' or 'infinity'"
@@ -267,9 +281,7 @@ class LOCKMethod(object):
         return etree.tostring(propel)
 
     def handleLockRefresh(self):
-        lockmanager = z3c.dav.interfaces.IDAVLockmanager(self.context)
-
-        if not lockmanager.islocked():
+        if not self.lockmanager.islocked():
             raise z3c.dav.interfaces.PreconditionFailed(
                 self.context, message = u"Context is not locked.")
 
@@ -278,7 +290,7 @@ class LOCKMethod(object):
                 self.context, message = u"Lock-Token doesn't match request uri")
 
         timeout = self.getTimeout()
-        lockmanager.refreshlock(timeout)
+        self.lockmanager.refreshlock(timeout)
 
     def handleLock(self):
         errors = []
@@ -326,14 +338,12 @@ class LOCKMethod(object):
         else:
             owner_str = None
 
-        lockmanager = z3c.dav.interfaces.IDAVLockmanager(self.context)
-
         try:
-            lockmanager.lock(scope = lockscope_str,
-                             type = locktype_str,
-                             owner = owner_str,
-                             duration = timeout,
-                             depth = depth)
+            self.lockmanager.lock(scope = lockscope_str,
+                                  type = locktype_str,
+                                  owner = owner_str,
+                                  duration = timeout,
+                                  depth = depth)
         except z3c.dav.interfaces.AlreadyLocked, error:
             errors.append(error)
 
@@ -358,7 +368,7 @@ def UNLOCK(context, request):
     if not lockmanager.islockable():
         return None
 
-    return UNLOCKMethod(context, request)
+    return UNLOCKMethod(context, request, lockmanager)
 
 
 class UNLOCKMethod(object):
@@ -368,9 +378,10 @@ class UNLOCKMethod(object):
     interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
-    def __init__(self, context, request):
+    def __init__(self, context, request, lockmanager):
         self.context = context
         self.request = request
+        self.lockmanager = lockmanager
 
     def UNLOCK(self):
         locktoken = self.request.getHeader("lock-token", "")
@@ -381,15 +392,15 @@ class UNLOCKMethod(object):
             raise z3c.dav.interfaces.BadRequest(
                 self.request, message = u"No lock-token header supplied")
 
-        lockmanager = z3c.dav.interfaces.IDAVLockmanager(self.context)
-        activelock = component.getMultiAdapter((self.context, self.request),
-                                               IActiveLock)
-        if not lockmanager.islocked() or activelock.locktoken[0] != locktoken:
+        activelock = component.getMultiAdapter(
+            (self.context, self.request), IActiveLock)
+        if not self.lockmanager.islocked() or \
+               activelock.locktoken[0] != locktoken:
             raise z3c.dav.interfaces.ConflictError(
                 self.context, message = "object is locked or the lock isn't" \
                                         " in the scope the passed.")
 
-        lockmanager.unlock()
+        self.lockmanager.unlock()
 
         self.request.response.setStatus(204)
         return ""

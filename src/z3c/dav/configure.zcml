@@ -292,7 +292,7 @@
 
     <bookchapter
        id="z3c.dav.datamodel"
-       title="WebDAV Data Model"
+       title="Data model"
        doc_path="datamodel.txt"
        parent="z3c.dav"
        />

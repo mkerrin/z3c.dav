@@ -1,5 +1,5 @@
 =================
-WebDAV Properties
+WebDAV data model
 =================
 
 .. contents::
@@ -7,38 +7,39 @@ WebDAV Properties
 Introduction
 ============
 
-The WebDAV data model consists of properties. Properties are name, value
-pairs whose name is a URI and whose value is a well formed XML fragment. All
-the WebDAV properties are split up into two categories, "live" and "dead"
-properties. Al live property is a property who has either some its semantics
-or syntax enforced by the server. A dead property has its syntax and semantics
-enforced by the client, and the server merely records the value of the property
-verbatim.
+The WebDAV data model is the set of properties defined on a resource.
+Properties are name, value pairs whose name is a URI and whose value is a
+well formed XML fragment. All the WebDAV properties are split up into two
+categories, "live" and "dead" properties. A live property is a property who
+has either some its semantics or syntax enforced by the server. A dead
+property has its syntax and semantics enforced by the client, and the server
+merely records the value of the property verbatim.
 
-Dead properties are just stored, edited or deleted through a adapter
-*z3c.dav.interfaces.IOpaquePropertyStorage* adapter. This just stores the
-data sent through a PROPPATCH request, performing no checks on the value of
-the data sent.
-
-Live properties are declared in advanace by declaring a utility which
+Live properties are declared in advance by declaring a utility which
 implements *z3c.dav.interfaces.IDAVProperty*. *IAVProperty* is just a data
-structure containing all the information neccessary to process a request.
+structure containing all the information necessary to process a request.
 This information includes:
 
-+ iface - a storage interface used to look up an adapter implementing
++ __name__ and namespace - specify the together specify the name of the
+  property.
 
-+ field - used to validate the data sent through PROPPATCH
++ iface - a storage interface used to look up an adapter which knows how
+  to get or set the value of this property.
 
-+ restricted - 
++ field - used to validate the data sent through PROPPATCH request.
 
-+ custom_widget / custom_input_widget - 
++ restricted - a boolean indicting if this property should be displayed in
+  response to a `allprop` PROPFIND request.
 
-+ restricted - 
++ custom_widget and custom_input_widget - specifies custom widgets needed
+  to render and parse the property. If either value is None then we look up
+  an *IDAVWidget* or *IDAVInputWidget* adapter of the field specified in this
+  data structure and the request object.
 
 This document will describe how Zope maintains and queries the WebDAV data
-model for all content objects within it, and how you has a developer can
-extend this model to include your own properties which can then be rendered
-or modified via the PROPFIND and PROPPATCH methods respectively.
+model for all content objects, and how you has a developer can extend this
+model to include your own properties which can then be rendered or modified
+via the PROPFIND and PROPPATCH methods respectively.
 
 Live properties
 ===============
@@ -90,9 +91,9 @@ Now we must declare and register a named utility implementing *IDAVProperty*.
   >>> component.getGlobalSiteManager().registerUtility(
   ...    ageProp, z3c.dav.interfaces.IDAVProperty, "{examplens:}age")
 
-It order for it to be defined there must be exist a multi-adapter from the
-resource to *IAgeStorage*. This allows some properties to be defined for a
-one resource and not an other.
+It order for it to be defined there must exist a multi-adapter from the
+resource, and request to *IAgeStorage*. This allows some properties to be
+defined for a one resource and not an other.
 
 Initially for our resource we have no defined properties, since we haven't
 yet implemented the storage adapter.
@@ -157,7 +158,7 @@ Finally the *z3c.dav.properties.getAllProperties* method contains one entry:
   ...    z3c.dav.properties.getAllProperties(democontent, request)]
   ['examplens:, age']
 
-Clean up Live Properties Test
+Clean up live properties test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By removing the storage adapter the above `age` property disappears.
@@ -172,8 +173,13 @@ By removing the storage adapter the above `age` property disappears.
   ...
   PropertyNotFound: {examplens:}age
 
-Dead Properties
+Dead properties
 ===============
+
+Dead properties are managede through a
+*z3c.dav.interfaces.IOpaquePropertyStorage* adapter. This just stores the
+data sent through a PROPPATCH request, performing no checks on the value of
+the data sent.
 
 Dead properties are handled just slightly differently. We first need to setup
 a *z3c.dav.properties.IOpaquePropertyStorage* adapter for our demo content.
@@ -226,7 +232,7 @@ we can now set and get any dead properties.
 But since no data has being stored for the `{examplens:}deadprop` property,
 it really doesn't exist yet even though we can get the property. If we want
 to call `getProperty` but not to generate the property we change the value
-of the keyword arguement `exists` to True.
+of the keyword argument `exists` to True.
 
   >>> z3c.dav.properties.getProperty(
   ...    democontent, request, dpname, exists = True)
@@ -254,7 +260,7 @@ Now set some data.
   >>> prop is not None
   True
 
-Grouping Properties
+Grouping properties
 ===================
 
 Instead of writing multiple storage adapters, we can group properties into
@@ -357,7 +363,7 @@ previous tests.
   >>> props
   ['deadprop', 'name', 'title']
 
-Cleanup Test
+Cleanup test
 ============
 
   >>> component.getGlobalSiteManager().unregisterAdapter(

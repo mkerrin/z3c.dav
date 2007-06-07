@@ -560,6 +560,8 @@ class IDAVLockmanager(interface.Interface):
         recurse through all the subitems locking them has you go.
 
         Raise a AlreadyLockedError if some resource is already locked.
+
+        Return the locktoken associated with the token that we just created.
         """
 
     def refreshlock(timeout):
@@ -567,9 +569,10 @@ class IDAVLockmanager(interface.Interface):
         Refresh to lock token associated with this resource.
         """
 
-    def unlock():
+    def unlock(locktoken):
         """
-        Unlock the current context.
+        Find the lock token on this resource with the same locktoken as the
+        argument and unlock it.
         """
 
     def islocked():

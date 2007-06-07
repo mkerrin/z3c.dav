@@ -47,7 +47,7 @@ from zope import interface
 import z3c.etree
 import z3c.dav.interfaces
 import z3c.dav.properties
-from z3c.dav.coreproperties import IActiveLock, IDAVSupportedlock
+from z3c.dav.coreproperties import IDAVLockdiscovery, IDAVSupportedlock
 import z3c.dav.utils
 import ifvalidator
 
@@ -252,13 +252,10 @@ class LOCKMethod(object):
         refreshlock = False
 
         if self.request.xmlDataSource is None:
-            errors = self.handleLockRefresh()
+            self.handleLockRefresh()
             refreshlock = True
         else: # Body => try to lock the resource
-            errors = self.handleLock()
-
-        if errors:
-            raise z3c.dav.interfaces.WebDAVErrors(self.context, errors)
+            locktoken = self.handleLock()
 
         etree = z3c.etree.getEngine()
 
@@ -269,14 +266,10 @@ class LOCKMethod(object):
         propel = etree.Element(etree.QName("DAV:", "prop"))
         propel.append(davwidget.render())
 
-        activelock = component.getMultiAdapter((self.context, self.request),
-                                               IActiveLock)
-
         self.request.response.setStatus(200)
         self.request.response.setHeader("Content-Type", "application/xml")
         if not refreshlock:
-            self.request.response.setHeader("Lock-Token",
-                                            "<%s>" % activelock.locktoken[0])
+            self.request.response.setHeader("Lock-Token", "<%s>" % locktoken)
 
         return etree.tostring(propel)
 
@@ -293,7 +286,7 @@ class LOCKMethod(object):
         self.lockmanager.refreshlock(timeout)
 
     def handleLock(self):
-        errors = []
+        locktoken = None
 
         xmlsource = self.request.xmlDataSource
         if xmlsource.tag != "{DAV:}lockinfo":
@@ -339,15 +332,15 @@ class LOCKMethod(object):
             owner_str = None
 
         try:
-            self.lockmanager.lock(scope = lockscope_str,
-                                  type = locktype_str,
-                                  owner = owner_str,
-                                  duration = timeout,
-                                  depth = depth)
+            locktoken = self.lockmanager.lock(scope = lockscope_str,
+                                              type = locktype_str,
+                                              owner = owner_str,
+                                              duration = timeout,
+                                              depth = depth)
         except z3c.dav.interfaces.AlreadyLocked, error:
-            errors.append(error)
+            raise z3c.dav.interfaces.WebDAVErrors(self.context, [error])
 
-        return errors
+        return locktoken
 
 ################################################################################
 #
@@ -393,14 +386,14 @@ class UNLOCKMethod(object):
                 self.request, message = u"No lock-token header supplied")
 
         activelock = component.getMultiAdapter(
-            (self.context, self.request), IActiveLock)
+            (self.context, self.request), IDAVLockdiscovery).lockdiscovery
         if not self.lockmanager.islocked() or \
-               activelock.locktoken[0] != locktoken:
+               locktoken not in [ltoken.locktoken[0] for ltoken in activelock]:
             raise z3c.dav.interfaces.ConflictError(
                 self.context, message = "object is locked or the lock isn't" \
                                         " in the scope the passed.")
 
-        self.lockmanager.unlock()
+        self.lockmanager.unlock(locktoken)
 
         self.request.response.setStatus(204)
         return ""

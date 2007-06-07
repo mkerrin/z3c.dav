@@ -104,7 +104,8 @@ can test for.
   ...            'duration': duration,
   ...            'depth': depth}
   ...        print "Locked the resource."
-  ...    def unlock(self):
+  ...        return 'urn:resourcelocktoken'
+  ...    def unlock(self, locktoken):
   ...        self.context._lockinfo = None
   ...        print "Unlocked the resource."
 
@@ -209,15 +210,15 @@ an `UnprocessableError`.
 
 Now enough of the errors that can occur, we will now lock the resource.
 
-  >>> errors = LOCK(resource, TestWebDAVRequest(
+  >>> locktoken = LOCK(resource, TestWebDAVRequest(
   ...    body = """<?xml version="1.0" encoding="utf-8" ?>
   ... <D:lockinfo xmlns:D="DAV:">
   ...   <D:lockscope><D:exclusive/></D:lockscope>
   ...   <D:locktype><D:write/></D:locktype>
   ... </D:lockinfo>""")).handleLock()
   Locked the resource.
-  >>> errors
-  []
+  >>> locktoken
+  'urn:resourcelocktoken'
 
   >>> manager = DAVLockmanager(resource)
   >>> manager.islocked()
@@ -230,7 +231,7 @@ just contains all the info need to set up the lock.
   {'owner': None, 'scope': 'exclusive', 'duration': datetime.timedelta(0, 720), 'type': 'write', 'depth': 'infinity'}
   >>> resource._lockinfo = None # unlocks the resource.
 
-  >>> errors = LOCK(resource, TestWebDAVRequest(
+  >>> locktoken = LOCK(resource, TestWebDAVRequest(
   ...    body = """<?xml version="1.0" encoding="utf-8" ?>
   ... <D:lockinfo xmlns:D="DAV:">
   ...   <D:lockscope><D:exclusive/></D:lockscope>
@@ -240,8 +241,8 @@ just contains all the info need to set up the lock.
   ...   </D:owner>
   ... </D:lockinfo>""")).handleLock()
   Locked the resource.
-  >>> errors
-  []
+  >>> locktoken
+  'urn:resourcelocktoken'
   >>> lockinfo = resource._lockinfo
   >>> print lockinfo['owner'] #doctest:+XMLDATA
   <owner xmlns="DAV:">
@@ -260,7 +261,7 @@ The depth parameter defaults to 'infinity' but could also specify a zero depth.
 
   >>> resource._lockinfo = None
 
-  >>> errors = LOCK(resource, TestWebDAVRequest(
+  >>> locktoken = LOCK(resource, TestWebDAVRequest(
   ...    environ = {'DEPTH': '0'},
   ...    body = """<?xml version="1.0" encoding="utf-8" ?>
   ... <D:lockinfo xmlns:D="DAV:">
@@ -271,8 +272,8 @@ The depth parameter defaults to 'infinity' but could also specify a zero depth.
   ...   </D:owner>
   ... </D:lockinfo>""")).handleLock()
   Locked the resource.
-  >>> errors
-  []
+  >>> locktoken
+  'urn:resourcelocktoken'
   >>> lockinfo = resource._lockinfo
   >>> print lockinfo['owner'] #doctest:+XMLDATA
   <owner xmlns="DAV:">
@@ -290,7 +291,7 @@ The depth parameter defaults to 'infinity' but could also specify a zero depth.
 Now if the resource is already locked then the `handleLock` returns an
 `z3c.dav.interfaces.AlreadyLocked` error.
 
-  >>> errors = LOCK(resource, TestWebDAVRequest(
+  >>> LOCK(resource, TestWebDAVRequest(
   ...    body = """<?xml version="1.0" encoding="utf-8" ?>
   ... <D:lockinfo xmlns:D="DAV:">
   ...   <D:lockscope><D:exclusive/></D:lockscope>
@@ -299,8 +300,9 @@ Now if the resource is already locked then the `handleLock` returns an
   ...     <D:href>http://example.org/~ejw/contact.html</D:href>
   ...   </D:owner>
   ... </D:lockinfo>""")).handleLock()
-  >>> errors #doctest:+ELLIPSIS
-  [<z3c.dav.interfaces.AlreadyLocked instance at ...>]
+  Traceback (most recent call last):
+  ...
+  WebDAVErrors
 
 LOCK
 ----

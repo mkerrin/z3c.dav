@@ -39,6 +39,8 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
+import time
+import random
 import datetime
 
 from zope import component
@@ -53,6 +55,16 @@ import ifvalidator
 
 MAXTIMEOUT = (2L ** 32) - 1
 DEFAULTTIMEOUT = 12 * 60L
+
+_randGen = random.Random(time.time())
+
+def generateLocktoken():
+    """
+    Simple utility method to generate a opaque lock token.
+    """
+    return "opaquelocktoken:%s-%s-00105A989226:%.03f" % \
+           (_randGen.random(), _randGen.random(), time.time())
+
 
 @component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 @interface.implementer(z3c.dav.interfaces.IWebDAVMethod)

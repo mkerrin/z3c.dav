@@ -188,7 +188,8 @@ class IActiveLock(ILockEntry):
                                 which refers to the lock.""",
               ),
         required = False,
-        readonly = True)
+        readonly = True,
+        max_length = 1)
 
     lockroot = schema.URI(
         title = u"Lock root",

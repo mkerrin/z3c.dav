@@ -104,7 +104,7 @@ can test for.
   ...            'duration': duration,
   ...            'depth': depth}
   ...        print "Locked the resource."
-  ...        return 'urn:resourcelocktoken'
+  ...        return 'opaquelocktoken:resourcelocktoken'
   ...    def unlock(self, locktoken):
   ...        self.context._lockinfo = None
   ...        print "Unlocked the resource."
@@ -218,7 +218,7 @@ Now enough of the errors that can occur, we will now lock the resource.
   ... </D:lockinfo>""")).handleLock()
   Locked the resource.
   >>> locktoken
-  'urn:resourcelocktoken'
+  'opaquelocktoken:resourcelocktoken'
 
   >>> manager = DAVLockmanager(resource)
   >>> manager.islocked()
@@ -242,7 +242,7 @@ just contains all the info need to set up the lock.
   ... </D:lockinfo>""")).handleLock()
   Locked the resource.
   >>> locktoken
-  'urn:resourcelocktoken'
+  'opaquelocktoken:resourcelocktoken'
   >>> lockinfo = resource._lockinfo
   >>> print lockinfo['owner'] #doctest:+XMLDATA
   <owner xmlns="DAV:">
@@ -273,7 +273,7 @@ The depth parameter defaults to 'infinity' but could also specify a zero depth.
   ... </D:lockinfo>""")).handleLock()
   Locked the resource.
   >>> locktoken
-  'urn:resourcelocktoken'
+  'opaquelocktoken:resourcelocktoken'
   >>> lockinfo = resource._lockinfo
   >>> print lockinfo['owner'] #doctest:+XMLDATA
   <owner xmlns="DAV:">
@@ -385,7 +385,7 @@ transaction.
   ...    @property
   ...    def lockroot(self):
   ...        return "http://localhost/resource"
-  ...    _locktoken = ['urn:resourcelocktoken']
+  ...    _locktoken = ['opaquelocktoken:resourcelocktoken']
   ...    @property
   ...    def locktoken(self):
   ...        return self._locktoken
@@ -461,7 +461,7 @@ First we note that the owner element is optional.
         <locktype><write /></locktype>
         <depth>infinity</depth>
         <timeout>Second-720</timeout>
-        <locktoken><href>urn:resourcelocktoken</href></locktoken>
+        <locktoken><href>opaquelocktoken:resourcelocktoken</href></locktoken>
         <lockroot>http://localhost/resource</lockroot>
       </activelock>
     </lockdiscovery>
@@ -471,7 +471,7 @@ First we note that the owner element is optional.
   >>> request.response.getHeader("Content-type")
   'application/xml'
   >>> request.response.getHeader("Lock-token")
-  '<urn:resourcelocktoken>'
+  '<opaquelocktoken:resourcelocktoken>'
 
 When rendering the `{DAV:}lockdiscovery` XML element the timeout and locktoken
 data can be known. This is handy information if you are implementing a custom
@@ -494,7 +494,7 @@ lock mechanism.
     </activelock>
   </lockdiscovery>
 
-  >>> Activelock._locktoken = ['urn:resourcelocktoken']
+  >>> Activelock._locktoken = ['opaquelocktoken:resourcelocktoken']
 
 Unlock the resource and try again with the owner element included in the
 request.
@@ -523,7 +523,7 @@ request.
           <href>http://example.org/~ejw/contact.html</href>
         </owner>
         <timeout>Second-720</timeout>
-        <locktoken><href>urn:resourcelocktoken</href></locktoken>
+        <locktoken><href>opaquelocktoken:resourcelocktoken</href></locktoken>
         <lockroot>http://localhost/resource</lockroot>
       </activelock>
     </lockdiscovery>
@@ -533,7 +533,7 @@ request.
   >>> request.response.getHeader("Content-type")
   'application/xml'
   >>> request.response.getHeader("Lock-token")
-  '<urn:resourcelocktoken>'
+  '<opaquelocktoken:resourcelocktoken>'
 
 handleLockRefresh
 -----------------
@@ -559,7 +559,7 @@ called.
   PreconditionFailed: Lock-Token doesn't match request uri
 
   >>> LOCK(resource, TestWebDAVRequest(
-  ...    environ = {'IF': '<urn:wrong-resourcelocktoken>'})).handleLockRefresh()
+  ...    environ = {'IF': '<opaquelocktoken:wrong-resourcelocktoken>'})).handleLockRefresh()
   Traceback (most recent call last):
   ...
   PreconditionFailed: Lock-Token doesn't match request uri
@@ -567,7 +567,7 @@ called.
 Now refresh the lock info but without a timeout so it doesn't change.
 
   >>> LOCK(resource, TestWebDAVRequest(
-  ...    environ = {'IF': '<urn:resourcelocktoken>'})).handleLockRefresh()
+  ...    environ = {'IF': '<opaquelocktoken:resourcelocktoken>'})).handleLockRefresh()
   Traceback (most recent call last):
   ...
   PreconditionFailed: Lock-Token doesn't match request uri
@@ -577,7 +577,7 @@ request object after parsing the if header, with the results of the
 conditional.
 
   >>> request = TestWebDAVRequest(
-  ...    environ = {'IF': '(<urn:resourcelocktoken>)'})
+  ...    environ = {'IF': '(<opaquelocktoken:resourcelocktoken>)'})
   >>> validator.valid(resource, request, None)
   True
   >>> LOCK(resource, request).handleLockRefresh()
@@ -592,7 +592,7 @@ conditional.
   'infinity'
 
   >>> request = TestWebDAVRequest(
-  ...    environ = {'IF': '(<urn:resourcelocktoken>)',
+  ...    environ = {'IF': '(<opaquelocktoken:resourcelocktoken>)',
   ...               'TIMEOUT': 'Second-1440'})
   >>> validator.valid(resource, request, None)
   True
@@ -612,7 +612,7 @@ method is called and assuming that everything else is OK then the lock token
 gets refreshed and the `{DAV:}lockdiscovery` property is rendered and
 returned.
 
-  >>> request = TestWebDAVRequest(environ = {'IF': '(<urn:resourcelocktoken>)'})
+  >>> request = TestWebDAVRequest(environ = {'IF': '(<opaquelocktoken:resourcelocktoken>)'})
   >>> validator.valid(resource, request, None)
   True
   >>> respbody = LOCK(resource, request).LOCK()
@@ -645,7 +645,7 @@ and the lock token timeout is updated with this value.
         </owner>
         <timeout>Second-720</timeout>
         <locktoken>
-          <href>urn:resourcelocktoken</href>
+          <href>opaquelocktoken:resourcelocktoken</href>
         </locktoken>
         <lockroot>http://localhost/resource</lockroot>
       </activelock>
@@ -658,7 +658,7 @@ and the lock token timeout is updated with this value.
 
 Similar if we specify a timeout header.
 
-  >>> request = TestWebDAVRequest(environ = {'IF': '(<urn:resourcelocktoken>)',
+  >>> request = TestWebDAVRequest(environ = {'IF': '(<opaquelocktoken:resourcelocktoken>)',
   ...                                  'TIMEOUT': 'Second-1440'})
   >>> validator.valid(resource, request, None)
   True
@@ -684,7 +684,7 @@ Similar if we specify a timeout header.
         </owner>
         <timeout>Second-1440</timeout>
         <locktoken>
-          <href>urn:resourcelocktoken</href>
+          <href>opaquelocktoken:resourcelocktoken</href>
         </locktoken>
         <lockroot>http://localhost/resource</lockroot>
       </activelock>
@@ -741,7 +741,7 @@ We need to be test this again later - as we get the same error when resource
 is finally locked.
 
   >>> UNLOCK(resource, TestWebDAVRequest(
-  ...    environ = {'LOCK_TOKEN': '<urn:wrong-resourcelocktoken>'})).UNLOCK()
+  ...    environ = {'LOCK_TOKEN': '<opaquelocktoken:wrong-resourcelocktoken>'})).UNLOCK()
   Traceback (most recent call last):
   ...
   ConflictError: object is locked or the lock isn't in the scope the passed.
@@ -749,7 +749,7 @@ is finally locked.
 Now successfully unlock the object.
 
   >>> request = TestWebDAVRequest(
-  ...    environ = {'LOCK_TOKEN': '<urn:resourcelocktoken>'})
+  ...    environ = {'LOCK_TOKEN': '<opaquelocktoken:resourcelocktoken>'})
   >>> respbody = UNLOCK(resource, request).UNLOCK()
   Unlocked the resource.
   >>> respbody

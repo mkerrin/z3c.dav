@@ -71,9 +71,21 @@ STATE_ANNOTS = "z3c.conditionalviews.stateresults"
 
 class IStateTokens(zope.interface.Interface):
 
+    schemes = zope.schema.List(
+        title = u"State token schemes",
+        description = \
+                    u"List of possible state schemes producible by the system")
+
     tokens = zope.schema.List(
         title = u"State tokens",
         description = u"List of the current state tokens.")
+
+
+class IFStateToken(object):
+
+    def __init__(self, scheme, token):
+        self.scheme = scheme
+        self.token = token
 
 
 class ListCondition(object):
@@ -135,13 +147,12 @@ class IFValidator(object):
       ...    zope.interface.implements(IStateTokens)
       ...    def __init__(self, context, request, view):
       ...        self.context = context
+      ...    schemes = ('', 'opaquetoken')
       ...    @property
       ...    def tokens(self):
       ...        context = removeSecurityProxy(self.context) # ???
       ...        if getattr(context, '_tokens', None) is not None:
       ...            return context._tokens
-      ...        if context and context.__name__:
-      ...            return [context.__name__]
       ...        return []
       >>> zope.component.getGlobalSiteManager().registerAdapter(
       ...    Statetokens, (None, TestRequest, None))
@@ -175,6 +186,7 @@ class IFValidator(object):
     Firstly nothing matches the <DAV:no-lock> state token.
 
       >>> resource = Demo('test')
+      >>> resource._tokens = ['test']
       >>> validator.valid(resource, request, None)
       False
 
@@ -265,7 +277,7 @@ class IFValidator(object):
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'invalidlocktoken': False}}
+      {'/test': {'invalidlocktoken': True}}
 
     Combined entity / state tokens
     ------------------------------
@@ -284,6 +296,24 @@ class IFValidator(object):
       >>> request._environ['IF'] = '(<nolocktoken> ["yy"]) (["xx"])'
       >>> validator.valid(resource, request, None)
       True
+
+    Now if the resource isn't locked and has no state tokens associated with
+    it, then the request must be valid.
+
+      >>> resource._tokens = []
+      >>> request._environ['IF'] = '(<locktoken>)'
+      >>> validator.valid(resource, request, None)
+      True
+      >>> getStateResults(request)
+      {'/test': {'locktoken': True}}
+
+    But we if the condition in the state token contains a state token belong
+    to the URL scheme that we don't know about then the condition false, and
+    in this case the header evaluation fails.
+
+      >>> request._environ['IF'] = '(<DAV:no-lock>)'
+      >>> validator.valid(resource, request, None)
+      False
 
     Resources
     =========
@@ -310,7 +340,7 @@ class IFValidator(object):
     would require more setup.
 
       >>> request.setPublication(ZopePublication(None))
-      >>> request._environ['REQUEST_METHOD'] = 'FROG'
+      >>> request._environ['REQUEST_METHOD'] = 'PUT'
 
     Test that we can find the locked resource from the demo resource.
 
@@ -322,8 +352,11 @@ class IFValidator(object):
       >>> resource.__name__
       'locked'
 
-    The state tokens for all content objects is there `__name__` attribute.
+    Setup all the state tokens for all content objects to be their `__name__`
+    attribute.
 
+      >>> demo._tokens = ['demo']
+      >>> locked._tokens = ['locked']
       >>> request._environ['IF'] = '<http://localhost/locked> (<demo>)'
       >>> validator.valid(demo, request, None)
       False
@@ -339,16 +372,16 @@ class IFValidator(object):
 
       >>> request._environ['IF'] = '<http://localhost/missing> (<locked>)'
       >>> validator.valid(demo, request, None)
-      False
+      True
 
     In this case when we try to match against `(Not <locked>)` but we stored
     state is still matched.
 
       >>> request._environ['IF'] = '<http://localhost/missing> (Not <locked>)'
       >>> validator.valid(demo, request, None)
-      True
+      False
       >>> getStateResults(request)
-      {'/missing': {'locked': False}}
+      {}
 
     If we have specify multiple resources then we need to parse the
     whole `IF` header so that the state results method knows about the
@@ -367,9 +400,16 @@ class IFValidator(object):
     True, but if we matched any resources / state tokens before the parse
     error then we should still store this.
 
-      >>> request._environ['IF'] = '</ddd> (hi)'
+    Need to clear the request annotation for these tests to run.
+
+      >>> request = TestRequest(environ = {'IF': '</ddd> (hi)'})
+      >>> request.setPublication(ZopePublication(None))
+      >>> request._environ['REQUEST_METHOD'] = 'PUT'
+
       >>> validator.valid(demo, request, None)
-      True
+      Traceback (most recent call last):
+      ...
+      BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, "Invalid IF header: unclosed '(' list production"
       >>> getStateResults(request)
       {}
 
@@ -378,15 +418,19 @@ class IFValidator(object):
 
       >>> request._environ['IF'] = '</ddd> (<hi>) (there)'
       >>> validator.valid(demo, request, None)
-      True
+      Traceback (most recent call last):
+      ...
+      BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, "Invalid IF header: unclosed '(' list production"
       >>> getStateResults(request)
-      {'/ddd': {'hi': False}}
+      {}
 
     Try what happens when there is no starting '(' for a list.
 
       >>> request._environ['IF'] = '</ddd> <hi>'
       >>> validator.valid(demo, request, None)
-      True
+      Traceback (most recent call last):
+      ...
+      BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, "Invalid IF header: unexcepted charactor found, expected a '('"
       >>> getStateResults(request)
       {}
 
@@ -394,17 +438,21 @@ class IFValidator(object):
 
       >>> request._environ['IF'] = '</ddd> (<hi>) <hi>'
       >>> validator.valid(demo, request, None)
-      True
+      Traceback (most recent call last):
+      ...
+      BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, "Invalid IF header: unexcepted charactor found, expected a '('"
       >>> getStateResults(request)
-      {'/ddd': {'hi': False}}
+      {}
 
     Expected a '(' in the IF header.
 
       >>> request._environ['IF'] = '</ddd> (<hi>) hi'
       >>> validator.valid(demo, request, None)
-      True
+      Traceback (most recent call last):
+      ...
+      BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, "Invalid IF header: unexcepted charactor found, expected a '('"
       >>> getStateResults(request)
-      {'/ddd': {'hi': False}}
+      {}
 
     matchesIfHeader method
     ======================
@@ -412,7 +460,7 @@ class IFValidator(object):
     Test the state of the context to see if matches the list of states
     supplied in the `IF` header.
 
-      >>> request = TestRequest(environ = {'REQUEST_METHOD': 'FROG'})
+      >>> request = TestRequest(environ = {'REQUEST_METHOD': 'PUT'})
       >>> request.setPublication(ZopePublication(None))
 
     When the resource is not locked and hence are no state tokens for the
@@ -427,7 +475,8 @@ class IFValidator(object):
       >>> matchesIfHeader(demo, request)
       False
 
-    XXX - Not sure if this is right.
+    Specifying a `DAV:no-lock` state token always causes the validation
+    to succeed.
 
       >>> request._environ['IF'] = '</demo> (NOT <DAV:no-lock>)'
       >>> validator.valid(demo, request, None)
@@ -537,16 +586,18 @@ class IFValidator(object):
             conditions = []
 
             if not header or header[0] != "(":
-                raise ValueError(
-                    "IF Header contains invalid data - expected '('")
+                raise z3c.dav.interfaces.BadRequest(
+                    request, "Invalid IF header: unexcepted charactor" \
+                             " found, expected a '('")
             header = header[1:].lstrip()
 
             while header:
                 listitem = condition.match(header)
                 if not listitem:
                     if header[0] != ")":
-                        raise ValueError(
-                            "IF Header contains invalid data - expected ')'")
+                        raise z3c.dav.interfaces.BadRequest(
+                            request,
+                            "Invalid IF header: unclosed '(' list production")
                     header = header[1:].lstrip()
                     break
 
@@ -554,6 +605,10 @@ class IFValidator(object):
 
                 notted = bool(listitem.group("notted"))
                 state_token = listitem.group("state_token")
+                if state_token:
+                    state_token = IFStateToken(
+                        urlparse.urlparse(state_token)[0], state_token)
+
                 entity_tag = listitem.group("entity_tag")
                 if entity_tag:
                     if entity_tag[2:] == "W/":
@@ -585,65 +640,84 @@ class IFValidator(object):
         stateresults = {}
         conditionalresult = False
 
-        try:
-            for resource, conditions in self.get_next_list(request):
-                if resource:
-                    try:
-                        context = self.get_resource(context, request, resource)
-                    except zope.publisher.interfaces.NotFound, error:
-                        # resource is still set so can't match the conditions
-                        # against the current context.
-                        context = None
+        for resource, conditions in self.get_next_list(request):
+            if resource:
+                try:
+                    context = self.get_resource(context, request, resource)
+                except zope.publisher.interfaces.NotFound:
+                    # resource is still set so can't match the conditions
+                    # against the current context.
+                    context = None
 
-                if context is not None:
-                    path = zope.traversing.api.getPath(context)
-                else:
-                    path = urlparse.urlparse(resource)[2]
+            if context is not None:
+                path = zope.traversing.api.getPath(context)
+            else:
+                path = None
 
-                etag = zope.component.queryMultiAdapter(
-                    (context, request, view),
-                    z3c.conditionalviews.interfaces.IETag,
-                    default = None)
-                etag = etag and etag.etag
+            etag = zope.component.queryMultiAdapter(
+                (context, request, view),
+                z3c.conditionalviews.interfaces.IETag,
+                default = None)
+            etag = etag and etag.etag
 
-                states = zope.component.queryMultiAdapter(
-                    (context, request, view), IStateTokens, default = [])
-                states = states and states.tokens
+            states = zope.component.queryMultiAdapter(
+                (context, request, view), IStateTokens, default = None)
+            statetokens = states and states.tokens or []
 
-                listresult = True
-                for condition in conditions:
-                    # Each List production describes a series of conditions.
-                    # The whole list evaluates to true if and only if each
-                    # condition evaluates to true.
-                    if condition.entity_tag:
-                        # XXX - should we store these entity tags for
-                        # validation later on, like we do with the state
-                        # tokens.
-                        result = etag and etag == condition.entity_tag or False
-                    elif condition.state_token:
-                        result = condition.state_token in states or False
-                        stateresults.setdefault(path, {})
-                        stateresults[path][condition.state_token] = result
+            listresult = True
+            for condition in conditions:
+                # Each List production describes a series of conditions.
+                # The whole list evaluates to true if and only if each
+                # condition evaluates to true.
+                if condition.entity_tag:
+                    result = etag and \
+                             etag == condition.entity_tag or False
+
+                    if condition.notted:
+                        result = not result
+                elif condition.state_token:
+                    # Each state token is a URL. So first we test to see
+                    # if we understand the scheme of the state token
+                    # supplied in this condition. If we don't understand
+                    # the scheme then this condition evaluates to False.
+                    if states and \
+                           condition.state_token.scheme in states.schemes:
+                        # Now if the context as at least one state token
+                        # then we compare the state token supplied in this
+                        # condition by simple string comparison.
+                        if statetokens and \
+                               condition.state_token.token not in \
+                                  statetokens:
+                            result = False
+                        else:
+                            result = True
                     else:
-                        # This should not happen :-)
-                        raise TypeError(
-                            "Either the entity_tag or the state_token needs "
-                            "to be set on a condition")
+                        # Un-known state token scheme so this condition
+                        # is False.
+                        result = False
                     if condition.notted:
                         result = not result
 
-                    listresult &= result
+                    if path is not None:
+                        # There is no way we can compare the state results
+                        # for this request at a later date if we don't
+                        # have a path.
+                        stateresults.setdefault(path, {})
+                        stateresults[path][
+                            condition.state_token.token] = result
+                else:
+                    raise TypeError(
+                        "Either the entity_tag or the state_token"
+                        " needs to be set on a condition")
 
-                if listresult:
-                    # Each No-tag-list and Tagged-list production may contain
-                    # one or more Lists. They evaluate to true if and only if
-                    # any of the contained lists evaluates to true. That is if
-                    # listresult is True then the tag-lists are True.
-                    conditionalresult = True
-        except ValueError:
-            # Error in parsing the IF header, so as with all conditional
-            # requests we default to True - that is a valid request.
-            conditionalresult = True
+                listresult &= result
+
+            if listresult:
+                # Each No-tag-list and Tagged-list production may contain
+                # one or more Lists. They evaluate to true if and only if
+                # any of the contained lists evaluates to true. That is if
+                # listresult is True then the tag-lists are True.
+                conditionalresult = True
 
         # We may have states and entity tags that failed, but we don't want
         # to reparse the if header to figure this out.
@@ -686,7 +760,7 @@ def matchesIfHeader(context, request):
                 if parsedstates.get(locktoken, False):
                     return True
             if parsedstates:
-                # If the 
+                # None of the statetokens in the passed.
                 return False
             islocked = True
         context = getattr(context, "__parent__", None)
@@ -752,15 +826,16 @@ class StateTokens(object):
         self.context = context
         self.request = request
 
+    schemes = ("opaquelocktoken",)
+
     @property
     def tokens(self):
         lockdiscovery = zope.component.queryMultiAdapter(
             (self.context, self.request),
             z3c.dav.coreproperties.IDAVLockdiscovery)
         lockdiscovery = lockdiscovery and lockdiscovery.lockdiscovery
+        locktokens = []
         if lockdiscovery is not None:
             for activelock in lockdiscovery:
-                locktokens = activelock.locktoken
-                if locktokens:
-                    return locktokens
-        return []
+                locktokens.extend(activelock.locktoken)
+        return locktokens

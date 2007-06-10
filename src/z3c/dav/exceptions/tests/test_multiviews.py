@@ -25,6 +25,7 @@ from zope.interface.verify import verifyObject
 from zope import schema
 from zope import component
 from zope.traversing.browser.interfaces import IAbsoluteURL
+from zope.component.interfaces import IDefaultViewName
 
 import z3c.dav.publisher
 from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
@@ -170,6 +171,15 @@ class TestMSErrorView(unittest.TestCase):
                             (z3c.dav.interfaces.IPropertyNotFound,
                              z3c.dav.interfaces.IWebDAVRequest))
 
+        gsm.registerAdapter(z3c.dav.exceptions.AlreadyLockedErrorView,
+                            (z3c.dav.interfaces.IAlreadyLocked,
+                             z3c.dav.interfaces.IWebDAVRequest),
+                            name = u"index.html")
+        gsm.registerAdapter(u"index.html",
+                            (z3c.dav.interfaces.IAlreadyLocked,
+                             z3c.dav.interfaces.IWebDAVRequest),
+                            IDefaultViewName)
+
     def tearDown(self):
         super(TestMSErrorView, self).tearDown()
 
@@ -185,6 +195,15 @@ class TestMSErrorView(unittest.TestCase):
         gsm.unregisterAdapter(z3c.dav.exceptions.PropertyNotFoundError,
                               (z3c.dav.interfaces.IPropertyNotFound,
                                z3c.dav.interfaces.IWebDAVRequest))
+
+        gsm.unregisterAdapter(z3c.dav.exceptions.AlreadyLockedErrorView,
+                              (z3c.dav.interfaces.IAlreadyLocked,
+                               z3c.dav.interfaces.IWebDAVRequest),
+                              name = u"index.html")
+        gsm.unregisterAdapter(u"index.html",
+                              (z3c.dav.interfaces.IAlreadyLocked,
+                               z3c.dav.interfaces.IWebDAVRequest),
+                              IDefaultViewName)
 
     def test_multi_resource_error_interface(self):
         resource = Resource()
@@ -267,6 +286,19 @@ class TestMSErrorView(unittest.TestCase):
   <ns0:href>/resource</ns0:href>
   <ns0:status>HTTP/1.1 424 Failed Dependency</ns0:status>
 </ns0:response></ns0:multistatus>""")
+
+    def test_one_error_default_view(self):
+        resource = Resource()
+        error = z3c.dav.interfaces.WebDAVErrors(resource)
+        error.append(
+            z3c.dav.interfaces.AlreadyLocked(resource, "Resource is locked"))
+        request = TestRequest()
+
+        view = z3c.dav.exceptions.MultiStatusErrorView(error, request)
+        result = view()
+
+        self.assertEqual(request.response.getStatus(), 423)
+        self.assertEqual(result, "")
 
 
 def test_suite():

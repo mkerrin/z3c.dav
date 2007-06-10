@@ -27,6 +27,7 @@ from zope import schema
 from zope import component
 import zope.publisher.interfaces.http
 from zope.app.http.interfaces import IHTTPException
+import zope.app.publisher.browser
 
 import z3c.dav.interfaces
 import z3c.dav.utils
@@ -93,11 +94,24 @@ class MultiStatusErrorView(object):
         etree = z3c.etree.getEngine()
         multistatus = z3c.dav.utils.MultiStatus()
 
+        if len(self.error.errors) == 1 and \
+               self.error.errors[0].resource == self.error.context:
+            # If have only one error and the context on which we raised the
+            # exception, then we just try and view the default view of the
+            # error.
+            error = self.error.errors[0]
+            name = zope.app.publisher.browser.queryDefaultViewName(
+                error, self.request)
+            if name is not None:
+                view = component.queryMultiAdapter(
+                    (error, self.request), name = name)
+                return view()
+
         seenContext = False
         for error in self.error.errors:
             if error.resource == self.error.context:
                 seenContext = True
-            
+
             davwidget = component.getMultiAdapter(
                 (error, self.request), z3c.dav.interfaces.IDAVErrorWidget)
 
@@ -112,8 +126,7 @@ class MultiStatusErrorView(object):
 
         if not seenContext:
             response = z3c.dav.utils.Response(
-                z3c.dav.utils.getObjectURL(
-                    self.error.context, self.request))
+                z3c.dav.utils.getObjectURL(self.error.context, self.request))
             response.status = 424 # Failed Dependency
             multistatus.responses.append(response)
 

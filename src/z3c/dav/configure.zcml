@@ -74,9 +74,10 @@
      />
 
   <adapter
-     for="zope.interface.Interface
-          zope.publisher.interfaces.http.IHTTPRequest
-          zope.interface.Interface"
+     factory=".ifvalidator.StateTokensForNullResource"
+     />
+
+  <adapter
      factory=".ifvalidator.StateTokens"
      />
 

@@ -181,11 +181,21 @@ class IFValidator(object):
       ...    def getPath(self):
       ...        return '/' + self.context.__name__
       >>> zope.component.getGlobalSiteManager().registerAdapter(
-      ...    PhysicallyLocatable, (zope.interface.Interface,))
+      ...    PhysicallyLocatable, (Demo,))
+
+    We store the results of the parsing of the state tokens in a dictionary
+    structure. Its keys are the path to the object and its value is a
+    dictionary of locktokens and whether or not the `NOT` keyword was present.
+
+      >>> def getStateResults(request):
+      ...    reqannot = zope.annotation.interfaces.IAnnotations(request)
+      ...    return reqannot.get(STATE_ANNOTS, {})
 
     Firstly nothing matches the <DAV:no-lock> state token.
 
       >>> resource = Demo('test')
+      >>> validator.valid(resource, request, None)
+      False
       >>> resource._tokens = ['test']
       >>> validator.valid(resource, request, None)
       False
@@ -258,7 +268,7 @@ class IFValidator(object):
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'locktoken': True}}
+      {'/test': {'locktoken': False}}
 
     If there are multiple locktokens associated with a resource, we only
     are interested in the token that is represented in the IF header, so we
@@ -268,10 +278,12 @@ class IFValidator(object):
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'locktoken': True}}
+      {'/test': {'locktoken': False}}
       >>> request._environ['IF'] = '(NOT <locktoken>)'
       >>> validator.valid(resource, request, None)
       False
+      >>> getStateResults(request)
+      {'/test': {'locktoken': True}}
 
       >>> request._environ['IF'] = '(NOT <invalidlocktoken>)'
       >>> validator.valid(resource, request, None)
@@ -297,15 +309,15 @@ class IFValidator(object):
       >>> validator.valid(resource, request, None)
       True
 
-    Now if the resource isn't locked and has no state tokens associated with
-    it, then the request must be valid.
+    Now if the resource isn't locked, that is it has no state tokens
+    associated with it, then the request must be valid.
 
       >>> resource._tokens = []
       >>> request._environ['IF'] = '(<locktoken>)'
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'locktoken': True}}
+      {'/test': {'locktoken': False}}
 
     But we if the condition in the state token contains a state token belong
     to the URL scheme that we don't know about then the condition false, and
@@ -381,7 +393,7 @@ class IFValidator(object):
       >>> validator.valid(demo, request, None)
       False
       >>> getStateResults(request)
-      {}
+      {'/missing': {'locked': True}}
 
     If we have specify multiple resources then we need to parse the
     whole `IF` header so that the state results method knows about the
@@ -391,7 +403,114 @@ class IFValidator(object):
       >>> validator.valid(demo, request, None)
       True
       >>> getStateResults(request)
-      {'/locked': {'notlocked': False}, '/demo': {'demo': True}}
+      {'/locked': {'notlocked': False}, '/demo': {'demo': False}}
+
+    Null resources
+    ==============
+
+      >>> import zope.app.http.put
+
+    When validating certain tagged-list productions we can get back
+    zope.app.http.interfaces.INullResource objects from the get_resource
+    method, plus the original context can be a null resource too.
+
+      >>> class Demo2(Demo):
+      ...    def publishTraverse(self, request, name):
+      ...        child = self.children.get(name, None)
+      ...        if child:
+      ...            return child
+      ...        if request.method in ('PUT', 'LOCK', 'MKCOL'):
+      ...            return zope.app.http.put.NullResource(self, name)
+      ...        raise zope.publisher.interfaces.NotFound(self, name, request)
+
+      >>> root2 = Demo2('')
+      >>> locked2 = Demo2('locked')
+      >>> root2.add(locked2)
+      >>> demo2 = Demo2('demo')
+      >>> root2.add(demo2)
+
+      >>> class PhysicallyLocatable2(PhysicallyLocatable):
+      ...    def getRoot(self):
+      ...        return root2
+      >>> zope.component.getGlobalSiteManager().registerAdapter(
+      ...    PhysicallyLocatable2, (Demo2,))
+
+    Now generate a request with an IF header, and LOCK method that fails to
+    find a resource, we get a NullResource instead of a NotFound exception.
+
+      >>> request = TestRequest(environ = {'IF': '</missing> (<locked>)',
+      ...                                  'REQUEST_METHOD': 'LOCK'})
+      >>> request.setPublication(ZopePublication(None))
+
+      >>> missingdemo2 = validator.get_resource(demo2, request, '/missing')
+      >>> missingdemo2 = removeSecurityProxy(missingdemo2)
+      >>> missingdemo2  #doctest:+ELLIPSIS
+      <zope.app.http.put.NullResource object at ...>
+
+    Now this request evaluates to true and we have no state tokens since, we
+    have no path to compare the results against.
+
+      >>> validator.valid(demo2, request, None)
+      True
+      >>> getStateResults(request)
+      {'/missing': {'locked': False}}
+      >>> matchesIfHeader(demo2, request)
+      True
+      >>> matchesIfHeader(missingdemo2, request)
+      True
+
+    But if the root2 folder is locked then we consider our selves to be in
+    the scope of the lock.
+
+      >>> root2._tokens = ['locked']
+      >>> validator.valid(demo2, request, None)
+      True
+      >>> getStateResults(request)
+      {'/missing': {'locked': False}}
+      >>> matchesIfHeader(demo2, request)
+      False
+      >>> validator.valid(missingdemo2, request, None)
+      True
+      >>> getStateResults(request)
+      {'/missing': {'locked': False}}
+      >>> matchesIfHeader(missingdemo2, request)
+      True
+
+    Even though the correct lock token is supplied in the `IF` header for the
+    root2 resource, it is on for an alternative resource and the root object
+    is not within the scope of that indirect lock token.
+
+      >>> matchesIfHeader(root2, request)
+      False
+
+      >>> root2._tokens = ['otherlocktoken']
+      >>> validator.valid(demo2, request, None)
+      True
+      >>> getStateResults(request)
+      {'/missing': {'locked': False}}
+
+      >>> validator.valid(missingdemo2, request, None)
+      True
+      >>> matchesIfHeader(missingdemo2, request)
+      True
+
+      >>> root2._tokens = ['locked']
+      >>> validator.valid(missingdemo2, request, None)
+      True
+
+    When a null resource is created it if sometimes replaced by an other
+    persistent object. If this is a PUT method then the object created
+    should be locked with an indirect lock token, associated with the same
+    root token as the folder, so as the matchesIfHeader method returns
+    True.
+
+      >>> demo3 = Demo('missing')
+      >>> root2.add(demo3)
+      >>> matchesIfHeader(demo3, request)
+      False
+      >>> demo3._tokens = ['locked']
+      >>> matchesIfHeader(demo3, request)
+      True
 
     Invalid data
     ============
@@ -563,7 +682,10 @@ class IFValidator(object):
       ...    Statetokens, (None, TestRequest, None))
       True
       >>> zope.component.getGlobalSiteManager().unregisterAdapter(
-      ...    PhysicallyLocatable, (zope.interface.Interface,))
+      ...    PhysicallyLocatable, (Demo,))
+      True
+      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
+      ...    PhysicallyLocatable2, (Demo2,))
       True
 
     """
@@ -649,10 +771,11 @@ class IFValidator(object):
                     # against the current context.
                     context = None
 
-            if context is not None:
-                path = zope.traversing.api.getPath(context)
+            if context is None or \
+                   zope.app.http.interfaces.INullResource.providedBy(context):
+                path = resource and urlparse.urlparse(resource)[2]
             else:
-                path = None
+                path = zope.traversing.api.getPath(context)
 
             etag = zope.component.queryMultiAdapter(
                 (context, request, view),
@@ -680,21 +803,23 @@ class IFValidator(object):
                     # if we understand the scheme of the state token
                     # supplied in this condition. If we don't understand
                     # the scheme then this condition evaluates to False.
-                    if states and \
-                           condition.state_token.scheme in states.schemes:
-                        # Now if the context as at least one state token
-                        # then we compare the state token supplied in this
-                        # condition by simple string comparison.
-                        if statetokens and \
-                               condition.state_token.token not in \
-                                  statetokens:
-                            result = False
+                    if states:
+                        if condition.state_token.scheme in states.schemes:
+                            # Now if the context as at least one state token
+                            # then we compare the state token supplied in this
+                            # condition by simple string comparison.
+                            if statetokens and \
+                                   condition.state_token.token not in \
+                                       statetokens:
+                                result = False
+                            else:
+                                result = True
                         else:
-                            result = True
+                            # Un-known state token scheme so this condition
+                            # is False.
+                            result = False
                     else:
-                        # Un-known state token scheme so this condition
-                        # is False.
-                        result = False
+                        result = True
                     if condition.notted:
                         result = not result
 
@@ -704,7 +829,7 @@ class IFValidator(object):
                         # have a path.
                         stateresults.setdefault(path, {})
                         stateresults[path][
-                            condition.state_token.token] = result
+                            condition.state_token.token] = condition.notted
                 else:
                     raise TypeError(
                         "Either the entity_tag or the state_token"
@@ -733,11 +858,6 @@ class IFValidator(object):
         pass # do nothing
 
 
-def getStateResults(request):
-    reqannot = zope.annotation.interfaces.IAnnotations(request)
-    return reqannot.get(STATE_ANNOTS, {})
-
-
 def matchesIfHeader(context, request):
     # Test the state of the context to see if matches the list of states
     # supplied in the `IF` header.
@@ -757,7 +877,7 @@ def matchesIfHeader(context, request):
             parsedstates = stateresults.get(
                 zope.traversing.api.getPath(context), {})
             for locktoken in states:
-                if parsedstates.get(locktoken, False):
+                if locktoken in parsedstates:
                     return True
             if parsedstates:
                 # None of the statetokens in the passed.
@@ -821,6 +941,9 @@ class StateTokens(object):
 
     """
     zope.interface.implements(IStateTokens)
+    zope.component.adapts(zope.interface.Interface,
+                          zope.publisher.interfaces.http.IHTTPRequest,
+                          zope.interface.Interface)
 
     def __init__(self, context, request, view):
         self.context = context
@@ -839,3 +962,17 @@ class StateTokens(object):
             for activelock in lockdiscovery:
                 locktokens.extend(activelock.locktoken)
         return locktokens
+
+
+class StateTokensForNullResource(object):
+    zope.interface.implements(IStateTokens)
+    zope.component.adapts(zope.app.http.interfaces.INullResource,
+                          zope.publisher.interfaces.http.IHTTPRequest,
+                          zope.interface.Interface)
+
+    def __init__(self, context, request, view):
+        pass
+
+    schemes = ("opaquelocktoken",)
+
+    tokens = []

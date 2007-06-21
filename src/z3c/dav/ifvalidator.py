@@ -225,6 +225,10 @@ class IFValidator(object):
       >>> validator.valid(resource, request, None)
       True
 
+      >>> request._environ['IF'] = '([W/"xx"])'
+      >>> validator.valid(resource, request, None)
+      True
+
     The request object gets annotated with the results of the matching any
     state tokens, so that I only need to parse this data once. But since only
     entity tags have been passed so far the request object will not be
@@ -249,14 +253,18 @@ class IFValidator(object):
       >>> validator.valid(resource, request, None)
       True
 
+      >>> request._environ['IF'] = '(NOT [W/"xx"])'
+      >>> validator.valid(resource, request, None)
+      False
+
       >>> getStateResults(request)
       {}
 
     State-tokens
     ------------
 
-    If the request is False then we have no need for the state tokens but
-    they just default then to an empty dictionary.
+    We collect the parsed state tokens from the `IF` as we find them and
+    store them as an annotation on the request object.
 
       >>> request = TestRequest(environ = {'IF': '(<locktoken>)'})
       >>> validator.valid(resource, request, None)
@@ -347,7 +355,7 @@ class IFValidator(object):
 
     The request needs more setup in order for the traversal to work. We
     need and a publication object and since our TestRequets object extends
-    the BrowserRequest pretend that the method is `FROG` so that the
+    the BrowserRequest pretend that the method is `PUT` so that the
     traversal doesn't try and find a default view for the resource. This
     would require more setup.
 
@@ -373,9 +381,6 @@ class IFValidator(object):
       >>> validator.valid(demo, request, None)
       False
       >>> request._environ['IF'] = '<http://localhost/locked> (<locked>)'
-      >>> validator.valid(demo, request, None)
-      True
-      >>> request._environ['IF'] = '<http://localhost/demo> (<demo>)'
       >>> validator.valid(demo, request, None)
       True
 
@@ -447,8 +452,9 @@ class IFValidator(object):
       >>> missingdemo2  #doctest:+ELLIPSIS
       <zope.app.http.put.NullResource object at ...>
 
-    Now this request evaluates to true and we have no state tokens since, we
-    have no path to compare the results against.
+    Now this request evaluates to true and we take the path from the `IF`
+    header and store the state tokens in the request annotation against
+    this path.
 
       >>> validator.valid(demo2, request, None)
       True
@@ -459,8 +465,7 @@ class IFValidator(object):
       >>> matchesIfHeader(missingdemo2, request)
       True
 
-    But if the root2 folder is locked then we consider our selves to be in
-    the scope of the lock.
+    The demo object is not locked so it automatically matches the if header.
 
       >>> root2._tokens = ['locked']
       >>> validator.valid(demo2, request, None)
@@ -468,12 +473,6 @@ class IFValidator(object):
       >>> getStateResults(request)
       {'/missing': {'locked': False}}
       >>> matchesIfHeader(demo2, request)
-      False
-      >>> validator.valid(missingdemo2, request, None)
-      True
-      >>> getStateResults(request)
-      {'/missing': {'locked': False}}
-      >>> matchesIfHeader(missingdemo2, request)
       True
 
     Even though the correct lock token is supplied in the `IF` header for the
@@ -506,9 +505,6 @@ class IFValidator(object):
 
       >>> demo3 = Demo('missing')
       >>> root2.add(demo3)
-      >>> matchesIfHeader(demo3, request)
-      False
-      >>> demo3._tokens = ['locked']
       >>> matchesIfHeader(demo3, request)
       True
 
@@ -595,7 +591,7 @@ class IFValidator(object):
       False
 
     Specifying a `DAV:no-lock` state token always causes the validation
-    to succeed.
+    to succeed, but the locktoken is never in the header so we don't match it.
 
       >>> request._environ['IF'] = '</demo> (NOT <DAV:no-lock>)'
       >>> validator.valid(demo, request, None)
@@ -615,7 +611,9 @@ class IFValidator(object):
 
     The parsed state token for the demo object does not match that in the
     `IF` header. Note that we needed to specify the <DAV:no-lock> in order
-    for the request to be valid.
+    for the request to be valid. In this case we the request will be
+    executed but there are event handlers that might call the matchesIfHeader
+    which does return False since we don't have any locktoken.
 
       >>> request._environ['IF'] = '</demo> (<falsetest>) (NOT <DAV:no-lock>)'
       >>> validator.valid(demo, request, None)
@@ -623,9 +621,9 @@ class IFValidator(object):
       >>> matchesIfHeader(demo, request)
       False
 
-    The state token for the root object matches that in the `IF` header. But
-    since the demo object is a child of the root token then it is also
-    assumed to match the parsed data.
+    The state token for the root object matches that in the `IF` header. And
+    this as special meaning for any children of the root folder, if there
+    state token is the same then we get a match.
 
       >>> root._tokens = ['roottest']
       >>> request._environ['IF'] = '</> (<roottest>)'
@@ -633,17 +631,10 @@ class IFValidator(object):
       True
       >>> matchesIfHeader(root, request)
       True
-      >>> matchesIfHeader(demo, request)
-      True
 
-    Since the state of the root token does not match the information in the
-    `IF` header, and the demo object fails to match the data.
+    Demo is locked with the state token 'test' and so doesnot validate against
+    the `IF` header.
 
-      >>> request._environ['IF'] = '</> (<falseroottest>) (NOT <DAV:no-lock>)'
-      >>> validator.valid(demo, request, None)
-      True
-      >>> matchesIfHeader(root, request)
-      False
       >>> matchesIfHeader(demo, request)
       False
 
@@ -658,16 +649,33 @@ class IFValidator(object):
       >>> matchesIfHeader(demo, request)
       True
 
-    Even tough the demo objects state failed to match the `IF` header, its
-    parent did.
+    If the demo objects is for example indirectly locked against a root, and
+    its state token appears in the `IF` header for a parent object then
+    the demo object matches the `IF` header.
 
-      >>> request._environ['IF'] = '</> (<roottest>) </demo> (<demofalsetest>)'
-      >>> validator.valid(demo, request, None)
+      >>> request._environ['IF'] = '</> (<roottest>)'
+      >>> validator.valid(root, request, None)
       True
       >>> matchesIfHeader(root, request)
       True
       >>> matchesIfHeader(demo, request)
       False
+
+    But if the demo object is not locked then it passes.
+
+      >>> demo._tokens = ['roottest']
+      >>> validator.valid(demo, request, None)
+      True
+      >>> matchesIfHeader(root, request)
+      True
+      >>> matchesIfHeader(demo, request)
+      True
+
+      >>> root._tokens = ['notroottest']
+      >>> matchesIfHeader(root, request)
+      False
+      >>> matchesIfHeader(demo, request)
+      True
 
     Cleanup
     =======
@@ -733,8 +741,8 @@ class IFValidator(object):
 
                 entity_tag = listitem.group("entity_tag")
                 if entity_tag:
-                    if entity_tag[2:] == "W/":
-                        entity_tag = entity[2:]
+                    if entity_tag[:2] == "W/":
+                        entity_tag = entity_tag[2:]
                     entity_tag = entity_tag[1:-1]
 
                 conditions.append(
@@ -859,33 +867,41 @@ class IFValidator(object):
 
 
 def matchesIfHeader(context, request):
-    # Test the state of the context to see if matches the list of states
-    # supplied in the `IF` header.
+    # Test the state of the context to see if matches the list of state
+    # tokens supplied in the `IF` header.
     reqannot = zope.annotation.interfaces.IAnnotations(request)
     stateresults = reqannot.get(STATE_ANNOTS, {})
 
-    islocked = False
-    while context:
-        # We need to specify a None view here. This means that IStateTokens
-        # adapters need to be reqistered for all views. But in some situations
-        # it might be nice to restrict a state token adapter to specific views,
-        # for example is the view's context is a null resource.
-        states = zope.component.queryMultiAdapter(
-            (context, request, None), IStateTokens, default = [])
-        states = states and states.tokens
-        if states:
+    # We need to specify a None view here. This means that IStateTokens
+    # adapters need to be reqistered for all views. But in some situations
+    # it might be nice to restrict a state token adapter to specific views,
+    # for example is the view's context is a null resource.
+    states = zope.component.queryMultiAdapter(
+        (context, request, None), IStateTokens, default = [])
+    states = states and states.tokens
+    if states:
+        parsedstates = stateresults.get(
+            zope.traversing.api.getPath(context), {})
+        while not parsedstates and \
+               getattr(context, "__parent__", None) is not None:
+            # An object might be indirectly locked so we can test its parents
+            # to see if any of there state tokens are listed in the `IF`
+            # header.
+            context = context.__parent__
             parsedstates = stateresults.get(
                 zope.traversing.api.getPath(context), {})
-            for locktoken in states:
-                if locktoken in parsedstates:
-                    return True
-            if parsedstates:
-                # None of the statetokens in the passed.
-                return False
-            islocked = True
-        context = getattr(context, "__parent__", None)
+        for locktoken in states:
+            # From the spec:
+            # Note that for the purpose of submitting the lock token the
+            # actual form doesn't matter; what's relevant is that the
+            # lock token appears in the If header, and that the If header
+            # itself evaluates to true.
+            if locktoken in parsedstates:
+                return True
+        return False
 
-    return not islocked
+    # No state tokens so this automatically matches.
+    return True
 
 
 class StateTokens(object):

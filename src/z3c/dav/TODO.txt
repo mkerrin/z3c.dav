@@ -2,22 +2,6 @@
 TODO
 ====
 
-Miscellaneous
-=============
-
-The *zope.webdav* package needs to be split up into *zope.webdav* and
-*zope.app.webdav*. This is because there are a lot of stuff in here that
-is Zope3 specific and when migrating this to Zope2 we don't need them. I
-started this process but gave up after a while. Hence we have the
-z3-configure.zcml file. This should be a basis for *zope.app.webdav*.
-
-We need better integration with Zope3. That includes providing better support
-for caching (ETags), and all the "IF*" headers defined in the HTTP and WebDAV
-specs. Also the exceptions and there views are not neccessarly WebDAV specific
-so they could maybe be moved into there own package. So developers of other
-related packages can re-use them. Note that this will probable require some
-rewrite of the current exceptions if this is ever going to happen.
-
 Error Handling
 --------------
 
@@ -42,20 +26,12 @@ Error Handling
 Locking
 -------
 
-- update the timeout header parsing to support multiple arguments.
-
-- shared lock tokens need testing.
-
 - test locking default timeout - this is an application specific problem. So
   the IDAVLockmanager should be dealing with accepting or rejecting the
   requested timeout.
 
 - lock on unmapped urls doesn't work yet. Zope3 will need to be changed
   to get this to work.
-
-- more unit tests. Names on lockingutils.DAVActiveLock,
-  lockingutils.DAVLockdiscovery. In locking the UNLOCK, LOCK method needs
-  testing.
 
 Misc
 ----
@@ -69,8 +45,6 @@ Misc
 
 - propfind, proppatch - if any property update, view goes horrible wrong then
   a 500 status code needs to be updated.
-
-- egg support
 
 Finally
 =======

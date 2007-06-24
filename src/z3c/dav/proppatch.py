@@ -23,7 +23,7 @@ __docformat__ = 'restructuredtext'
 import zope.event
 from zope import interface
 from zope import component
-from zope.lifecycleevent import ObjectModifiedEvent
+import zope.lifecycleevent
 
 import z3c.etree
 from zope.security.interfaces import Unauthorized
@@ -62,8 +62,9 @@ class PROPPATCH(object):
         propErrors = []
         # properties - list of all the properties that we handled correctly.
         properties = []
-        # changed - boolean indicating whether any content changed or not.
-        changed = False
+        # changedAttributes - list of IModificationDescription objects
+        #                     indicting what as changed during this request
+        changedAttributes = []
         for update in xmldata:
             if update.tag not in ("{DAV:}set", "{DAV:}remove"):
                 continue
@@ -77,9 +78,9 @@ class PROPPATCH(object):
             for prop in props:
                 try:
                     if update.tag == "{DAV:}set":
-                        changed |= self.handleSet(prop)
+                        changedAttributes.extend(self.handleSet(prop))
                     else: # update.tag == "{DAV:}remove"
-                        changed |= self.handleRemove(prop)
+                        changedAttributes.extend(self.handleRemove(prop))
                 except Unauthorized:
                     # If the use doesn't have the correct permission to modify
                     # a property then we need to re-raise the Unauthorized
@@ -102,8 +103,10 @@ class PROPPATCH(object):
 
             raise errors # this kills the current transaction.
 
-        if changed:
-            zope.event.notify(ObjectModifiedEvent(self.context))
+        if changedAttributes:
+            zope.event.notify(
+                zope.lifecycleevent.ObjectModifiedEvent(
+                    self.context, *changedAttributes))
 
         url = z3c.dav.utils.getObjectURL(self.context, self.request)
         response = z3c.dav.utils.Response(url)
@@ -117,7 +120,8 @@ class PROPPATCH(object):
 
         self.request.response.setStatus(207)
         self.request.response.setHeader("content-type", "application/xml")
-        return etree.tostring(multistatus())
+        ## Is UTF-8 encoding ok here or is there a better way of doing this.
+        return etree.tostring(multistatus(), encoding = "utf-8")
 
     def handleSet(self, prop):
         davprop, adapter = z3c.dav.properties.getProperty(
@@ -138,8 +142,9 @@ class PROPPATCH(object):
 
         if field.get(adapter) != value:
             field.set(adapter, value)
-            return True
-        return False
+            return [
+                zope.lifecycleevent.Attributes(davprop.iface, davprop.__name__)]
+        return []
 
     def handleRemove(self, prop):
         davprop = component.queryUtility(
@@ -155,6 +160,7 @@ class PROPPATCH(object):
 
         if deadproperties is not None and deadproperties.hasProperty(prop.tag):
             deadproperties.removeProperty(prop.tag)
-            return True
+            return [zope.lifecycleevent.Sequence(
+                z3c.dav.interfaces.IOpaquePropertyStorage, prop.tag)]
 
-        return False
+        return []

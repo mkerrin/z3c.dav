@@ -29,7 +29,9 @@ from zope import schema
 import zope.schema.interfaces
 from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.security.interfaces import Unauthorized
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent, \
+     ISequence, IAttributes
+import zope.lifecycleevent
 
 import z3c.dav.coreproperties
 import z3c.dav.proppatch
@@ -119,11 +121,13 @@ class PROPPATCHHandler(z3c.dav.proppatch.PROPPATCH):
 
     def handleSet(self, prop):
         self.setprops.append(prop.tag)
-        return True
+        # The unit tests have no idea where the property lives.
+        return [zope.lifecycleevent.Attributes(interface.Interface)]
 
     def handleRemove(self, prop):
         self.removeprops.append(prop.tag)
-        return True
+        # The unit tests have no idea where the property lives.
+        return [zope.lifecycleevent.Attributes(interface.Interface)]
 
 
 class PROPPATCHXmlParsing(unittest.TestCase):
@@ -493,7 +497,13 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertEqual(propp.handleSet(propel), True)
+
+        propset = propp.handleSet(propel)
+        self.assertEqual(len(propset), 1)
+        self.assertEqual(IAttributes.providedBy(propset[0]), True)
+        self.assertEqual(propset[0].interface, IExamplePropertyStorage)
+        self.assertEqual(propset[0].attributes, ("exampletextprop",))
+
         self.assertEqual(resource.text, "Example Text Prop")
 
     def test_handleSetProperty_samevalue(self):
@@ -506,7 +516,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertEqual(propp.handleSet(propel), False)
+        self.assertEqual(propp.handleSet(propel), [])
         self.assertEqual(resource.text, "Text Prop")
 
     def test_handleSet_forbidden_property(self):
@@ -575,7 +585,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertEqual(propp.handleRemove(propel), False)
+        self.assertEqual(propp.handleRemove(propel), [])
 
     def test_event_onsetProperty(self):
         request = TestRequest(
@@ -718,7 +728,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertEqual(propp.handleRemove(propel), False)
+        self.assertEqual(propp.handleRemove(propel), [])
 
     def test_remove_not_there(self):
         etree = z3c.etree.getEngine()
@@ -730,7 +740,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         resource = Resource("Text Prop", 10)
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
-        self.assertEqual(propp.handleRemove(propel), False)
+        self.assertEqual(propp.handleRemove(propel), [])
         self.assertEqual(self.events, [])
 
     def test_remove_prop(self):
@@ -751,7 +761,12 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
 
         propp = z3c.dav.proppatch.PROPPATCH(resource, request)
 
-        self.assertEqual(propp.handleRemove(propel), True)
+        removed = propp.handleRemove(propel)
+        self.assertEqual(len(removed), 1)
+        self.assertEqual(ISequence.providedBy(removed[0]), True)
+        self.assertEqual(
+            removed[0].interface, z3c.dav.interfaces.IOpaquePropertyStorage)
+        self.assertEqual(removed[0].keys, ("{example:}exampledeadprop",))
         self.assertEqual(deadprops.hasProperty(testprop), False)
 
     def test_event_on_remove_property(self):

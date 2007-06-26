@@ -92,7 +92,7 @@ class PROPPATCHTestCase(dav.DAVTestCase):
     <prop>
       <displayname />
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -209,7 +209,7 @@ Jim Whitehead
     <prop>
       <ns1:Author xmlns:ns1="http://ns.example.com/z39.50/" />
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -247,7 +247,7 @@ Jim Whitehead
       <ns1:prop2 xmlns:ns1="example:" />
       <ns1:prop3 xmlns:ns1="example:" />
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -275,7 +275,7 @@ Jim Whitehead
     <prop>
       <displayname />
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -332,7 +332,7 @@ This is a dead property.</X:deadprop>""")
     <prop>
       <ns1:deadprop xmlns:ns1="deadprop:" />
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -357,7 +357,7 @@ This is a dead property.</X:deadprop>""")
     <prop>
       <displayname />
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",

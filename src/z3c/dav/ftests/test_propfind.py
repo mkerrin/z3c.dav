@@ -85,7 +85,7 @@ class PROPFINDTests(dav.DAVTestCase):
     <prop>
       <resourcetype><collection /></resourcetype>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -111,7 +111,7 @@ class PROPFINDTests(dav.DAVTestCase):
       <ns1:exampleintprop xmlns:ns1="DAVtest:" />
       <ns1:unauthprop xmlns:ns1="DAVtest:" />
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -134,7 +134,7 @@ class PROPFINDTests(dav.DAVTestCase):
       <resourcetype><collection /></resourcetype>
       <ns1:exampleintprop xmlns:ns1="DAVtest:">0</ns1:exampleintprop>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -208,7 +208,7 @@ class PROPFINDTests(dav.DAVTestCase):
             self.assertEqual(len(propstats), 1)
             statusresp = response.findall("{DAV:}propstat/{DAV:}status")
             self.assertEqual(len(statusresp), 1)
-            self.assertEqual(statusresp[0].text, "HTTP/1.1 200 OK")
+            self.assertEqual(statusresp[0].text, "HTTP/1.1 200 Ok")
             hrefs = response.findall("{DAV:}href")
             self.assertEqual(len(hrefs), 1)
             allhrefs.append(hrefs[0].text)
@@ -240,7 +240,7 @@ class PROPFINDTests(dav.DAVTestCase):
             self.assertEqual(len(propstats), 1)
             statusresp = response.findall("{DAV:}propstat/{DAV:}status")
             self.assertEqual(len(statusresp), 1)
-            self.assertEqual(statusresp[0].text, "HTTP/1.1 200 OK")
+            self.assertEqual(statusresp[0].text, "HTTP/1.1 200 Ok")
             hrefs = response.findall("{DAV:}href")
             self.assertEqual(len(hrefs), 1)
             allhrefs.append(hrefs[0].text)
@@ -278,7 +278,7 @@ class PROPFINDTests(dav.DAVTestCase):
       <resourcetype><collection /></resourcetype>
       <ns1:testdeadprop xmlns:ns1="examplens:">TEST</ns1:testdeadprop>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -310,7 +310,7 @@ class PROPFINDTests(dav.DAVTestCase):
       <ns1:exampleintprop xmlns:ns1="DAVtest:">0</ns1:exampleintprop>
       <ns1:testdeadprop xmlns:ns1="examplens:">TEST</ns1:testdeadprop>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -333,7 +333,7 @@ class PROPFINDTests(dav.DAVTestCase):
     <prop>
       <displayname>copyright \xc2\xa9 me</displayname>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -366,7 +366,7 @@ This is a dead property.</X:deadprop>""")
       <ns1:deadprop xmlns:ns1="deadprop:">
 This is a dead property.</ns1:deadprop>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -421,7 +421,7 @@ This is a dead property.</ns1:deadprop>
       <resourcetype><collection /></resourcetype>
       <ns1:exampleintprop xmlns:ns1="DAVtest:">0</ns1:exampleintprop>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
 </response>
 </multistatus>""",
@@ -458,7 +458,7 @@ This is a dead property.</ns1:deadprop>
       <resourcetype><collection /></resourcetype>
       <ns1:exampleintprop xmlns:ns1="DAVtest:">0</ns1:exampleintprop>
     </prop>
-    <status>HTTP/1.1 200 OK</status>
+    <status>HTTP/1.1 200 Ok</status>
   </propstat>
   <propstat>
     <prop>

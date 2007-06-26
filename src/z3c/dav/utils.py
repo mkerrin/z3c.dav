@@ -163,10 +163,10 @@ def makedavelement(tagname, text_or_el = None):
 def makestatuselement(status):
     """
       >>> etree.tostring(makestatuselement(200)) #doctest:+XMLDATA
-      '<status xmlns="DAV:">HTTP/1.1 200 OK</status>'
+      '<status xmlns="DAV:">HTTP/1.1 200 Ok</status>'
 
       >>> etree.tostring(makestatuselement(200L)) #doctest:+XMLDATA
-      '<status xmlns="DAV:">HTTP/1.1 200 OK</status>'
+      '<status xmlns="DAV:">HTTP/1.1 200 Ok</status>'
 
     Do we want this?
 
@@ -214,7 +214,7 @@ class Propstat(object):
         <prop>
           <testprop>Test Property</testprop>
         </prop>
-        <status>HTTP/1.1 200 OK</status>
+        <status>HTTP/1.1 200 Ok</status>
       </propstat>
 
       >>> pstat.properties.append(makedavelement(u'test2', u'Second Test'))
@@ -224,7 +224,7 @@ class Propstat(object):
           <testprop>Test Property</testprop>
           <test2>Second Test</test2>
         </prop>
-        <status>HTTP/1.1 200 OK</status>
+        <status>HTTP/1.1 200 Ok</status>
       </propstat>
 
       >>> pstat.responsedescription = u'This is ok'
@@ -234,7 +234,7 @@ class Propstat(object):
           <testprop>Test Property</testprop>
           <test2>Second Test</test2>
         </prop>
-        <status>HTTP/1.1 200 OK</status>
+        <status>HTTP/1.1 200 Ok</status>
         <responsedescription>This is ok</responsedescription>
       </propstat>
 
@@ -245,7 +245,7 @@ class Propstat(object):
           <testprop>Test Property</testprop>
           <test2>Second Test</test2>
         </prop>
-        <status>HTTP/1.1 200 OK</status>
+        <status>HTTP/1.1 200 Ok</status>
         <error>
           <precondition-error />
         </error>
@@ -320,7 +320,7 @@ class Response(object):
       <response xmlns="DAV:">
         <href>/container</href>
         <href>/container2</href>
-        <status>HTTP/1.1 200 OK</status>
+        <status>HTTP/1.1 200 Ok</status>
       </response>
 
     The response XML element can contain a number of Propstat elements
@@ -343,7 +343,7 @@ class Response(object):
           <prop>
             <test1>test one</test1>
           </prop>
-          <status>HTTP/1.1 200 OK</status>
+          <status>HTTP/1.1 200 Ok</status>
         </propstat>
         <propstat>
           <prop>
@@ -361,7 +361,7 @@ class Response(object):
           <prop>
             <test1>test one</test1>
           </prop>
-          <status>HTTP/1.1 200 OK</status>
+          <status>HTTP/1.1 200 Ok</status>
         </propstat>
         <propstat>
           <prop>
@@ -382,7 +382,7 @@ class Response(object):
           <prop>
             <test1>test one</test1>
           </prop>
-          <status>HTTP/1.1 200 OK</status>
+          <status>HTTP/1.1 200 Ok</status>
         </propstat>
         <propstat>
           <prop>
@@ -404,7 +404,7 @@ class Response(object):
           <prop>
             <test1>test one</test1>
           </prop>
-          <status>HTTP/1.1 200 OK</status>
+          <status>HTTP/1.1 200 Ok</status>
         </propstat>
         <propstat>
           <prop>
@@ -448,7 +448,7 @@ class Response(object):
           <prop>
             <testprop>Test Property</testprop>
           </prop>
-          <status>HTTP/1.1 200 OK</status>
+          <status>HTTP/1.1 200 Ok</status>
         </propstat>
       </response>
 
@@ -462,7 +462,7 @@ class Response(object):
             <testprop>Test Property</testprop>
             <testprop2>Test Property Two</testprop2>
           </prop>
-          <status>HTTP/1.1 200 OK</status>
+          <status>HTTP/1.1 200 Ok</status>
         </propstat>
       </response>
 
@@ -475,7 +475,7 @@ class Response(object):
             <testprop>Test Property</testprop>
             <testprop2>Test Property Two</testprop2>
           </prop>
-          <status>HTTP/1.1 200 OK</status>
+          <status>HTTP/1.1 200 Ok</status>
           </propstat>
           <propstat>
             <prop>
@@ -583,7 +583,7 @@ class MultiStatus(object):
             <prop>
               <test1>test one</test1>
             </prop>
-            <status>HTTP/1.1 200 OK</status>
+            <status>HTTP/1.1 200 Ok</status>
           </propstat>
         </response>
         <responsedescription>simple description</responsedescription>
@@ -603,7 +603,7 @@ class MultiStatus(object):
             <prop>
               <test1>test one</test1>
             </prop>
-            <status>HTTP/1.1 200 OK</status>
+            <status>HTTP/1.1 200 Ok</status>
           </propstat>
         </response>
         <response>

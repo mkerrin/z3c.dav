@@ -342,7 +342,7 @@ class PROPPATCHXmlParsing(unittest.TestCase):
       <ns0:getcontenttype xmlns:ns0="DAV:"/>
       <ns0:displayname xmlns:ns0="DAV:"/>
     </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
   </ns0:propstat>
 </ns0:response></ns0:multistatus>""")
 

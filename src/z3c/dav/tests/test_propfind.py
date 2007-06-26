@@ -443,7 +443,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <ns1:exampleintprop xmlns:ns1="DAVtest:"/>
     <ns1:unauthprop xmlns:ns1="DAVtest:"/>
   </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat></ns0:response>""")
 
     def test_renderSelected(self):
@@ -465,7 +465,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
     <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat></ns0:response>""")
 
     def test_renderSelected_notfound(self):
@@ -486,7 +486,7 @@ class PROPFINDTestRender(unittest.TestCase):
   <ns0:prop xmlns:ns0="DAV:">
     <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
   </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat>
 <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
   <ns0:prop xmlns:ns0="DAV:">
@@ -511,7 +511,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <ns0:resourcetype />
     <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat></ns0:response>""")
 
     def test_renderAllProperties_withInclude(self):
@@ -533,7 +533,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <ns0:resourcetype />
     <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat></ns0:response>""")
 
     def test_renderAllProperties_withRestrictedProp(self):
@@ -551,7 +551,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <ns0:resourcetype />
     <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat></ns0:response>""")
 
     def test_renderAllProperties_withRestrictedProp_include(self):
@@ -574,7 +574,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <ns0:resourcetype />
     <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
   </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat></ns0:response>""")
 
     def test_renderBrokenProperty(self):
@@ -626,7 +626,7 @@ class PROPFINDTestRender(unittest.TestCase):
   <prop>
     <ns1:exampletextprop xmlns:ns1="DAVtest:">some text</ns1:exampletextprop>
   </prop>
-  <status>HTTP/1.1 200 OK</status>
+  <status>HTTP/1.1 200 Ok</status>
 </propstat>
 <propstat>
   <prop>
@@ -667,7 +667,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <resourcetype />
     <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
   </prop>
-  <status>HTTP/1.1 200 OK</status>
+  <status>HTTP/1.1 200 Ok</status>
 </propstat>
 </response>""", response)
 
@@ -702,7 +702,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <resourcetype />
     <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
   </prop>
-  <status>HTTP/1.1 200 OK</status>
+  <status>HTTP/1.1 200 Ok</status>
 </propstat>
 <propstat>
   <prop>
@@ -737,7 +737,7 @@ class PROPFINDTestRender(unittest.TestCase):
     <resourcetype />
     <ns1:exampleintprop xmlns:ns1="DAVtest:">10</ns1:exampleintprop>
   </prop>
-  <status>HTTP/1.1 200 OK</status>
+  <status>HTTP/1.1 200 Ok</status>
 </propstat>
 <propstat>
   <prop>
@@ -821,7 +821,7 @@ class PROPFINDRecuseTest(unittest.TestCase):
         <ns0:collection xmlns:ns0="DAV:"/>
       </ns0:resourcetype>
     </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
   </ns0:propstat>
 </ns0:response>
 <ns0:response xmlns:ns0="DAV:">
@@ -832,7 +832,7 @@ class PROPFINDRecuseTest(unittest.TestCase):
         <ns0:collection xmlns:ns0="DAV:"/>
       </ns0:resourcetype>
     </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
   </ns0:propstat>
 </ns0:response>
 <ns0:response xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
@@ -843,7 +843,7 @@ class PROPFINDRecuseTest(unittest.TestCase):
       <ns0:resourcetype xmlns:ns0="DAV:"/>
       <ns01:exampleintprop xmlns:ns0="DAVtest:">4</ns01:exampleintprop>
     </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
   </ns0:propstat>
 </ns0:response>
 <ns0:response xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
@@ -854,7 +854,7 @@ class PROPFINDRecuseTest(unittest.TestCase):
       <ns0:resourcetype xmlns:ns0="DAV:"/>
       <ns01:exampleintprop xmlns:ns0="DAVtest:">2</ns01:exampleintprop>
     </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 OK</ns0:status>
+    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
   </ns0:propstat>
 </ns0:response></ns0:multistatus>
         """)

@@ -3,19 +3,19 @@ WebDAV
 ======
 
 The *z3c.dav* package is an implementation of the WebDAV protocol for Zope3.
-*z3c.dav* only supports the *zope.app.folder* content type, within the core
-RFC2518 protocol, but *z3c.dav* does contain a number of components that help
-developers support WebDAV in their application. These components include
+*z3c.dav* supports the *zope.app.folder* content type, within the scope of the
+core RFC2518 protocol. *z3c.dav* also contains a number of components that
+help developers support WebDAV in their application. These components include
 the ability to handle WebDAV specific errors, to generate multi-status
 responses, and an implementation of all core WebDAV methods exist that use
 zope component to lookup specific adapters that perform the required action.
-For example `locking`_ looks up a IDAVLockmanager to perform the actual
-locking and unlocking of objects. But if the required adapter does not
-exist then a `405 Method Not Allowed` response is returned to the client.
+For example `locking`_ parses the request and then looks up a IDAVLockmanager
+adapter to perform the locking and unlocking of objects. But if the required
+adapter does not exist then a `405 Method Not Allowed` response is returned
+to the client.
 
-In other to support the other standard Zope content types and services that
-might be used within your application the following add on packages are
-available:
+Add-on packages exist to support other standard Zope3 content types and
+services. These include:
 
 * z3c.davapp.zopeappfile
 
@@ -32,19 +32,4 @@ available:
   z3c.dav.
 
 Each of these packages uses an other Zope3 package to provide the underlying
-functionality. For example *z3c.davapp.zopelocking* provides WebDAV locking
-support by implementing a common IDAVLockmanager adapter defined in *z3c.dav*
-which hooks into the z3c.dav locking mechanism to do the actual locking of
-the objects while z3c.dav will parse the request from the client, lookup the
-IDAVLockmanager and call some method on this adapter depending on the request.
-
-More information
-----------------
-
-* `Data model`_
-
-* `Locking`_
-
-.. _data model: z3c.dav.datamodel/@@show.html
-
-.. _locking: z3c.dav.locking/@@show.html
+functionality.

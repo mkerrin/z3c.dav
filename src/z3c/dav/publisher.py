@@ -55,8 +55,12 @@ class WebDAVRequest(z3c.conditionalviews.ConditionalHTTPRequest):
             content_type = parts[0].strip().lower()
             content_type_params = parts[1].strip()
 
+        content_length = self.getHeader("content-length", 0)
+        if content_length:
+            content_length = int(content_length)
+
         if content_type in ("text/xml", "application/xml", None) and \
-               self.getHeader("content-length", 0) > 0:
+               content_length > 0:
             etree = z3c.etree.getEngine()
             try:
                 self.xmlDataSource = etree.parse(self.bodyStream).getroot()

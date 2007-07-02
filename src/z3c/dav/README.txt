@@ -9,7 +9,7 @@ help developers support WebDAV in their application. These components include
 the ability to handle WebDAV specific errors, to generate multi-status
 responses, and an implementation of all core WebDAV methods exist that use
 zope component to lookup specific adapters that perform the required action.
-For example `locking`_ parses the request and then looks up a IDAVLockmanager
+For example locking parses the request and then looks up a IDAVLockmanager
 adapter to perform the locking and unlocking of objects. But if the required
 adapter does not exist then a `405 Method Not Allowed` response is returned
 to the client.

@@ -118,6 +118,25 @@ class TestWebDAVPublisher(unittest.TestCase):
         self.assertRaises(BadRequest, request.processInputs)
         self.assertEqual(request.content_type, None)
 
+    def test_contentLength(self):
+        request = create_request("", {"CONTENT_TYPE": "text/xml",
+                                      "CONTENT_LENGTH": "0"})
+        request.processInputs()
+
+        self.assertEqual(request.content_type, "text/xml")
+        self.assertEqual(request.xmlDataSource, None)
+
+    def test_contentLength2(self):
+        body = """<?xml version="1.0" encoding="utf-8" ?>
+        <somedoc>This is some xml document</somedoc>
+        """
+        request = create_request(body, {"CONTENT_TYPE": "text/xml",
+                                        "CONTENT_LENGTH": str(len(body))})
+        request.processInputs()
+
+        self.assertEqual(request.content_type, "text/xml")
+        self.assert_(request.xmlDataSource is not None)
+
 
 def test_suite():
     return unittest.TestSuite((

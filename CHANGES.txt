@@ -1,0 +1,10 @@
+==================
+Changes in z3c.dav
+==================
+
+0.9.1
+=====
+
+- stricter property validation
+
+- some servers pass the `Content-Length` header value as a string

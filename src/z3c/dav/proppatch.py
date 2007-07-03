@@ -76,6 +76,13 @@ class PROPPATCH(object):
             props = props[0]
 
             for prop in props:
+                if z3c.dav.utils.parseEtreeTag(prop.tag)[0] == "":
+                    # A namespace which is None corresponds to when no prefix
+                    # is set, which I think is fine.
+                    raise z3c.dav.interfaces.BadRequest(
+                        self.request,
+                        u"PROPFIND with invalid namespace declaration in body")
+
                 try:
                     if update.tag == "{DAV:}set":
                         changedAttributes.extend(self.handleSet(prop))

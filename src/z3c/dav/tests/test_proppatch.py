@@ -248,6 +248,51 @@ class PROPPATCHXmlParsing(unittest.TestCase):
         self.assertEqual(propp.setprops, [])
         self.assertEqual(propp.removeprops, [])
 
+    def test_invalid_namespace_prop(self):
+        etree = z3c.etree.getEngine()
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
+        # Manually set up the xmlDataSource as some  etree `parse` method
+        # raise a syntax error with the prop element with an empty namespace
+        # which we are trying to test
+        request.content_type = "application/xml"
+        request.xmlDataSource = etree.fromstring("""<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:" xmlns="DAV:">
+  <set>
+    <prop>
+    </prop>
+  </set>
+</D:propertyupdate>""")
+        prop = etree.Element("{}bar")
+        prop.tag = "{}bar"
+        request.xmlDataSource[0][0].append(prop)
+        propp = PROPPATCHHandler(Resource(), request)
+
+        self.assertRaises(z3c.dav.interfaces.BadRequest,
+                          propp.PROPPATCH)
+
+    def test_none_namespace_prop(self):
+        etree = z3c.etree.getEngine()
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
+        # Manually set up the xmlDataSource as some  etree `parse` method
+        # raise a syntax error with the prop element with an empty namespace
+        # which we are trying to test
+        request.content_type = "application/xml"
+        request.xmlDataSource = etree.fromstring("""<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:" xmlns="DAV:">
+  <set>
+    <prop>
+    </prop>
+  </set>
+</D:propertyupdate>""")
+        prop = etree.Element("bar")
+        prop.tag = "bar"
+        request.xmlDataSource[0][0].append(prop)
+        propp = PROPPATCHHandler(Resource(), request)
+        propp.PROPPATCH()
+
+        self.assertEqual(propp.setprops, ["bar"])
+        self.assertEqual(propp.removeprops, [])
+
     def test_set_one_prop(self):
         request = TestRequest(
             set_properties = "<displayname>Display name</displayname>")

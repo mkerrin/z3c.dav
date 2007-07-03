@@ -98,7 +98,6 @@ class PROPFIND(object):
                     extraArg = includes[0]
             elif properties.tag == "{DAV:}prop":
                 if len(properties) == 0:
-                    ## XXX - does this code correspond to the protocol.
                     propertiesFactory = self.renderAllProperties
                 else:
                     propertiesFactory = self.renderSelectedProperties
@@ -242,6 +241,13 @@ class PROPFIND(object):
             z3c.dav.utils.getObjectURL(ob, req))
 
         for prop in props:
+            if z3c.dav.utils.parseEtreeTag(prop.tag)[0] == "":
+                # A namespace which is None corresponds to when no prefix is
+                # set, which I think is fine.
+                raise z3c.dav.interfaces.BadRequest(
+                    self.request,
+                    u"PROPFIND with invalid namespace declaration in body")
+
             try:
                 davprop, adapter = z3c.dav.properties.getProperty(
                     ob, req, prop.tag, exists = True)

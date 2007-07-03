@@ -468,6 +468,43 @@ class PROPFINDTestRender(unittest.TestCase):
   <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
 </ns0:propstat></ns0:response>""")
 
+    def test_renderSelected_badProperty(self):
+        resource = Resource("some text", 10)
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
+        propf = PROPFIND(None, None)
+
+        etree = z3c.etree.getEngine()
+        props = etree.Element(etree.QName("DAV:", "prop"))
+        prop = etree.Element("{}bar")
+        prop.tag = "{}bar" # lxml ignores the namespace in the above element
+        props.append(prop)
+
+        self.assertRaises(z3c.dav.interfaces.BadRequest,
+                          propf.renderSelectedProperties,
+                          resource, request, props)
+
+    def test_renderSelected_badProperty2(self):
+        resource = Resource("some text", 10)
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
+        propf = PROPFIND(None, None)
+
+        etree = z3c.etree.getEngine()
+        props = etree.Element(etree.QName("DAV:", "prop"))
+        prop = etree.Element("bar")
+        props.append(prop)
+
+        response = propf.renderSelectedProperties(resource, request, props)
+        assertXMLEqual(response(),
+                       """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat>
+  <D:prop>
+    <bar />
+  </D:prop>
+  <D:status>HTTP/1.1 404 Not Found</D:status>
+</D:propstat>
+</D:response>""")
+
     def test_renderSelected_notfound(self):
         resource = Resource("some text", 10)
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})

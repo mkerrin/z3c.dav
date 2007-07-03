@@ -42,6 +42,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
     information out of a 207 Multi-Status response. The idea is to make
     writing tests for different WebDAV components a lot easier.
 
+      >>> import copy
       >>> from zope.publisher.http import HTTPResponse
       >>> etree = z3c.etree.getEngine()
 
@@ -88,7 +89,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       >>> msresponses = wrapped.getMSResponses()
       >>> len(msresponses)
       1
-      >>> print etree.tostring(msresponses[0]) #doctest:+XMLDATA
+      >>> print etree.tostring(copy.copy(msresponses[0])) #doctest:+XMLDATA
       <response xmlns="DAV:" />
 
     Now use the `getMSResponse(href)` to get a response element who's href
@@ -107,7 +108,8 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       >>> wrapped._body = None # turn off cache
 
       >>> print etree.tostring(
-      ...    wrapped.getMSResponse('/testfile.txt')) #doctest:+XMLDATA
+      ...    copy.copy(
+      ...        wrapped.getMSResponse('/testfile.txt'))) #doctest:+XMLDATA
       <response xmlns="DAV:">
         <href>/testfile.txt</href>
       </response>
@@ -165,7 +167,8 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       KeyError: 'No propstats element with status 200'
 
       >>> print etree.tostring(
-      ...    wrapped.getMSPropstat('/testfile.txt', 404)) #doctest:+XMLDATA
+      ...    copy.copy(
+      ...        wrapped.getMSPropstat('/testfile.txt', 404))) #doctest:+XMLDATA
       <propstat xmlns="DAV:">
         <status>HTTP/1.1 404 Not Found</status>
       </propstat>

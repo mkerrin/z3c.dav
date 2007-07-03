@@ -39,6 +39,7 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
+import copy
 import time
 import random
 import datetime
@@ -339,7 +340,7 @@ class LOCKMethod(object):
 
         owner = xmlsource.find("{DAV:}owner")
         if owner is not None: # The owner element is optional.
-            owner_str = etree.tostring(owner)
+            owner_str = etree.tostring(copy.copy(owner))
         else:
             owner_str = None
 

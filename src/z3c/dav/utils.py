@@ -185,12 +185,15 @@ def parseEtreeTag(tag):
       >>> parseEtreeTag('{DAV:}prop')
       ['DAV:', 'prop']
 
+      >>> parseEtreeTag('{}prop')
+      ['', 'prop']
+
       >>> parseEtreeTag('prop')
       (None, 'prop')
 
     """
-    if tag[0] == '{':
-        return tag[1:].split('}')
+    if tag[0] == "{":
+        return tag[1:].split("}")
     return None, tag
 
 ################################################################################

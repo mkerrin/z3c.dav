@@ -343,6 +343,7 @@ def propfindSetUp():
                         (IUnauthorized,
                          z3c.dav.interfaces.IWebDAVRequest))
 
+
 def propfindTearDown():
     etreeTearDown()
 
@@ -433,18 +434,18 @@ class PROPFINDTestRender(unittest.TestCase):
         # call the response to render to an XML fragment.
         response = response()
 
-        assertXMLEqual(response, """<ns0:response xmlns:ns0="DAV:">
-<ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
+        assertXMLEqual(response, """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat xmlns:D1="DAVtest:">
+  <D:prop>
     <ns1:brokenprop xmlns:ns1="DAVtest:"/>
     <ns1:exampletextprop xmlns:ns1="DAVtest:"/>
-    <ns0:resourcetype />
+    <D:resourcetype />
     <ns1:exampleintprop xmlns:ns1="DAVtest:"/>
     <ns1:unauthprop xmlns:ns1="DAVtest:"/>
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-</ns0:propstat></ns0:response>""")
+  </D:prop>
+  <D:status>HTTP/1.1 200 Ok</D:status>
+</D:propstat></D:response>""")
 
     def test_renderSelected(self):
         resource = Resource("some text", 10)
@@ -458,15 +459,15 @@ class PROPFINDTestRender(unittest.TestCase):
 </prop>""")
         response = propf.renderSelectedProperties(resource, request, props)
 
-        assertXMLEqual(response(), """<ns0:response xmlns:ns0="DAV:">
-<ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
-    <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-</ns0:propstat></ns0:response>""")
+        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat xmlns:D1="DAVtest:">
+  <D:prop>
+    <D1:exampletextprop xmlns:D="DAVtest:">some text</D1:exampletextprop>
+    <D1:exampleintprop xmlns:D="DAVtest:">10</D1:exampleintprop>
+  </D:prop>
+  <D:status>HTTP/1.1 200 Ok</D:status>
+</D:propstat></D:response>""")
 
     def test_renderSelected_badProperty(self):
         resource = Resource("some text", 10)
@@ -517,21 +518,21 @@ class PROPFINDTestRender(unittest.TestCase):
 </prop>""")
         response = propf.renderSelectedProperties(resource, request, props)
 
-        assertXMLEqual(response(), """<ns0:response xmlns:ns0="DAV:">
-<ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
-    <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-</ns0:propstat>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
-    <ns01:extratextprop xmlns:ns0="DAVtest:" />
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 404 Not Found</ns0:status>
-</ns0:propstat>
-</ns0:response>""")
+        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat>
+  <D:prop>
+    <D1:exampletextprop xmlns:D1="DAVtest:">some text</D1:exampletextprop>
+  </D:prop>
+  <D:status>HTTP/1.1 200 Ok</D:status>
+</D:propstat>
+<D:propstat>
+  <D:prop>
+    <D1:extratextprop xmlns:D1="DAVtest:" />
+  </D:prop>
+  <D:status>HTTP/1.1 404 Not Found</D:status>
+</D:propstat>
+</D:response>""")
 
     def test_renderAllProperties(self):
         resource = Resource("some text", 10)
@@ -540,16 +541,16 @@ class PROPFINDTestRender(unittest.TestCase):
 
         response = propf.renderAllProperties(resource, request, None)
 
-        assertXMLEqual(response(), """<ns0:response xmlns:ns0="DAV:">
-<ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
-    <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-    <ns0:resourcetype />
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-</ns0:propstat></ns0:response>""")
+        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat>
+  <D:prop>
+    <D1:exampletextprop xmlns:D1="DAVtest:">some text</D1:exampletextprop>
+    <D:resourcetype />
+    <D1:exampleintprop xmlns:D1="DAVtest:">10</D1:exampleintprop>
+  </D:prop>
+  <D:status>HTTP/1.1 200 Ok</D:status>
+</D:propstat></D:response>""")
 
     def test_renderAllProperties_withInclude(self):
         resource = Resource("some text", 10)
@@ -562,16 +563,16 @@ class PROPFINDTestRender(unittest.TestCase):
 </include>""")
         response = propf.renderAllProperties(resource, request, include)
 
-        assertXMLEqual(response(), """<ns0:response xmlns:ns0="DAV:">
-<ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
-    <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-    <ns0:resourcetype />
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-</ns0:propstat></ns0:response>""")
+        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat>
+  <D:prop>
+    <D1:exampletextprop xmlns:D1="DAVtest:">some text</D1:exampletextprop>
+    <D:resourcetype />
+    <D1:exampleintprop xmlns:D1="DAVtest:">10</D1:exampleintprop>
+  </D:prop>
+  <D:status>HTTP/1.1 200 Ok</D:status>
+</D:propstat></D:response>""")
 
     def test_renderAllProperties_withRestrictedProp(self):
         resource = Resource("some text", 10)
@@ -581,15 +582,15 @@ class PROPFINDTestRender(unittest.TestCase):
         exampleTextProperty.restricted = True
         response = propf.renderAllProperties(resource, request, None)
 
-        assertXMLEqual(response(), """<ns0:response xmlns:ns0="DAV:">
-<ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
-    <ns0:resourcetype />
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-</ns0:propstat></ns0:response>""")
+        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat>
+  <D:prop>
+    <D:resourcetype />
+    <D1:exampleintprop xmlns:D1="DAVtest:">10</D1:exampleintprop>
+  </D:prop>
+  <D:status>HTTP/1.1 200 Ok</D:status>
+</D:propstat></D:response>""")
 
     def test_renderAllProperties_withRestrictedProp_include(self):
         resource = Resource("some text", 10)
@@ -603,16 +604,16 @@ class PROPFINDTestRender(unittest.TestCase):
 </include>""")
         response = propf.renderAllProperties(resource, request, include)
 
-        assertXMLEqual(response(), """<ns0:response xmlns:ns0="DAV:">
-<ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-<ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:prop xmlns:ns0="DAV:">
-    <ns01:exampletextprop xmlns:ns0="DAVtest:">some text</ns01:exampletextprop>
-    <ns0:resourcetype />
-    <ns01:exampleintprop xmlns:ns0="DAVtest:">10</ns01:exampleintprop>
-  </ns0:prop>
-  <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-</ns0:propstat></ns0:response>""")
+        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+<D:href>/resource</D:href>
+<D:propstat>
+  <D:prop>
+    <D1:exampletextprop xmlns:D1="DAVtest:">some text</D1:exampletextprop>
+    <D:resourcetype />
+    <D1:exampleintprop xmlns:D1="DAVtest:">10</D1:exampleintprop>
+  </D:prop>
+  <D:status>HTTP/1.1 200 Ok</D:status>
+</D:propstat></D:response>""")
 
     def test_renderBrokenProperty(self):
         resource = Resource("some text", 10)
@@ -849,51 +850,51 @@ class PROPFINDRecuseTest(unittest.TestCase):
         etree = z3c.etree.getEngine()
         etree.fromstring(result)
 
-        assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
-<ns0:response xmlns:ns0="DAV:">
-  <ns0:href xmlns:ns0="DAV:">/collection/</ns0:href>
-  <ns0:propstat xmlns:ns0="DAV:">
-    <ns0:prop xmlns:ns0="DAV:">
-      <ns0:resourcetype xmlns:ns0="DAV:">
-        <ns0:collection xmlns:ns0="DAV:"/>
-      </ns0:resourcetype>
-    </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-  </ns0:propstat>
-</ns0:response>
-<ns0:response xmlns:ns0="DAV:">
-  <ns0:href xmlns:ns0="DAV:">/collection/c/</ns0:href>
-  <ns0:propstat xmlns:ns0="DAV:">
-    <ns0:prop xmlns:ns0="DAV:">
-      <ns0:resourcetype xmlns:ns0="DAV:">
-        <ns0:collection xmlns:ns0="DAV:"/>
-      </ns0:resourcetype>
-    </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-  </ns0:propstat>
-</ns0:response>
-<ns0:response xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:href xmlns:ns0="DAV:">/collection/c/r2</ns0:href>
-  <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-    <ns0:prop xmlns:ns0="DAV:">
-      <ns01:exampletextprop xmlns:ns0="DAVtest:">some text - r2</ns01:exampletextprop>
-      <ns0:resourcetype xmlns:ns0="DAV:"/>
-      <ns01:exampleintprop xmlns:ns0="DAVtest:">4</ns01:exampleintprop>
-    </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-  </ns0:propstat>
-</ns0:response>
-<ns0:response xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-  <ns0:href xmlns:ns0="DAV:">/collection/r1</ns0:href>
-  <ns0:propstat xmlns:ns0="DAV:" xmlns:ns01="DAVtest:">
-    <ns0:prop xmlns:ns0="DAV:">
-      <ns01:exampletextprop xmlns:ns0="DAVtest:">some text - r1</ns01:exampletextprop>
-      <ns0:resourcetype xmlns:ns0="DAV:"/>
-      <ns01:exampleintprop xmlns:ns0="DAVtest:">2</ns01:exampleintprop>
-    </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-  </ns0:propstat>
-</ns0:response></ns0:multistatus>
+        assertXMLEqual(result, """<D:multistatus xmlns:D="DAV:">
+<D:response>
+  <D:href>/collection/</D:href>
+  <D:propstat>
+    <D:prop>
+      <D:resourcetype>
+        <D:collection />
+      </D:resourcetype>
+    </D:prop>
+    <D:status>HTTP/1.1 200 Ok</D:status>
+  </D:propstat>
+</D:response>
+<D:response>
+  <D:href>/collection/c/</D:href>
+  <D:propstat>
+    <D:prop>
+      <D:resourcetype>
+        <D:collection />
+      </D:resourcetype>
+    </D:prop>
+    <D:status>HTTP/1.1 200 Ok</D:status>
+  </D:propstat>
+</D:response>
+<D:response>
+  <D:href>/collection/c/r2</D:href>
+  <D:propstat>
+    <D:prop>
+      <D1:exampletextprop xmlns:D1="DAVtest:">some text - r2</D1:exampletextprop>
+      <D:resourcetype />
+      <D1:exampleintprop xmlns:D1="DAVtest:">4</D1:exampleintprop>
+    </D:prop>
+    <D:status>HTTP/1.1 200 Ok</D:status>
+  </D:propstat>
+</D:response>
+<D:response>
+  <D:href>/collection/r1</D:href>
+  <D:propstat>
+    <D:prop>
+      <D1:exampletextprop xmlns:D1="DAVtest:">some text - r1</D1:exampletextprop>
+      <D:resourcetype />
+      <D1:exampleintprop xmlns:D1="DAVtest:">2</D1:exampleintprop>
+    </D:prop>
+    <D:status>HTTP/1.1 200 Ok</D:status>
+  </D:propstat>
+</D:response></D:multistatus>
         """)
 
 

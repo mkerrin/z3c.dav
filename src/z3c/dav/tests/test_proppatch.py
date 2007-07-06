@@ -379,17 +379,17 @@ class PROPPATCHXmlParsing(unittest.TestCase):
         propp = PROPPATCHHandler(Resource(), request)
         result = propp.PROPPATCH()
 
-        assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
-<ns0:response xmlns:ns0="DAV:">
-  <ns0:href xmlns:ns0="DAV:">/resource</ns0:href>
-  <ns0:propstat xmlns:ns0="DAV:">
-    <ns0:prop xmlns:ns0="DAV:">
-      <ns0:getcontenttype xmlns:ns0="DAV:"/>
-      <ns0:displayname xmlns:ns0="DAV:"/>
-    </ns0:prop>
-    <ns0:status xmlns:ns0="DAV:">HTTP/1.1 200 Ok</ns0:status>
-  </ns0:propstat>
-</ns0:response></ns0:multistatus>""")
+        assertXMLEqual(result, """<multistatus xmlns="DAV:">
+<response>
+  <href>/resource</href>
+  <propstat>
+    <prop>
+      <getcontenttype />
+      <displayname />
+    </prop>
+    <status>HTTP/1.1 200 Ok</status>
+  </propstat>
+</response></multistatus>""")
 
 
 class IExamplePropertyStorage(interface.Interface):

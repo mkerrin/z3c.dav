@@ -19,6 +19,7 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
+import urllib
 import urlparse
 
 from zope import interface
@@ -73,7 +74,7 @@ class Base(object):
                 raise z3c.dav.interfaces.BadGateway(
                     self.context, self.request)
 
-        return destpath
+        return urllib.unquote(destpath).decode("utf-8")
 
     def getDestinationNameAndParentObject(self):
         """Returns a tuple for destionation name, the parent folder object

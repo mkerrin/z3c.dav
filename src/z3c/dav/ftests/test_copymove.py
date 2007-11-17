@@ -173,6 +173,40 @@ class COPYTestCase(dav.DAVTestCase):
                                             "http://localhost/c")
         self.assertEqual(list(self.getRootFolder()["c"].keys()), [u"r2", u"r3"])
 
+    def test_copy_with_space_in_dest_filename(self):
+        file = self.addResource("/source file", "some file content",
+                                contentType = "text/plain")
+
+        response = self.publish(
+            "/source file", basic = "mgr:mgrpw",
+            env = {"REQUEST_METHOD": "COPY",
+                   "DESTINATION": "http://localhost/dest file"})
+
+        self.assertEqual(response.getStatus(), 201)
+        self.assertEqual(response.getHeader("location"),
+                         "http://localhost/dest%20file")
+        self.assertEqual(self.getRootFolder()["dest file"].data,
+                         "some file content")
+        self.assertEqual(self.getRootFolder()["source file"].data,
+                         "some file content")
+
+    def test_copy_with_quotedspace_in_dest_filename(self):
+        file = self.addResource("/source file", "some file content",
+                                contentType = "text/plain")
+
+        response = self.publish(
+            "/source file", basic = "mgr:mgrpw",
+            env = {"REQUEST_METHOD": "COPY",
+                   "DESTINATION": "http://localhost/dest%20file"})
+
+        self.assertEqual(response.getStatus(), 201)
+        self.assertEqual(response.getHeader("location"),
+                         "http://localhost/dest%20file")
+        self.assertEqual(self.getRootFolder()["dest file"].data,
+                         "some file content")
+        self.assertEqual(self.getRootFolder()["source file"].data,
+                         "some file content")
+
 
 class MOVETestCase(dav.DAVTestCase):
     """These tests are very similar to the COPY tests. Actually I copied them
@@ -326,6 +360,38 @@ class MOVETestCase(dav.DAVTestCase):
         self.assertEqual(response.getHeader("location"),
                                             "http://localhost/c")
         self.assertEqual(list(self.getRootFolder()["c"].keys()), [u"r2", u"r3"])
+
+    def test_move_with_space_in_dest_filename(self):
+        file = self.addResource("/source file", "some file content",
+                                contentType = "text/plain")
+
+        response = self.publish(
+            "/source file", basic = "mgr:mgrpw",
+            env = {"REQUEST_METHOD": "MOVE",
+                   "DESTINATION": "http://localhost/dest file"})
+
+        self.assertEqual(response.getStatus(), 201)
+        self.assertEqual(response.getHeader("location"),
+                         "http://localhost/dest%20file")
+        self.assertEqual(self.getRootFolder()["dest file"].data,
+                         "some file content")
+        self.assert_("source file" not in self.getRootFolder())
+
+    def test_move_with_quotedspace_in_dest_filename(self):
+        file = self.addResource("/source file", "some file content",
+                                contentType = "text/plain")
+
+        response = self.publish(
+            "/source file", basic = "mgr:mgrpw",
+            env = {"REQUEST_METHOD": "MOVE",
+                   "DESTINATION": "http://localhost/dest%20file"})
+
+        self.assertEqual(response.getStatus(), 201)
+        self.assertEqual(response.getHeader("location"),
+                         "http://localhost/dest%20file")
+        self.assertEqual(self.getRootFolder()["dest file"].data,
+                         "some file content")
+        self.assert_("source file" not in self.getRootFolder())
 
 
 def test_suite():

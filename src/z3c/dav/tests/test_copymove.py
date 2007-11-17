@@ -32,7 +32,7 @@ from zope.app.container.interfaces import IReadContainer
 from zope.traversing.interfaces import IContainmentRoot
 
 import z3c.dav.publisher
-from z3c.dav.copymove import COPY, MOVE
+from z3c.dav.copymove import Base, COPY, MOVE
 
 class IResource(interface.Interface):
 
@@ -214,6 +214,28 @@ class COPYMOVEParseHeadersTestCase(unittest.TestCase):
         copy = COPY(resource, request)
         self.assertRaises(z3c.dav.interfaces.BadGateway,
                           copy.getDestinationNameAndParentObject)
+
+    def test_getDestinationPath_with_space(self):
+        resource = self.root["resource"] = Resource()
+        request = TestRequest(
+            environ = {"DESTINATION": "http://localhost/test path"})
+
+        copy = Base(resource, request)
+        destname, destob, parent = copy.getDestinationNameAndParentObject()
+        self.assertEqual(destname, "test path")
+        self.assertEqual(destob, None)
+        self.assertEqual(parent, self.root)
+
+    def test_getDestinationPath_with_quotedspace(self):
+        resource = self.root["resource"] = Resource()
+        request = TestRequest(
+            environ = {"DESTINATION": "http://localhost/test%20path"})
+
+        copy = Base(resource, request)
+        destname, destob, parent = copy.getDestinationNameAndParentObject()
+        self.assertEqual(destname, "test path")
+        self.assertEqual(destob, None)
+        self.assertEqual(parent, self.root)
 
     def test_getDestinationNameAndParentObject(self):
         resource = self.root["resource"] = Resource()

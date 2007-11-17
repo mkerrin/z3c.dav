@@ -217,7 +217,7 @@ class PROPFIND(object):
                 # Users don't have the permission to view this property and
                 # if they didn't explicitly ask for the named property
                 # we can silently ignore this property, pretending that it
-                # is a restricted property.g
+                # is a restricted property.
                 if isIncluded:
                     self.handleException(
                         "{%s}%s" %(davprop.namespace, davprop.__name__),

@@ -42,8 +42,7 @@ class PROPPATCH(object):
         self.request = request
 
     def PROPPATCH(self):
-        if self.request.content_type not in ("text/xml", "application/xml") \
-               or self.request.xmlDataSource is None:
+        if self.request.xmlDataSource is None:
             raise z3c.dav.interfaces.BadRequest(
                 self.request,
                 message = "All PROPPATCH requests needs a XML body")

@@ -52,11 +52,19 @@ class MKCOL(object):
     implementation of MKCOL doesn't understand any message body received
     with a MKCOL request and thus raise a UnsupportedMediaType exception.
 
-      >>> mkcol = MKCOL(context, TestRequest(StringIO('some request body')))
-      >>> mkcol.MKCOL() #doctest:+ELLIPSIS
+      >>> MKCOL(context,
+      ...    TestRequest(StringIO('some request data'),
+      ...                environ = {'CONTENT_LENGTH': '17'})).MKCOL() #doctest:+ELLIPSIS
       Traceback (most recent call last):
       ...
       UnsupportedMediaType: <zope.app.http.put.NullResource object at ...>, u'A request body is not supported for a MKCOL method'
+      >>> MKCOL(context,
+      ...    TestRequest(StringIO('some request data'),
+      ...                environ = {'CONTENT_LENGTH': 17})).MKCOL() #doctest:+ELLIPSIS
+      Traceback (most recent call last):
+      ...
+      UnsupportedMediaType: <zope.app.http.put.NullResource object at ...>, u'A request body is not supported for a MKCOL method'
+
       >>> events
       []
 
@@ -138,6 +146,30 @@ class MKCOL(object):
       >>> events[3:]
       []
 
+    Unsupported media type
+    ======================
+
+    The test for the unsupported media type is on the 'content-length' so make
+    sure that if test this against 'Content-Length': 0 and None properly.
+
+      >>> context = NullResource(container, 'newdir1')
+      >>> MKCOL(context,
+      ...    TestRequest(StringIO(''),
+      ...                environ = {'CONTENT_LENGTH': 0})).MKCOL() #doctest:+ELLIPSIS
+      ''
+
+      >>> context = NullResource(container, 'newdir2')
+      >>> MKCOL(context,
+      ...    TestRequest(StringIO(''),
+      ...                environ = {'CONTENT_LENGTH': '0'})).MKCOL() #doctest:+ELLIPSIS
+      ''
+
+      >>> context = NullResource(container, 'newdir3')
+      >>> MKCOL(context,
+      ...    TestRequest(StringIO(''),
+      ...                environ = {'CONTENT_LENGTH': None})).MKCOL() #doctest:+ELLIPSIS
+      ''
+
     Cleanup.
 
       >>> component.getGlobalSiteManager().unregisterAdapter(WriteDirectory)
@@ -156,7 +188,7 @@ class MKCOL(object):
         self.request = request
 
     def MKCOL(self):
-        if self.request.getHeader("content-length") > 0:
+        if int(self.request.getHeader("content-length", 0)) > 0:
             # We don't (yet) support a request body on MKCOL.
             raise z3c.dav.interfaces.UnsupportedMediaType(
                 self.context,

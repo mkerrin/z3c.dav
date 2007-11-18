@@ -68,7 +68,7 @@ class PROPFIND(object):
         return self.request.getHeader("depth", "infinity")
 
     def PROPFIND(self):
-        if self.request.getHeader("content-length") > 0 and \
+        if int(self.request.getHeader("content-length", 0)) > 0 and \
                self.request.content_type not in ("text/xml", "application/xml"):
             raise z3c.dav.interfaces.BadRequest(
                 self.request,

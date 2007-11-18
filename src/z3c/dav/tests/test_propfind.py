@@ -100,6 +100,44 @@ class PROPFINDBodyTestCase(unittest.TestCase):
 
         return propfind
 
+    def test_plaintext_body(self):
+        request = z3c.dav.publisher.WebDAVRequest(
+            StringIO("some text"), environ = {"CONTENT_TYPE": "text/plain",
+                                              "CONTENT_LENGTH": 9})
+        request.processInputs()
+
+        propfind = PROPFINDBodyParsed(None, request)
+        self.assertRaises(z3c.dav.interfaces.BadRequest, propfind.PROPFIND)
+
+    def test_plaintext_body_strlength(self):
+        request = z3c.dav.publisher.WebDAVRequest(
+            StringIO("some text"), environ = {"CONTENT_TYPE": "text/plain",
+                                              "CONTENT_LENGTH": "9"})
+        request.processInputs()
+
+        propfind = PROPFINDBodyParsed(None, request)
+        self.assertRaises(z3c.dav.interfaces.BadRequest, propfind.PROPFIND)
+
+    def test_nobody_nolength(self):
+        # Need to test that no BadRequest is raised by the PROPFIND method
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(""), environ = {})
+        request.processInputs()
+
+        self.assertEqual(
+            request.getHeader("content-length", "missing"), "missing")
+
+        propfind = PROPFINDBodyParsed(None, request)
+        result = propfind.PROPFIND()
+
+    def test_nobody_length_0(self):
+        # Need to test that no BadRequest is raised by the PROPFIND method
+        request = z3c.dav.publisher.WebDAVRequest(
+            StringIO(""), environ = {"CONTENT_LENGTH": "0"})
+        request.processInputs()
+
+        propfind = PROPFINDBodyParsed(None, request)
+        result = propfind.PROPFIND()
+
     def test_notxml(self):
         self.assertRaises(z3c.dav.interfaces.BadRequest, self.checkPropfind,
             "<propname />", {"CONTENT_TYPE": "text/plain"})

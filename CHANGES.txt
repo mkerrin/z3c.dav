@@ -2,6 +2,15 @@
 Changes in z3c.dav
 ==================
 
+1.0b1
+=====
+
+- Fix bug in COPY / MOVE methods when the destination URL contained quoted
+  charactors - https://bugs.launchpad.net/z3c.dav/+bug/163150
+
+- MKCOP and PROPFIND methods needed to expect a string as a value for the
+  content-length header - https://bugs.launchpad.net/z3c.dav/+bug/163153
+
 0.9.1
 =====
 

@@ -41,7 +41,9 @@ import z3c.dav.widgets
 import z3c.dav.exceptions
 import z3c.dav.coreproperties
 from z3c.dav.propfind import PROPFIND
-from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
+from z3c.etree.testing import etreeSetup, etreeTearDown
+from z3c.etree.testing import assertXMLEqual
+from z3c.etree.testing import assertXMLEqualIgnoreOrdering
 import z3c.etree
 
 from test_proppatch import unauthProperty, UnauthorizedPropertyStorage, \
@@ -472,7 +474,7 @@ class PROPFINDTestRender(unittest.TestCase):
         # call the response to render to an XML fragment.
         response = response()
 
-        assertXMLEqual(response, """<D:response xmlns:D="DAV:">
+        assertXMLEqualIgnoreOrdering(response, """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat xmlns:D1="DAVtest:">
   <D:prop>
@@ -497,7 +499,7 @@ class PROPFINDTestRender(unittest.TestCase):
 </prop>""")
         response = propf.renderSelectedProperties(resource, request, props)
 
-        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+        assertXMLEqualIgnoreOrdering(response(), """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat xmlns:D1="DAVtest:">
   <D:prop>
@@ -533,7 +535,7 @@ class PROPFINDTestRender(unittest.TestCase):
         props.append(prop)
 
         response = propf.renderSelectedProperties(resource, request, props)
-        assertXMLEqual(response(),
+        assertXMLEqualIgnoreOrdering(response(),
                        """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat>
@@ -556,7 +558,7 @@ class PROPFINDTestRender(unittest.TestCase):
 </prop>""")
         response = propf.renderSelectedProperties(resource, request, props)
 
-        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+        assertXMLEqualIgnoreOrdering(response(), """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat>
   <D:prop>
@@ -579,7 +581,7 @@ class PROPFINDTestRender(unittest.TestCase):
 
         response = propf.renderAllProperties(resource, request, None)
 
-        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+        assertXMLEqualIgnoreOrdering(response(), """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat>
   <D:prop>
@@ -601,7 +603,7 @@ class PROPFINDTestRender(unittest.TestCase):
 </include>""")
         response = propf.renderAllProperties(resource, request, include)
 
-        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+        assertXMLEqualIgnoreOrdering(response(), """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat>
   <D:prop>
@@ -620,7 +622,7 @@ class PROPFINDTestRender(unittest.TestCase):
         exampleTextProperty.restricted = True
         response = propf.renderAllProperties(resource, request, None)
 
-        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+        assertXMLEqualIgnoreOrdering(response(), """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat>
   <D:prop>
@@ -642,7 +644,7 @@ class PROPFINDTestRender(unittest.TestCase):
 </include>""")
         response = propf.renderAllProperties(resource, request, include)
 
-        assertXMLEqual(response(), """<D:response xmlns:D="DAV:">
+        assertXMLEqualIgnoreOrdering(response(), """<D:response xmlns:D="DAV:">
 <D:href>/resource</D:href>
 <D:propstat>
   <D:prop>
@@ -665,7 +667,7 @@ class PROPFINDTestRender(unittest.TestCase):
         response = propf.renderSelectedProperties(resource, request, props)
         response = response()
 
-        assertXMLEqual("""<response xmlns="DAV:">
+        assertXMLEqualIgnoreOrdering("""<response xmlns="DAV:">
 <href>/resource</href>
 <propstat>
   <prop>
@@ -696,7 +698,7 @@ class PROPFINDTestRender(unittest.TestCase):
 
         # The PROPFIND method should return a 401 when the user is unauthorized
         # to view a property.
-        assertXMLEqual("""<response xmlns="DAV:">
+        assertXMLEqualIgnoreOrdering("""<response xmlns="DAV:">
 <href>/resource</href>
 <propstat>
   <prop>
@@ -735,7 +737,7 @@ class PROPFINDTestRender(unittest.TestCase):
         response = response()
 
         # Note that the unauthprop is not included in the response.
-        assertXMLEqual("""<response xmlns="DAV:">
+        assertXMLEqualIgnoreOrdering("""<response xmlns="DAV:">
 <href>/resource</href>
 <propstat>
   <prop>
@@ -770,7 +772,7 @@ class PROPFINDTestRender(unittest.TestCase):
         response = propf.renderAllProperties(resource, request, includes)
         response = response()
 
-        assertXMLEqual("""<response xmlns="DAV:">
+        assertXMLEqualIgnoreOrdering("""<response xmlns="DAV:">
 <href>/resource</href>
 <propstat>
   <prop>
@@ -805,7 +807,7 @@ class PROPFINDTestRender(unittest.TestCase):
         response = propf.renderAllProperties(resource, request, includes)
         response = response()
 
-        assertXMLEqual("""<response xmlns="DAV:">
+        assertXMLEqualIgnoreOrdering("""<response xmlns="DAV:">
 <href>/resource</href>
 <propstat>
   <prop>
@@ -885,10 +887,9 @@ class PROPFINDRecuseTest(unittest.TestCase):
         propf = PROPFIND(collection, request)
 
         result = propf.PROPFIND()
-        etree = z3c.etree.getEngine()
-        etree.fromstring(result)
 
-        assertXMLEqual(result, """<D:multistatus xmlns:D="DAV:">
+        self.assertEqual(request.response.getStatus(), 207)
+        assertXMLEqualIgnoreOrdering(result, """<D:multistatus xmlns:D="DAV:">
 <D:response>
   <D:href>/collection/</D:href>
   <D:propstat>

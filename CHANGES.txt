@@ -2,6 +2,11 @@
 Changes in z3c.dav
 ==================
 
+1.0b2
+=====
+
+- Register views for the `zope.security.interfaces.Forbidden' exceptions.
+
 1.0b1
 =====
 

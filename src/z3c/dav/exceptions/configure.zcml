@@ -6,6 +6,13 @@
     -->
   <adapter
      factory="z3c.dav.exceptions.ForbiddenError"
+     for="zope.security.interfaces.Forbidden
+          z3c.dav.interfaces.IWebDAVRequest"
+     provides="z3c.dav.interfaces.IDAVErrorWidget"
+     />
+
+  <adapter
+     factory="z3c.dav.exceptions.ForbiddenError"
      for="z3c.dav.interfaces.ForbiddenError
           z3c.dav.interfaces.IWebDAVRequest"
      provides="z3c.dav.interfaces.IDAVErrorWidget"
@@ -129,6 +136,14 @@
      for="z3c.dav.interfaces.IConflictError"
      type="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
+     />
+
+  <view
+     for="zope.security.interfaces.IForbidden"
+     type="zope.publisher.interfaces.http.IHTTPRequest"
+     name="index.html"
+     permission="zope.Public"
+     factory="z3c.dav.exceptions.HTTPForbiddenError"
      />
 
   <view

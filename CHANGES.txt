@@ -5,6 +5,13 @@ Changes in z3c.dav
 1.0b2
 =====
 
+- Improved the handling of `Unauthorized' and `Forbidden' errors during the
+  processing of `PROPFIND' requests. Basically we return a `Unauthorized'
+  response requesting the user to log-in when the problem occurs on the
+  requested resource otherwise we render the problem into the `multistatus'
+  response. In the case where we aren't allowed to list a folder we ignore
+  the contents, unless it is the requested resource.
+
 - Register views for the `zope.security.interfaces.Forbidden' exceptions.
 
 1.0b1

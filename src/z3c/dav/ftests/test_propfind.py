@@ -24,6 +24,7 @@ import transaction
 
 import dav
 from zope import component
+import zope.security.interfaces
 import z3c.dav.interfaces
 import z3c.etree.testing
 
@@ -222,6 +223,17 @@ class PROPFINDTests(dav.DAVTestCase):
                                     "http://localhost/a/r3",
                                     "http://localhost/b/",
                                     "http://localhost/r1"])
+
+    def test_etcsite(self):
+        # By all means this test is a bit stupid but it does highlight a fact.
+        # We get unauthorized errors when we enter try and access a resource
+        # which doesn't give the admin access to folder listing. But as
+        # the previous test shows we can get the problem resource to display
+        # in the depth infinity folder listing. As long as the problem resource
+        # is not the request resource then no errors should be raised.
+        self.assertRaises(zope.security.interfaces.Unauthorized,
+                          self.publish, "/++etc++site/", basic = "mrg:mgrpw",
+                          env = {"REQUEST_METHOD": "PROPFIND"})
 
     def test_depthone(self):
         self.createCollectionResourceStructure()

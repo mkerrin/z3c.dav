@@ -42,8 +42,7 @@ from zope import interface
 from zope import component
 from zope.filerepresentation.interfaces import IReadDirectory
 from zope.error.interfaces import IErrorReportingUtility
-from zope.security.checker import canAccess
-from zope.security.interfaces import Unauthorized
+import zope.security.interfaces
 
 import z3c.etree
 import z3c.dav.utils
@@ -64,7 +63,6 @@ class PROPFIND(object):
         self.request = request
 
     def getDepth(self):
-        # default is infinity.
         return self.request.getHeader("depth", "infinity")
 
     def PROPFIND(self):
@@ -122,7 +120,8 @@ class PROPFIND(object):
         return etree.tostring(multistatus(), encoding = "utf-8")
 
     def handlePropfindResource(self, ob, req, depth, \
-                               propertiesFactory, extraArg):
+                               propertiesFactory, extraArg,
+                               level = 0):
         """
         Recursive method that collects all the `response' XML elements for
         the current PROPFIND request.
@@ -132,16 +131,44 @@ class PROPFIND(object):
         request and `extraArg' used to pass in specific information about
         the properties we want to return.
         """
-        responses = [propertiesFactory(ob, req, extraArg)]
+        responses = [propertiesFactory(ob, req, extraArg, level)]
         if depth in ("1", "infinity"):
             subdepth = (depth == "1") and "0" or "infinity"
 
             readdir = IReadDirectory(ob, None)
-            if readdir is not None and canAccess(readdir, "values"):
-                for subob in readdir.values():
-                    if subob is not None:
+            if readdir is not None:
+                try:
+                    # We catch any Forbidden or Unauthorized exceptions here.
+                    # We have successfully rendered the property on this
+                    # resource and we are as such trying to render a listing
+                    # of the container object. If we do get an Unauthorized
+                    # exception then we only raise this if level == 0.
+                    # Otherwise the user might never have access to the resource
+                    # and they will never get to see the resources that they
+                    # are interested in.
+                    values = readdir.values()
+                except zope.security.interfaces.Forbidden:
+                    # Since we successfully rendered the properties and the
+                    # user is forbidden to access the folder listing then
+                    # we silently ignore this exception. Allowing them to
+                    # continue with there usage of the system.
+                    errUtility = component.getUtility(IErrorReportingUtility)
+                    errUtility.raising(sys.exc_info(), req)
+                except zope.security.interfaces.Unauthorized:
+                    # Sometimes even the administrator will raise an
+                    # `Unauthorized' exception on the `values' method. If this
+                    # happens on a sub-resource to the requested resource then
+                    # we log the exception and continue - others this request
+                    # fails with the `Unauthorized' exception.
+                    if level == 0:
+                        raise
+                    errUtility = component.getUtility(IErrorReportingUtility)
+                    errUtility.raising(sys.exc_info(), req)
+                else:
+                    for subob in values:
                         responses.extend(self.handlePropfindResource(
-                            subob, req, subdepth, propertiesFactory, extraArg))
+                            subob, req, subdepth,
+                            propertiesFactory, extraArg, level + 1))
 
         return responses
 
@@ -149,22 +176,23 @@ class PROPFIND(object):
         error_view = component.queryMultiAdapter(
             (exc_info[1], request), z3c.dav.interfaces.IDAVErrorWidget)
         if error_view is None:
-            ## An unexpected error occured here. This error should be
-            ## fixed. In order to easily debug the problem we will
-            ## log the error with the ErrorReportingUtility
-            errUtility = component.getUtility(IErrorReportingUtility)
-            errUtility.raising(exc_info, request)
+            # An unexpected error occured here and should be fixed.
             propstat = response.getPropstat(500) # Internal Server Error
         else:
             propstat = response.getPropstat(error_view.status)
-            ## XXX - needs testing
+            # XXX - needs testing
             propstat.responsedescription += error_view.propstatdescription
             response.responsedescription += error_view.responsedescription
+
+        # In order to easily debug the problem we will log the error with
+        # the ErrorReportingUtility.
+        errUtility = component.getUtility(IErrorReportingUtility)
+        errUtility.raising(exc_info, request)
 
         etree = z3c.etree.getEngine()
         propstat.properties.append(etree.Element(proptag))
 
-    def renderPropnames(self, ob, req, ignore):
+    def renderPropnames(self, ob, req, ignoreExtraArg, ignorelevel = 0):
         """
         See doc string for the renderAllProperties method. Note that we don't
         need to worry about the security in this method has the permissions on
@@ -184,7 +212,7 @@ class PROPFIND(object):
 
         return response
 
-    def renderAllProperties(self, ob, req, include):
+    def renderAllProperties(self, ob, req, include, level = 0):
         """
         The specification says:
         
@@ -213,7 +241,7 @@ class PROPFIND(object):
                 davwidget = z3c.dav.properties.getWidget(
                     davprop, adapter, req)
                 response.addProperty(200, davwidget.render())
-            except Unauthorized:
+            except zope.security.interfaces.Unauthorized:
                 # Users don't have the permission to view this property and
                 # if they didn't explicitly ask for the named property
                 # we can silently ignore this property, pretending that it
@@ -228,7 +256,7 @@ class PROPFIND(object):
                     # just in case this is a problem that needs sorting out.
                     errUtility = component.getUtility(IErrorReportingUtility)
                     errUtility.raising(sys.exc_info(), req)
-            except Exception:
+            except:
                 self.handleException(
                     "{%s}%s" %(davprop.namespace, davprop.__name__),
                     sys.exc_info(), req,
@@ -236,14 +264,14 @@ class PROPFIND(object):
 
         return response
 
-    def renderSelectedProperties(self, ob, req, props):
+    def renderSelectedProperties(self, ob, req, props, level = 0):
         response = z3c.dav.utils.Response(
             z3c.dav.utils.getObjectURL(ob, req))
 
         for prop in props:
             if z3c.dav.utils.parseEtreeTag(prop.tag)[0] == "":
-                # A namespace which is None corresponds to when no prefix is
-                # set, which I think is fine.
+                # XXX - A namespace which is None corresponds to when no
+                # prefix is set, which I think is fine.
                 raise z3c.dav.interfaces.BadRequest(
                     self.request,
                     u"PROPFIND with invalid namespace declaration in body")
@@ -255,7 +283,16 @@ class PROPFIND(object):
                     davprop, adapter, req)
                 propstat = response.getPropstat(200)
                 propstat.properties.append(davwidget.render())
-            except Exception:
+            except zope.security.interfaces.Unauthorized:
+                if level == 0:
+                    # When we are rendering properties on the requested
+                    # resource then we must raise any Unauthorized exceptions
+                    # so that user can then log in. But if the Unauthorized
+                    # exception is on a sub resource to the requested resource
+                    # then we can just handle this unauthorized exception.
+                    raise
+                self.handleException(prop.tag, sys.exc_info(), req, response)
+            except:
                 self.handleException(prop.tag, sys.exc_info(), req, response)
 
         return response

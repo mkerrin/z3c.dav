@@ -1,0 +1,101 @@
+===========================
+zope.app.folder integration
+===========================
+
+  >>> import z3c.etree
+  >>> from zope.app.folder.folder import Folder
+
+  >>> resp = http("""
+  ... PROPFIND / HTTP/1.1
+  ... """, handle_errors = True)
+  >>> resp.getStatus()
+  207
+  >>> resp.getHeader('content-type')
+  'application/xml'
+  >>> print resp.getBody() #doctest:+XMLDATA,+ELLIPSIS
+  <multistatus xmlns="DAV:">
+    <response>
+      <href>http://localhost/</href>
+      <propstat>
+        <prop>
+          <creationdate>...</creationdate>
+          <displayname />
+          <getlastmodified>...</getlastmodified>
+          <resourcetype><collection /></resourcetype>
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+    <response>
+      <href>http://localhost/++etc++site/</href>
+      <propstat>
+        <prop>
+          <resourcetype><collection /></resourcetype>
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+  </multistatus>
+
+When we are logged in we get more information on the '++etc++site' folder since
+we are allowed to list the folder contents here.
+
+  >>> resp = http("""
+  ... PROPFIND / HTTP/1.1
+  ... Authorization: Basic mgr:mgrpw
+  ... """, handle_errors = True)
+  >>> resp.getStatus()
+  207
+  >>> resp.getHeader('content-type')
+  'application/xml'
+  >>> print resp.getBody() #doctest:+XMLDATA,+ELLIPSIS
+  <multistatus xmlns="DAV:">
+    <response>
+      <href>http://localhost/</href>
+      <propstat>
+        <prop>
+          <creationdate>...</creationdate>
+          <displayname />
+          <getlastmodified>...</getlastmodified>
+          <resourcetype><collection /></resourcetype>
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+    <response>
+      <href>http://localhost/++etc++site/</href>
+      <propstat>
+        <prop>
+          <resourcetype><collection /></resourcetype>
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+    <response>
+      <href>http://localhost/++etc++site/default/</href>
+      <propstat>
+        <prop>
+          <resourcetype><collection /></resourcetype>
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+    <response>
+      <href>http://localhost/++etc++site/default/PrincipalAnnotation</href>
+      <propstat>
+        <prop>
+          <resourcetype />
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+    <response>
+      <href>http://localhost/++etc++site/default/RootErrorReportingUtility</href>
+      <propstat>
+        <prop>
+          <resourcetype />
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+  </multistatus>

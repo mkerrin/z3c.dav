@@ -30,7 +30,7 @@ import zope.schema.interfaces
 from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.filerepresentation.interfaces import IReadDirectory
 from zope.app.container.interfaces import IReadContainer
-from zope.app.error.interfaces import IErrorReportingUtility
+from zope.error.interfaces import IErrorReportingUtility
 from zope.security.interfaces import Unauthorized, IUnauthorized
 from zope.security.interfaces import IChecker
 from zope.security.checker import CheckerPublic

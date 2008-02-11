@@ -1,6 +1,6 @@
 <configure
    xmlns="http://namespaces.zope.org/zope"
-   i18n_domain="zope.app.dav">
+   i18n_domain="z3c.dav">
 
   <include package="z3c.dav.exceptions" />
 

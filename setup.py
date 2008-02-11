@@ -25,7 +25,7 @@ setup(name = "z3c.dav",
                           "z3c.etree",
                           "z3c.conditionalviews",
                           "zope.app.zcmlfiles",
-                          "zope.app.securitypolicy",
+                          "zope.securitypolicy",
                           ],
 
       include_package_data = True,

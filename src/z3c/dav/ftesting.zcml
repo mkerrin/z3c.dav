@@ -1,6 +1,6 @@
 <configure xmlns="http://namespaces.zope.org/zope"
            xmlns:zcml="http://namespaces.zope.org/zcml"
-           i18n_domain="zope">
+           i18n_domain="z3c.dav">
 
   <!--
       Common Zope configuration file shared by the functional tests of
@@ -12,11 +12,11 @@
   <include zcml:condition="not-installed zope.app.zcmlfiles"
            package="zope.app.zcmlfiles" />
 
-  <include package="zope.app.securitypolicy" file="meta.zcml" />
-  <include package="zope.app.securitypolicy" />
+  <include package="zope.securitypolicy" file="meta.zcml" />
+  <include package="zope.securitypolicy" />
 
   <securityPolicy
-     component="zope.app.securitypolicy.zopepolicy.ZopeSecurityPolicy"
+     component="zope.securitypolicy.zopepolicy.ZopeSecurityPolicy"
      />
 
   <role

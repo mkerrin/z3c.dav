@@ -41,7 +41,7 @@ import sys
 from zope import interface
 from zope import component
 from zope.filerepresentation.interfaces import IReadDirectory
-from zope.app.error.interfaces import IErrorReportingUtility
+from zope.error.interfaces import IErrorReportingUtility
 from zope.security.checker import canAccess
 from zope.security.interfaces import Unauthorized
 

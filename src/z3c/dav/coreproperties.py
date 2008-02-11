@@ -22,7 +22,6 @@ __docformat__ = 'restructuredtext'
 from zope import interface
 from zope import component
 from zope import schema
-from zope.app.i18n import ZopeMessageFactory as _
 import zope.app.container.interfaces
 import zope.publisher.interfaces.http
 
@@ -32,97 +31,97 @@ import z3c.dav.widgets
 class IDAVCreationdate(interface.Interface):
 
     creationdate = schema.Datetime(
-        title = _("Records the time and date the resource was created."),
-        description = _("""The DAV:creationdate property SHOULD be defined on
-                           all DAV compliant resources.  If present, it
-                           contains a timestamp of the moment when the resource
-                           was created.  Servers that are incapable of
-                           persistently recording the creation date SHOULD
-                           instead leave it undefined (i.e. report
-                           "Not Found" """),
+        title = u"Records the time and date the resource was created.",
+        description = u"""The DAV:creationdate property SHOULD be defined on
+                          all DAV compliant resources.  If present, it
+                          contains a timestamp of the moment when the resource
+                          was created.  Servers that are incapable of
+                          persistently recording the creation date SHOULD
+                          instead leave it undefined (i.e. report
+                          "Not Found" """,
         readonly = True)
 
 
 class IDAVDisplayname(interface.Interface):
 
     displayname = schema.TextLine(
-        title = _("Provides a name for the resource that is suitable for presentation to a user."),
-        description = _("""Contains a description of the resource that is
-                           suitable for presentation to a user.  This property
-                           is defined on the resource, and hence SHOULD have
-                           the same value independent of the Request-URI used
-                           to retrieve it (thus computing this property based
-                           on the Request-URI is deprecated).  While generic
-                           clients might display the property value to end
-                           users, client UI designers must understand that the
-                           method for identifying resources is still the URL.
-                           Changes to DAV:displayname do not issue moves or
-                           copies to the server, but simply change a piece of
-                           meta-data on the individual resource.  Two resources
-                           can have the same DAV:displayname value even within
-                           the same collection."""),
+        title = u"Provides a name for the resource that is suitable for presentation to a user.",
+        description = u"""Contains a description of the resource that is
+                          suitable for presentation to a user.  This property
+                          is defined on the resource, and hence SHOULD have
+                          the same value independent of the Request-URI used
+                          to retrieve it (thus computing this property based
+                          on the Request-URI is deprecated).  While generic
+                          clients might display the property value to end
+                          users, client UI designers must understand that the
+                          method for identifying resources is still the URL.
+                          Changes to DAV:displayname do not issue moves or
+                          copies to the server, but simply change a piece of
+                          meta-data on the individual resource.  Two resources
+                          can have the same DAV:displayname value even within
+                          the same collection.""",
         readonly = False)
 
 
 class IDAVGetcontentlanguage(interface.Interface):
 
     getcontentlanguage = schema.TextLine(
-        title = _("GET Content-Language header."),
-        description = _("""Contains the Content-Language header value (from
-                           Section 14.12 of [RFC2616]) as it would be returned
-                           by a GET without accept headers.
+        title = u"GET Content-Language header.",
+        description = u"""Contains the Content-Language header value (from
+                          Section 14.12 of [RFC2616]) as it would be returned
+                          by a GET without accept headers.
 
-                           The DAV:getcontentlanguage property MUST be defined
-                           on any DAV compliant resource that returns the
-                           Content-Language header on a GET."""),
+                          The DAV:getcontentlanguage property MUST be defined
+                          on any DAV compliant resource that returns the
+                          Content-Language header on a GET.""",
         readonly = False)
 
 
 class IDAVGetcontentlength(interface.Interface):
 
     getcontentlength = schema.Int(
-        title = _("Contains the Content-Length header returned by a GET without accept headers."),
-        description = _("""The DAV:getcontentlength property MUST be defined on
-                            any DAV compliant resource that returns the
-                            Content-Length header in response to a GET."""),
+        title = u"Contains the Content-Length header returned by a GET without accept headers.",
+        description = u"""The DAV:getcontentlength property MUST be defined on
+                          any DAV compliant resource that returns the
+                          Content-Length header in response to a GET.""",
         readonly = True)
 
 
 class IDAVGetcontenttype(interface.Interface):
 
     getcontenttype = schema.TextLine(
-        title = _("Contains the Content-Type header value as it would be returned by a GET without accept headers."),
-        description = _("""This property MUST be defined on any DAV compliant
-                           resource that returns the Content-Type header in
-                           response to a GET."""),
+        title = u"Contains the Content-Type header value as it would be returned by a GET without accept headers.",
+        description = u"""This property MUST be defined on any DAV compliant
+                          resource that returns the Content-Type header in
+                          response to a GET.""",
         readonly = False)
 
 
 class IDAVGetetag(interface.Interface):
 
     getetag = schema.TextLine(
-        title = _("Contains the ETag header value as it would be returned by a GET without accept headers."),
-        description = _("""The getetag property MUST be defined on any DAV
-                           compliant resource that returns the Etag header.
-                           Refer to Section 3.11 of RFC2616 for a complete
-                           definition of the semantics of an ETag, and to
-                           Section 8.6 for a discussion of ETags in WebDAV."""),
+        title = u"Contains the ETag header value as it would be returned by a GET without accept headers.",
+        description = u"""The getetag property MUST be defined on any DAV
+                          compliant resource that returns the Etag header.
+                          Refer to Section 3.11 of RFC2616 for a complete
+                          definition of the semantics of an ETag, and to
+                          Section 8.6 for a discussion of ETags in WebDAV.""",
         readonly = True)
 
 
 class IDAVGetlastmodified(interface.Interface):
 
     getlastmodified = schema.Datetime(
-        title = _("Contains the Last-Modified header value as it would be returned by a GET method without accept headers."),
-        description = _("""Note that the last-modified date on a resource SHOULD
-                           only reflect changes in the body (the GET responses)
-                           of the resource.  A change in a property only SHOULD
-                           NOT cause the last-modified date to change, because
-                           clients MAY rely on the last-modified date to know
-                           when to overwrite the existing body.  The
-                           DAV:getlastmodified property MUST be defined on any
-                           DAV compliant resource that returns the
-                           Last-Modified header in response to a GET."""),
+        title = u"Contains the Last-Modified header value as it would be returned by a GET method without accept headers.",
+        description = u"""Note that the last-modified date on a resource SHOULD
+                          only reflect changes in the body (the GET responses)
+                          of the resource.  A change in a property only SHOULD
+                          NOT cause the last-modified date to change, because
+                          clients MAY rely on the last-modified date to know
+                          when to overwrite the existing body.  The
+                          DAV:getlastmodified property MUST be defined on any
+                          DAV compliant resource that returns the
+                          Last-Modified header in response to a GET.""",
         readonly = True)
 
 
@@ -202,20 +201,19 @@ class IActiveLock(ILockEntry):
 class IDAVLockdiscovery(interface.Interface):
 
     lockdiscovery = schema.List(
-        title = _("Describes the active locks on a resource"),
-        description = _("""Returns a listing of who has a lock, what type of
-                           lock he has, the timeout type and the time remaining
-                           on the timeout, and the associated lock token.  If
-                           there are no locks, but the server supports locks,
-                           the property will be present but contain zero
-                           'activelock' elements.  If there is one or more
-                           lock, an 'activelock' element appears for each lock
-                           on the resource.  This property is NOT lockable with
-                           respect to write locks (Section 7)."""),
+        title = u"Describes the active locks on a resource",
+        description = u"""Returns a listing of who has a lock, what type of
+                          lock he has, the timeout type and the time remaining
+                          on the timeout, and the associated lock token.  If
+                          there are no locks, but the server supports locks,
+                          the property will be present but contain zero
+                          'activelock' elements.  If there is one or more
+                          lock, an 'activelock' element appears for each lock
+                          on the resource.  This property is NOT lockable with
+                          respect to write locks (Section 7).""",
         value_type = schema.Object(
             __name__ = "activelock",
-            title = _(""),
-            description = _(""),
+            title = u"",
             schema = IActiveLock,
             readonly = True),
         readonly = True)
@@ -224,39 +222,38 @@ class IDAVLockdiscovery(interface.Interface):
 class IDAVResourcetype(interface.Interface):
 
     resourcetype = schema.List(
-        title = _("Specifies the nature of the resource."),
-        description = _("""MUST be defined on all DAV compliant resources.  Each
-                           child element identifies a specific type the
-                           resource belongs to, such as 'collection', which is
-                           the only resource type defined by this specification
-                           (see Section 14.3).  If the element contains the
-                           'collection' child element plus additional
-                           unrecognized elements, it should generally be
-                           treated as a collection.  If the element contains no
-                           recognized child elements, it should be treated as a
-                           non-collection resource.  The default value is empty.
-                           This element MUST NOT contain text or mixed content.
-                           Any custom child element is considered to be an
-                           identifier for a resource type."""),
+        title = u"Specifies the nature of the resource.",
+        description = u"""MUST be defined on all DAV compliant resources.  Each
+                          child element identifies a specific type the
+                          resource belongs to, such as 'collection', which is
+                          the only resource type defined by this specification
+                          (see Section 14.3).  If the element contains the
+                          'collection' child element plus additional
+                          unrecognized elements, it should generally be
+                          treated as a collection.  If the element contains no
+                          recognized child elements, it should be treated as a
+                          non-collection resource.  The default value is empty.
+                          This element MUST NOT contain text or mixed content.
+                          Any custom child element is considered to be an
+                          identifier for a resource type.""",
         readonly = True)
 
 
 class IDAVSupportedlock(interface.Interface):
 
     supportedlock = schema.List(
-        title = _("To provide a listing of the lock capabilities supported by the resource."),
-        description = _("""Returns a listing of the combinations of scope and
-                           access types which may be specified in a lock
-                           request on the resource.  Note that the actual
-                           contents are themselves controlled by access
-                           controls so a server is not required to provide
-                           information the client is not authorized to see.
-                           This property is NOT lockable with respect to
-                           write locks (Section 7)."""),
+        title = u"To provide a listing of the lock capabilities supported by the resource.",
+        description = u"""Returns a listing of the combinations of scope and
+                          access types which may be specified in a lock
+                          request on the resource.  Note that the actual
+                          contents are themselves controlled by access
+                          controls so a server is not required to provide
+                          information the client is not authorized to see.
+                          This property is NOT lockable with respect to
+                          write locks (Section 7).""",
         value_type = schema.Object(
             __name__ = "lockentry",
-            title = _(""),
-            description = _(""),
+            title = u"",
             schema = ILockEntry,
             readonly = True),
         readonly = True)

@@ -569,6 +569,22 @@ class IFValidator(object):
       >>> getStateResults(request)
       {}
 
+    The specification for the `If' header requires at list one condition be
+    present.
+
+      >>> request._environ['IF'] = '</ddd> ()'
+      >>> validator.valid(demo, request, None)
+      Traceback (most recent call last):
+      ...
+      BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, 'Invalid IF header: no conditions present'
+
+      >>> request._environ['IF'] = '()'
+      >>> validator.valid(demo, request, None)
+      Traceback (most recent call last):
+      ...
+      BadRequest: <zope.publisher.browser.TestRequest instance URL=http://127.0.0.1>, 'Invalid IF header: no conditions present'
+
+
     matchesIfHeader method
     ======================
 
@@ -677,6 +693,32 @@ class IFValidator(object):
       >>> matchesIfHeader(demo, request)
       True
 
+    Update response
+    ===============
+
+    After validating a request the `updateResponse' method is called. This
+    does nothing.
+
+      >>> headers = dict(request.response.getHeaders())
+      >>> validator.updateResponse(demo, request, None)
+      >>> dict(request.response.getHeaders()) == headers
+      True
+
+    Each cases 1
+    ============
+
+    Test case when there are no state tokens known by the system. In this
+    case the request is not valid as we have no knowledge of the token passed
+    in the conditional request so we can't match against it.
+
+      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
+      ...    Statetokens, (None, TestRequest, None))
+      True
+
+      >>> request._environ['IF'] = '</> (<roottest>)'
+      >>> validator.valid(root, request, None)
+      False
+
     Cleanup
     =======
 
@@ -685,9 +727,6 @@ class IFValidator(object):
       True
       >>> zope.component.getGlobalSiteManager().unregisterAdapter(
       ...    ETag, (None, TestRequest, None))
-      True
-      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
-      ...    Statetokens, (None, TestRequest, None))
       True
       >>> zope.component.getGlobalSiteManager().unregisterAdapter(
       ...    PhysicallyLocatable, (Demo,))
@@ -749,7 +788,8 @@ class IFValidator(object):
                     ListCondition(notted, state_token, entity_tag))
 
             if not conditions:
-                break
+                raise z3c.dav.interfaces.BadRequest(
+                    request, "Invalid IF header: no conditions present")
 
             yield resource, conditions
 
@@ -827,7 +867,9 @@ class IFValidator(object):
                             # is False.
                             result = False
                     else:
-                        result = True
+                        # No known state tokens so this condition is False as
+                        # we didn't match the conditional request.
+                        result = False
                     if condition.notted:
                         result = not result
 

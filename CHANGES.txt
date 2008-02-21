@@ -5,6 +5,11 @@ Changes in z3c.dav
 1.0b2
 =====
 
+- Be more pedantic in parsing `IF' conditional header. Raise `BadRequest'
+  exception when no conditions are present in the header. Handle condition
+  when there are no state tokens known by the system, here the conditional
+  request should fail.
+
 - Improved the handling of `Unauthorized' and `Forbidden' errors during the
   processing of `PROPFIND' requests. Basically we return a `Unauthorized'
   response requesting the user to log-in when the problem occurs on the

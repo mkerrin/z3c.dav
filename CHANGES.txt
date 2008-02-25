@@ -19,6 +19,8 @@ Changes in z3c.dav
 
 - Register views for the `zope.security.interfaces.Forbidden' exceptions.
 
+- Remove all the deprecation warnings.
+
 1.0b1
 =====
 
@@ -31,6 +33,6 @@ Changes in z3c.dav
 0.9.1
 =====
 
-- stricter property validation
+- Stricter property validation
 
-- some servers pass the `Content-Length` header value as a string
+- Some servers pass the `Content-Length` header value as a string

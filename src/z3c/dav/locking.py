@@ -314,14 +314,14 @@ class LOCKMethod(object):
         etree = z3c.etree.getEngine()
 
         lockscope = xmlsource.find("{DAV:}lockscope")
-        if not lockscope:
+        if lockscope is None:
             raise z3c.dav.interfaces.UnprocessableError(
                 self.context,
                 message = u"No `{DAV:}lockscope' XML element in request")
         lockscope_str = z3c.dav.utils.parseEtreeTag(lockscope[0].tag)[1]
 
         locktype = xmlsource.find("{DAV:}locktype")
-        if not locktype:
+        if locktype is None:
             raise z3c.dav.interfaces.UnprocessableError(
                 self.context,
                 message = u"No `{DAV:}locktype' XML element in request")

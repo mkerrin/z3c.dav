@@ -136,7 +136,7 @@ class OpaqueInputWidget(z3c.dav.widgets.DAVInputWidget):
 
         etree = z3c.etree.getEngine()
         # XXX - ascii seems a bit wrong here
-        return etree.tostring(el[-1], "utf-8")
+        return etree.tostring(el[-1], encoding="utf-8")
 
 
 class IOpaqueField(IField):

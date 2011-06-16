@@ -23,7 +23,7 @@ import urllib
 import urlparse
 
 from zope import interface
-from zope import component
+import zope.component
 import zope.publisher.interfaces.http
 from zope.copypastemove.interfaces import IObjectCopier, IObjectMover
 from zope.traversing.api import traverse, getRoot
@@ -34,8 +34,8 @@ from zope.publisher.interfaces.http import MethodNotAllowed
 import z3c.dav.interfaces
 
 class Base(object):
-    component.adapts(interface.Interface,
-                     zope.publisher.interfaces.http.IHTTPRequest)
+    zope.component.adapts(
+        interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

@@ -44,7 +44,7 @@ import time
 import random
 import datetime
 
-from zope import component
+import zope.component
 from zope import interface
 
 import z3c.etree
@@ -67,7 +67,7 @@ def generateLocktoken():
            (_randGen.random(), _randGen.random(), time.time())
 
 
-@component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+@zope.component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 @interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def LOCK(context, request):
     """
@@ -88,7 +88,8 @@ class LOCKMethod(object):
     LOCK handler for all objects.
     """
     interface.implements(z3c.dav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+    zope.component.adapts(
+        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request, lockmanager):
         self.context = context
@@ -327,7 +328,7 @@ class LOCKMethod(object):
                 message = u"No `{DAV:}locktype' XML element in request")
         locktype_str = z3c.dav.utils.parseEtreeTag(locktype[0].tag)[1]
 
-        supportedlocks = component.getMultiAdapter(
+        supportedlocks = zope.component.getMultiAdapter(
             (self.context, self.request), IDAVSupportedlock)
         for entry in supportedlocks.supportedlock:
             if entry.locktype[0] == locktype_str and \
@@ -361,7 +362,7 @@ class LOCKMethod(object):
 #
 ################################################################################
 
-@component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+@zope.component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 @interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def UNLOCK(context, request):
     """
@@ -382,7 +383,8 @@ class UNLOCKMethod(object):
     UNLOCK handler for all objects.
     """
     interface.implements(z3c.dav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+    zope.component.adapts(
+        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request, lockmanager):
         self.context = context
@@ -398,7 +400,7 @@ class UNLOCKMethod(object):
             raise z3c.dav.interfaces.BadRequest(
                 self.request, message = u"No lock-token header supplied")
 
-        activelock = component.getMultiAdapter(
+        activelock = zope.component.getMultiAdapter(
             (self.context, self.request), IDAVLockdiscovery).lockdiscovery
         if not self.lockmanager.islocked() or \
                locktoken not in [ltoken.locktoken[0] for ltoken in activelock]:

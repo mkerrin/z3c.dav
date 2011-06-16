@@ -33,7 +33,7 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
-from zope import component
+import zope.component
 from zope import interface
 from zope.publisher.http import status_reasons
 from zope.traversing.browser.interfaces import IAbsoluteURL
@@ -654,7 +654,7 @@ def getObjectURL(ob, req):
     If the object is a container and the url doesn't end in slash '/' then
     append a slash to the url.
     """
-    url = component.getMultiAdapter((ob, req), IAbsoluteURL)()
+    url = zope.component.getMultiAdapter((ob, req), IAbsoluteURL)()
     if IReadContainer.providedBy(ob) and url[-1] != "/":
         url += "/"
 

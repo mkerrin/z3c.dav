@@ -22,7 +22,7 @@ $Id$
 __docformat__ = 'restructuredtext'
 
 from zope import interface
-from zope import component
+import zope.component
 from zope.formlib import namedtemplate
 from zope.publisher.interfaces.http import IHTTPException
 from zope.app.pagetemplate import ViewPageTemplateFile
@@ -31,8 +31,8 @@ import z3c.dav.interfaces
 
 class BadRequest(object):
     interface.implements(IHTTPException)
-    component.adapts(z3c.dav.interfaces.IBadRequest,
-                     z3c.dav.interfaces.IHTTPRequest)
+    zope.component.adapts(z3c.dav.interfaces.IBadRequest,
+                          z3c.dav.interfaces.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

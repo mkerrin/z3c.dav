@@ -39,7 +39,7 @@ __docformat__ = 'restructuredtext'
 import sys
 
 from zope import interface
-from zope import component
+import zope.component
 from zope.filerepresentation.interfaces import IReadDirectory
 from zope.error.interfaces import IErrorReportingUtility
 import zope.security.interfaces
@@ -56,7 +56,8 @@ class PROPFIND(object):
     PROPFIND handler for all objects.
     """
     interface.implements(z3c.dav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+    zope.component.adapts(
+        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -152,7 +153,8 @@ class PROPFIND(object):
                     # user is forbidden to access the folder listing then
                     # we silently ignore this exception. Allowing them to
                     # continue with there usage of the system.
-                    errUtility = component.getUtility(IErrorReportingUtility)
+                    errUtility = zope.component.getUtility(
+                        IErrorReportingUtility)
                     errUtility.raising(sys.exc_info(), req)
                 except zope.security.interfaces.Unauthorized:
                     # Sometimes even the administrator will raise an
@@ -162,7 +164,8 @@ class PROPFIND(object):
                     # fails with the `Unauthorized' exception.
                     if level == 0:
                         raise
-                    errUtility = component.getUtility(IErrorReportingUtility)
+                    errUtility = zope.component.getUtility(
+                        IErrorReportingUtility)
                     errUtility.raising(sys.exc_info(), req)
                 else:
                     for subob in values:
@@ -173,7 +176,7 @@ class PROPFIND(object):
         return responses
 
     def handleException(self, proptag, exc_info, request, response):
-        error_view = component.queryMultiAdapter(
+        error_view = zope.component.queryMultiAdapter(
             (exc_info[1], request), z3c.dav.interfaces.IDAVErrorWidget)
         if error_view is None:
             # An unexpected error occured here and should be fixed.
@@ -186,7 +189,7 @@ class PROPFIND(object):
 
         # In order to easily debug the problem we will log the error with
         # the ErrorReportingUtility.
-        errUtility = component.getUtility(IErrorReportingUtility)
+        errUtility = zope.component.getUtility(IErrorReportingUtility)
         errUtility.raising(exc_info, request)
 
         etree = z3c.etree.getEngine()
@@ -255,7 +258,8 @@ class PROPFIND(object):
                     # Considering that we just silently ignored this property
                     # - log this exception with the error reporting utility
                     # just in case this is a problem that needs sorting out.
-                    errUtility = component.getUtility(IErrorReportingUtility)
+                    errUtility = zope.component.getUtility(
+                        IErrorReportingUtility)
                     errUtility.raising(sys.exc_info(), req)
             except:
                 self.handleException(

@@ -18,7 +18,7 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
-from zope import component
+import zope.component
 from zope import interface
 from zope import schema
 from zope.schema.interfaces import IField
@@ -226,10 +226,10 @@ class OpaqueProperty(object):
 
 
 def getAllProperties(context, request):
-    for name, prop in component.getUtilitiesFor(IDAVProperty):
-        adapter = component.queryMultiAdapter((context, request),
-                                              prop.iface,
-                                              default = None)
+    for name, prop in zope.component.getUtilitiesFor(IDAVProperty):
+        adapter = zope.component.queryMultiAdapter((context, request),
+                                                   prop.iface,
+                                                   default = None)
         if adapter is None:
             continue
 
@@ -244,15 +244,15 @@ def getAllProperties(context, request):
 
 
 def hasProperty(context, request, tag):
-    prop = component.queryUtility(IDAVProperty, name = tag, default = None)
+    prop = zope.component.queryUtility(IDAVProperty, name = tag, default = None)
     if prop is None:
         adapter = IOpaquePropertyStorage(context, None)
         if adapter is not None and adapter.hasProperty(tag):
             return True
         return False
 
-    adapter = component.queryMultiAdapter((context, request), prop.iface,
-                                          default = None)
+    adapter = zope.component.queryMultiAdapter((context, request), prop.iface,
+                                               default = None)
     if adapter is None:
         return False
 
@@ -260,7 +260,7 @@ def hasProperty(context, request, tag):
 
 
 def getProperty(context, request, tag, exists = False):
-    prop = component.queryUtility(IDAVProperty, name = tag, default = None)
+    prop = zope.component.queryUtility(IDAVProperty, name = tag, default = None)
     if prop is None:
         adapter = IOpaquePropertyStorage(context, None)
         if adapter is None:
@@ -275,8 +275,8 @@ def getProperty(context, request, tag, exists = False):
 
         return OpaqueProperty(tag), adapter
 
-    adapter = component.queryMultiAdapter((context, request), prop.iface,
-                                          default = None)
+    adapter = zope.component.queryMultiAdapter((context, request), prop.iface,
+                                               default = None)
     if adapter is None:
         ## XXX - should we use the zope.publisher.interfaces.NotFound
         ## exceptin here.
@@ -293,7 +293,7 @@ def getWidget(prop, adapter, request, type = IDAVWidget):
     elif type is IDAVInputWidget and prop.custom_input_widget is not None:
         widget = prop.custom_input_widget(prop.field, request)
     else:
-        widget = component.getMultiAdapter((prop.field, request), type)
+        widget = zope.component.getMultiAdapter((prop.field, request), type)
 
     if IDAVWidget.providedBy(widget):
         field = prop.field.bind(adapter)

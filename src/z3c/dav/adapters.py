@@ -18,7 +18,6 @@ __docformat__ = 'restructuredtext'
 from BTrees.OOBTree import OOBTree
 
 from zope import interface
-from zope import component
 import zope.annotation.interfaces
 from zope.dublincore.interfaces import IDCTimes, IDCDescriptiveProperties
 
@@ -34,6 +33,7 @@ class DAVDublinCore(object):
       >>> from zope.dublincore.annotatableadapter import ZDCAnnotatableAdapter
       >>> from zope.dublincore.interfaces import IWriteZopeDublinCore
       >>> from zope.annotation.attribute import AttributeAnnotations
+      >>> from zope import component
       >>> import datetime
       >>> from zope.datetime import tzinfo
 
@@ -134,6 +134,7 @@ class OpaqueProperties(object):
     """
       >>> from zope.annotation.attribute import AttributeAnnotations
       >>> from zope.interface.verify import verifyObject
+      >>> from zope import component
       >>> component.getGlobalSiteManager().registerAdapter(
       ...     AttributeAnnotations,
       ...     (zope.annotation.interfaces.IAnnotatable,),

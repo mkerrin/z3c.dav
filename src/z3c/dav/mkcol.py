@@ -15,7 +15,7 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
-from zope import component
+import zope.component
 from zope.filerepresentation.interfaces import IWriteDirectory
 from zope.filerepresentation.interfaces import IDirectoryFactory
 import zope.event
@@ -32,7 +32,6 @@ class MKCOL(object):
 
       >>> from cStringIO import StringIO
       >>> import zope.interface
-      >>> from zope import component
       >>> from zope.publisher.browser import TestRequest
       >>> from zope.app.http.put import NullResource
       >>> from zope.app.folder.folder import Folder
@@ -89,14 +88,14 @@ class MKCOL(object):
 
       >>> class WriteDirectory(object):
       ...    zope.interface.implements(IWriteDirectory)
-      ...    component.adapts(IFolder)
+      ...    zope.component.adapts(IFolder)
       ...    def __init__(self, context):
       ...        self.context = context
       ...    def __setitem__(self, name, object):
       ...        self.context[name] = object
       ...    def __delitem__(slef, name):
       ...        del self.context[name]
-      >>> component.getGlobalSiteManager().registerAdapter(WriteDirectory)
+      >>> zope.component.getGlobalSiteManager().registerAdapter(WriteDirectory)
 
       >>> events = []
 
@@ -114,12 +113,12 @@ class MKCOL(object):
 
       >>> class DirectoryFactory(object):
       ...    zope.interface.implements(IDirectoryFactory)
-      ...    component.adapts(IFolder)
+      ...    zope.component.adapts(IFolder)
       ...    def __init__(self, context):
       ...        pass
       ...    def __call__(self, name):
       ...        return Folder()
-      >>> component.getGlobalSiteManager().registerAdapter(DirectoryFactory)
+      >>> zope.component.getGlobalSiteManager().registerAdapter(DirectoryFactory)
       >>> events = []
 
     The next call to the mkcol implementation will succeed and create
@@ -172,16 +171,17 @@ class MKCOL(object):
 
     Cleanup.
 
-      >>> component.getGlobalSiteManager().unregisterAdapter(WriteDirectory)
+      >>> zope.component.getGlobalSiteManager().unregisterAdapter(WriteDirectory)
       True
-      >>> component.getGlobalSiteManager().unregisterAdapter(DirectoryFactory)
+      >>> zope.component.getGlobalSiteManager().unregisterAdapter(DirectoryFactory)
       True
 
       >>> zope.event.subscribers.remove(eventLog)
 
     """
-    component.adapts(zope.app.http.interfaces.INullResource,
-                     zope.publisher.interfaces.http.IHTTPRequest)
+    zope.component.adapts(
+        zope.app.http.interfaces.INullResource,
+        zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

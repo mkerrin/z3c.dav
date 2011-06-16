@@ -20,7 +20,7 @@ $Id$
 __docformat__ = 'restructuredtext'
 
 from zope import interface
-from zope import component
+import zope.component
 from zope import schema
 import zope.container.interfaces
 import zope.publisher.interfaces.http
@@ -292,7 +292,7 @@ class LockdiscoveryDAVWidget(z3c.dav.widgets.ListDAVWidget):
 
     Setup some adapters for rendering the widget.
 
-      >>> gsm = component.getGlobalSiteManager()
+      >>> gsm = zope.component.getGlobalSiteManager()
       >>> gsm.registerAdapter(z3c.dav.widgets.TextDAVWidget,
       ...                     (zope.schema.interfaces.IText, None))
       >>> gsm.registerAdapter(z3c.dav.widgets.IntDAVWidget,
@@ -430,8 +430,8 @@ class ResourceTypeAdapter(object):
 
     """
     interface.implements(IDAVResourcetype)
-    component.adapts(interface.Interface,
-                     zope.publisher.interfaces.http.IHTTPRequest)
+    zope.component.adapts(
+        interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

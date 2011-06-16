@@ -18,7 +18,7 @@ __docformat__ = 'restructuredtext'
 import datetime
 import calendar
 
-from zope import component
+import zope.component
 from zope import interface
 from zope.schema import getFieldsInOrder
 
@@ -154,8 +154,8 @@ class ObjectDAVWidget(DAVWidget):
                    not self.render_missing_values and not field.required:
                 continue
 
-            widget = component.getMultiAdapter((field, self.request),
-                                               interfaces.IDAVWidget)
+            widget = zope.component.getMultiAdapter((field, self.request),
+                                                    interfaces.IDAVWidget)
             widget.namespace = self.namespace
             widget.setRenderedValue(field.get(self._value))
             el.append(widget.render())
@@ -181,8 +181,8 @@ class ListDAVWidget(DAVWidget):
             # value_type is not None so render each item in the sequence
             # according to the widget register for this field.
             for value in self._value:
-                widget = component.getMultiAdapter((value_type, self.request),
-                                                   interfaces.IDAVWidget)
+                widget = zope.component.getMultiAdapter(
+                    (value_type, self.request), interfaces.IDAVWidget)
                 widget.setRenderedValue(value)
                 widget.namespace = self.namespace
                 el.append(widget.render())

@@ -22,7 +22,7 @@ __docformat__ = 'restructuredtext'
 
 import zope.event
 from zope import interface
-from zope import component
+import zope.component
 import zope.lifecycleevent
 
 import z3c.etree
@@ -35,7 +35,8 @@ import z3c.dav.properties
 class PROPPATCH(object):
     """PROPPATCH handler for all objects"""
     interface.implements(z3c.dav.interfaces.IWebDAVMethod)
-    component.adapts(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+    zope.component.adapts(
+        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context
@@ -153,7 +154,7 @@ class PROPPATCH(object):
         return []
 
     def handleRemove(self, prop):
-        davprop = component.queryUtility(
+        davprop = zope.component.queryUtility(
             z3c.dav.interfaces.IDAVProperty, prop.tag, None)
 
         if davprop is not None:

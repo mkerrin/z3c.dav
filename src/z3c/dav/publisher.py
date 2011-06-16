@@ -15,7 +15,7 @@ $Id$
 """
 __docformat__ = 'restructuredtext'
 
-from zope import component
+import zope.component
 from zope.interface import implements
 from zope.publisher.http import HTTPResponse, HTTPRequest
 from zope.app.publication.http import HTTPPublication
@@ -87,6 +87,6 @@ class WebDAVRequestFactory(object):
         return True
 
     def __call__(self):
-        request_class = component.queryUtility(
+        request_class = zope.component.queryUtility(
             interfaces.IWebDAVRequestFactory, default = WebDAVRequest)
         return request_class, HTTPPublication

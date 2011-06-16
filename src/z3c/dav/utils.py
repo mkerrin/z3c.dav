@@ -37,7 +37,7 @@ from zope import component
 from zope import interface
 from zope.publisher.http import status_reasons
 from zope.traversing.browser.interfaces import IAbsoluteURL
-from zope.app.container.interfaces import IReadContainer
+from zope.container.interfaces import IReadContainer
 import z3c.etree
 
 class IPropstat(interface.Interface):

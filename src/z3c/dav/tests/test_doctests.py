@@ -23,7 +23,7 @@ from zope.testing import doctest
 from zope import component
 from zope import interface
 from zope.annotation.interfaces import IAttributeAnnotatable
-from zope.app.container.interfaces import IContained, IContainer
+from zope.container.interfaces import IContained, IContainer
 
 import z3c.etree.testing
 

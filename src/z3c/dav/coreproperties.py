@@ -22,7 +22,7 @@ __docformat__ = 'restructuredtext'
 from zope import interface
 from zope import component
 from zope import schema
-import zope.app.container.interfaces
+import zope.container.interfaces
 import zope.publisher.interfaces.http
 
 from z3c.dav.properties import DAVProperty, DeadField
@@ -438,7 +438,7 @@ class ResourceTypeAdapter(object):
 
     @property
     def resourcetype(self):
-        if zope.app.container.interfaces.IReadContainer.providedBy(
+        if zope.container.interfaces.IReadContainer.providedBy(
             self.context):
             return [u'collection']
         return None

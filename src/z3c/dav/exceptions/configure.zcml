@@ -27,7 +27,7 @@
 
   <adapter
      factory="z3c.dav.exceptions.ConflictError"
-     for="zope.app.form.interfaces.IWidgetInputError
+     for="zope.formlib.interfaces.IWidgetInputError
           z3c.dav.interfaces.IWebDAVRequest"
      provides="z3c.dav.interfaces.IDAVErrorWidget"
      />

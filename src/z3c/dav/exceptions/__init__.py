@@ -26,8 +26,8 @@ from zope import interface
 from zope import schema
 from zope import component
 import zope.publisher.interfaces.http
-from zope.app.http.interfaces import IHTTPException
-import zope.app.publisher.browser
+from zope.publisher.interfaces.http import IHTTPException
+import zope.publisher.defaultview
 
 import z3c.dav.interfaces
 import z3c.dav.utils
@@ -100,7 +100,7 @@ class MultiStatusErrorView(object):
             # exception, then we just try and view the default view of the
             # error.
             error = self.error.errors[0]
-            name = zope.app.publisher.browser.queryDefaultViewName(
+            name = zope.publisher.defaultview.queryDefaultViewName(
                 error, self.request)
             if name is not None:
                 view = component.queryMultiAdapter(

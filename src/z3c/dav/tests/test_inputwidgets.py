@@ -25,7 +25,7 @@ from zope import schema
 from zope import interface
 from zope.schema.interfaces import RequiredMissing
 from zope.interface.verify import verifyObject
-from zope.app.form.interfaces import ConversionError, MissingInputError
+from zope.formlib.interfaces import ConversionError, MissingInputError
 from zope.datetime import tzinfo
 
 from z3c.dav import widgets

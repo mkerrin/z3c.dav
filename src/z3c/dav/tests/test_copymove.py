@@ -27,8 +27,8 @@ from zope.copypastemove.interfaces import IObjectCopier, IObjectMover
 from zope.location.traversing import LocationPhysicallyLocatable
 from zope.traversing.adapters import Traverser, DefaultTraversable
 from zope.traversing.browser.interfaces import IAbsoluteURL
-from zope.app.publication.http import MethodNotAllowed
-from zope.app.container.interfaces import IReadContainer
+from zope.publisher.interfaces.http import MethodNotAllowed
+from zope.container.interfaces import IReadContainer
 from zope.traversing.interfaces import IContainmentRoot
 
 import z3c.dav.publisher

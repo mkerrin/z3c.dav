@@ -24,7 +24,7 @@ __docformat__ = 'restructuredtext'
 from zope import interface
 from zope import component
 from zope.formlib import namedtemplate
-from zope.app.http.interfaces import IHTTPException
+from zope.publisher.interfaces.http import IHTTPException
 from zope.app.pagetemplate import ViewPageTemplateFile
 
 import z3c.dav.interfaces

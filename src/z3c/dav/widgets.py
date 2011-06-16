@@ -26,7 +26,7 @@ import z3c.etree
 import interfaces
 
 import zope.datetime
-from zope.app.form.interfaces import ConversionError, MissingInputError
+from zope.formlib.interfaces import ConversionError, MissingInputError
 
 DEFAULT_NS = 'DAV:'
 

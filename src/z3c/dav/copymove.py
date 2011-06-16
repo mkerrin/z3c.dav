@@ -29,7 +29,7 @@ from zope.copypastemove.interfaces import IObjectCopier, IObjectMover
 from zope.traversing.api import traverse, getRoot
 from zope.traversing.interfaces import TraversalError
 from zope.traversing.browser import absoluteURL
-from zope.app.publication.http import MethodNotAllowed
+from zope.publisher.interfaces.http import MethodNotAllowed
 
 import z3c.dav.interfaces
 

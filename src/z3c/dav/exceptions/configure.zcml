@@ -68,9 +68,9 @@
      name="index.html"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IUnprocessableError"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 
@@ -79,9 +79,9 @@
      name="index.html"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IWebDAVErrors"
-     type="z3c.dav.interfaces.IWebDAVRequest"
+     layer="z3c.dav.interfaces.IWebDAVRequest"
      name="index.html"
      />
 
@@ -90,9 +90,9 @@
      name="index.html"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IWebDAVPropstatErrors"
-     type="z3c.dav.interfaces.IWebDAVRequest"
+     layer="z3c.dav.interfaces.IWebDAVRequest"
      name="index.html"
      />
 
@@ -104,9 +104,9 @@
      factory="z3c.dav.exceptions.PreconditionFailed"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IPreconditionFailed"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 
@@ -118,9 +118,9 @@
      factory="z3c.dav.exceptions.BadGateway"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IBadGateway"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 
@@ -132,9 +132,9 @@
      factory="z3c.dav.exceptions.HTTPConflictError"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IConflictError"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 
@@ -154,9 +154,9 @@
      factory="z3c.dav.exceptions.HTTPForbiddenError"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IForbiddenError"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 
@@ -168,9 +168,9 @@
      factory="z3c.dav.exceptions.HTTPUnsupportedMediaTypeError"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IUnsupportedMediaType"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 
@@ -182,9 +182,9 @@
      factory="z3c.dav.exceptions.AlreadyLockedErrorView"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IAlreadyLocked"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 
@@ -201,9 +201,9 @@
      factory="z3c.dav.exceptions.browser.BadRequest"
      />
 
-  <defaultView
+  <browser:defaultView
      for="z3c.dav.interfaces.IBadRequest"
-     type="zope.publisher.interfaces.http.IHTTPRequest"
+     layer="zope.publisher.interfaces.http.IHTTPRequest"
      name="index.html"
      />
 

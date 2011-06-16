@@ -26,6 +26,7 @@ setup(name = "z3c.dav",
                           "z3c.conditionalviews",
                           "zope.app.zcmlfiles",
                           "zope.securitypolicy",
+                          "zope.app.testing", # remove dependency
                           ],
 
       include_package_data = True,

@@ -25,7 +25,7 @@ from zope.interface.verify import verifyObject
 from zope import schema
 from zope import component
 from zope.traversing.browser.interfaces import IAbsoluteURL
-from zope.component.interfaces import IDefaultViewName
+from zope.publisher.interfaces import IDefaultViewName
 
 import z3c.dav.publisher
 from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual

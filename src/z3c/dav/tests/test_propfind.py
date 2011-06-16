@@ -1198,7 +1198,9 @@ class PROPFINDSecurityTestCase(unittest.TestCase):
             self.collection["r1"], SecurityChecker({
                 "__name__": zope.security.checker.CheckerPublic,
                 "__parent__": zope.security.checker.CheckerPublic,
-                "text": zope.security.checker.CheckerPublic}))
+                "text": zope.security.checker.CheckerPublic,
+                "__providedBy__": zope.security.checker.CheckerPublic,
+                }))
 
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         request.processInputs()
@@ -1305,6 +1307,7 @@ class PROPFINDSecurityTestCase(unittest.TestCase):
             self.collection["c"], SecurityChecker({
                 "__name__": zope.security.checker.CheckerPublic,
                 "__parent__": zope.security.checker.CheckerPublic,
+                "__providedBy__": zope.security.checker.CheckerPublic,
             }))
         self.addChecker(self.collection["r1"], zope.security.checker.Checker({
             "text": zope.security.checker.CheckerPublic,
@@ -1416,6 +1419,7 @@ class PROPFINDSecurityTestCase(unittest.TestCase):
             self.collection, SecurityChecker({
                 "__name__": zope.security.checker.CheckerPublic,
                 "__parent__": zope.security.checker.CheckerPublic,
+                "__providedBy__": zope.security.checker.CheckerPublic,
             }))
 
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
@@ -1439,14 +1443,20 @@ class PROPFINDSecurityTestCase(unittest.TestCase):
                 "__name__": 1, # disable access to the `__name__' attribute
                 "__parent__": 1,
                 "text": zope.security.checker.CheckerPublic,
-                "intprop": zope.security.checker.CheckerPublic}))
+                "intprop": zope.security.checker.CheckerPublic,
+                "__providedBy__": zope.security.checker.CheckerPublic,
+                }))
         self.addChecker(
             self.collection["c"]["r2"], zope.security.checker.Checker({
                 "text": zope.security.checker.CheckerPublic,
-                "intprop": zope.security.checker.CheckerPublic}))
+                "intprop": zope.security.checker.CheckerPublic,
+                "__providedBy__": zope.security.checker.CheckerPublic,
+                }))
         collection = self.addChecker(
             self.collection, zope.security.checker.Checker({
-                "values": zope.security.checker.CheckerPublic}))
+                "values": zope.security.checker.CheckerPublic,
+                "__providedBy__": zope.security.checker.CheckerPublic,
+                }))
 
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         request.processInputs()

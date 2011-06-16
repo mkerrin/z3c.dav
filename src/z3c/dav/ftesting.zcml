@@ -15,6 +15,8 @@
   <include package="zope.securitypolicy" file="meta.zcml" />
   <include package="zope.securitypolicy" />
 
+  <include package="zope.login" />
+
   <securityPolicy
      component="zope.securitypolicy.zopepolicy.ZopeSecurityPolicy"
      />
@@ -31,7 +33,7 @@
      role="zope.Anonymous"
      />
   <grant
-     permission="zope.app.dublincore.view"
+     permission="zope.dublincore.view"
      role="zope.Anonymous"
      />
 

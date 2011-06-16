@@ -206,8 +206,9 @@ class PROPFIND(object):
 
         for davprop, adapter in \
                 z3c.dav.properties.getAllProperties(ob, req):
-            rendered_name = etree.Element(etree.QName(davprop.namespace,
-                                                      davprop.__name__))
+            rendered_name = etree.Element(
+                etree.QName(davprop.namespace, davprop.__name__)
+                )
             response.addProperty(200, rendered_name)
 
         return response

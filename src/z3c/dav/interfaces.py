@@ -25,7 +25,7 @@ from zope.interface.common.mapping import IMapping
 from zope.interface.common.sequence import IFiniteSequence
 from zope import schema
 from zope.schema.interfaces import IField
-from zope.component.interfaces import IView
+from zope.browser.interfaces import IView
 
 from zope.publisher.interfaces.http import IHTTPRequest, IHTTPResponse
 from zope.app.publication.interfaces import IRequestFactory

@@ -81,6 +81,24 @@ we are allowed to list the folder contents here.
       </propstat>
     </response>
     <response>
+      <href>http://localhost/++etc++site/default/CookieClientIdManager</href>
+      <propstat>
+        <prop>
+          <resourcetype />
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+    <response>
+      <href>http://localhost/++etc++site/default/PersistentSessionDataContainer</href>
+      <propstat>
+        <prop>
+          <resourcetype />
+        </prop>
+        <status>HTTP/1.1 200 Ok</status>
+      </propstat>
+    </response>
+    <response>
       <href>http://localhost/++etc++site/default/PrincipalAnnotation</href>
       <propstat>
         <prop>

@@ -132,17 +132,17 @@ class MKCOL(object):
       >>> 'newdir' in container
       True
       >>> container['newdir'] #doctest:+ELLIPSIS
-      <zope.app.folder.folder.Folder object at ...>
+      <zope.site.folder.Folder object at ...>
 
     Verify that the correct events are generated during the creation of the
     new folder.
 
       >>> events[0] #doctest:+ELLIPSIS
-      <zope.app.event.objectevent.ObjectCreatedEvent object at ...>
+      <zope.lifecycleevent.ObjectCreatedEvent object at ...>
       >>> events[1] #doctest:+ELLIPSIS
-      <zope.app.container.contained.ObjectAddedEvent object at ...>
+      <zope.lifecycleevent.ObjectAddedEvent object at ...>
       >>> events[2] #doctest:+ELLIPSIS
-      <zope.app.container.contained.ContainerModifiedEvent object at ...>
+      <zope.container.contained.ContainerModifiedEvent object at ...>
       >>> events[3:]
       []
 

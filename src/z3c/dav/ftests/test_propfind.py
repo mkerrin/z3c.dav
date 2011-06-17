@@ -12,8 +12,6 @@
 #
 ##############################################################################
 """Collection of functional tests for PROPFIND z3c.dav
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 

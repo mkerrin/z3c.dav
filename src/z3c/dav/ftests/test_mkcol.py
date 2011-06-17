@@ -12,8 +12,6 @@
 #
 ##############################################################################
 """Functional tests for MKCOL.
-
-$Id$
 """
 import unittest
 import dav

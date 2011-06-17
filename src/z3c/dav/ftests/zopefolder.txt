@@ -2,7 +2,6 @@
 zope.app.folder integration
 ===========================
 
-  >>> import z3c.etree
   >>> from zope.app.folder.folder import Folder
 
   >>> resp = http("""

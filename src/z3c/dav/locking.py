@@ -35,7 +35,6 @@ Response contains a lockdiscovery XML element.
   <!ELEMENT lockroot (href) >
     The href element contains the root of the lock.
 
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
@@ -45,7 +44,7 @@ import random
 import datetime
 
 import zope.component
-from zope import interface
+import zope.interface
 
 import z3c.etree
 import z3c.dav.interfaces
@@ -67,8 +66,9 @@ def generateLocktoken():
            (_randGen.random(), _randGen.random(), time.time())
 
 
-@zope.component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
-@interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
+@zope.component.adapter(
+    zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+@zope.interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def LOCK(context, request):
     """
     If we can adapt the context to a lock manager then we should be able to
@@ -87,9 +87,9 @@ class LOCKMethod(object):
     """
     LOCK handler for all objects.
     """
-    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    zope.interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     zope.component.adapts(
-        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+        zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request, lockmanager):
         self.context = context
@@ -362,8 +362,9 @@ class LOCKMethod(object):
 #
 ################################################################################
 
-@zope.component.adapter(interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
-@interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
+@zope.component.adapter(
+    zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+@zope.interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def UNLOCK(context, request):
     """
     If we can adapt the context to a lock manager then we should be able to
@@ -382,9 +383,9 @@ class UNLOCKMethod(object):
     """
     UNLOCK handler for all objects.
     """
-    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    zope.interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     zope.component.adapts(
-        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+        zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request, lockmanager):
         self.context = context

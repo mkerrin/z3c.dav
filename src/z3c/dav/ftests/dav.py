@@ -15,8 +15,6 @@
 
 XXX - This really needs some tidying up, also the setup should be moved to
 a global setup method so that individual tests can call it if they need to.
-
-$Id$
 """
 
 from cStringIO import StringIO

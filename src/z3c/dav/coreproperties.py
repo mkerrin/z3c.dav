@@ -15,11 +15,10 @@
 
   o readonly -> that the property is protected.
 
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
-from zope import interface
+import zope.interface
 import zope.component
 from zope import schema
 import zope.container.interfaces
@@ -28,7 +27,7 @@ import zope.publisher.interfaces.http
 from z3c.dav.properties import DAVProperty, DeadField
 import z3c.dav.widgets
 
-class IDAVCreationdate(interface.Interface):
+class IDAVCreationdate(zope.interface.Interface):
 
     creationdate = schema.Datetime(
         title = u"Records the time and date the resource was created.",
@@ -42,7 +41,7 @@ class IDAVCreationdate(interface.Interface):
         readonly = True)
 
 
-class IDAVDisplayname(interface.Interface):
+class IDAVDisplayname(zope.interface.Interface):
 
     displayname = schema.TextLine(
         title = u"Provides a name for the resource that is suitable for presentation to a user.",
@@ -63,7 +62,7 @@ class IDAVDisplayname(interface.Interface):
         readonly = False)
 
 
-class IDAVGetcontentlanguage(interface.Interface):
+class IDAVGetcontentlanguage(zope.interface.Interface):
 
     getcontentlanguage = schema.TextLine(
         title = u"GET Content-Language header.",
@@ -77,7 +76,7 @@ class IDAVGetcontentlanguage(interface.Interface):
         readonly = False)
 
 
-class IDAVGetcontentlength(interface.Interface):
+class IDAVGetcontentlength(zope.interface.Interface):
 
     getcontentlength = schema.Int(
         title = u"Contains the Content-Length header returned by a GET without accept headers.",
@@ -87,7 +86,7 @@ class IDAVGetcontentlength(interface.Interface):
         readonly = True)
 
 
-class IDAVGetcontenttype(interface.Interface):
+class IDAVGetcontenttype(zope.interface.Interface):
 
     getcontenttype = schema.TextLine(
         title = u"Contains the Content-Type header value as it would be returned by a GET without accept headers.",
@@ -97,7 +96,7 @@ class IDAVGetcontenttype(interface.Interface):
         readonly = False)
 
 
-class IDAVGetetag(interface.Interface):
+class IDAVGetetag(zope.interface.Interface):
 
     getetag = schema.TextLine(
         title = u"Contains the ETag header value as it would be returned by a GET without accept headers.",
@@ -109,7 +108,7 @@ class IDAVGetetag(interface.Interface):
         readonly = True)
 
 
-class IDAVGetlastmodified(interface.Interface):
+class IDAVGetlastmodified(zope.interface.Interface):
 
     getlastmodified = schema.Datetime(
         title = u"Contains the Last-Modified header value as it would be returned by a GET method without accept headers.",
@@ -125,7 +124,7 @@ class IDAVGetlastmodified(interface.Interface):
         readonly = True)
 
 
-class ILockEntry(interface.Interface):
+class ILockEntry(zope.interface.Interface):
     """A DAV Sub property of the supportedlock property.
     """
     lockscope = schema.List(
@@ -198,7 +197,7 @@ class IActiveLock(ILockEntry):
         required = True)
 
 
-class IDAVLockdiscovery(interface.Interface):
+class IDAVLockdiscovery(zope.interface.Interface):
 
     lockdiscovery = schema.List(
         title = u"Describes the active locks on a resource",
@@ -219,7 +218,7 @@ class IDAVLockdiscovery(interface.Interface):
         readonly = True)
 
 
-class IDAVResourcetype(interface.Interface):
+class IDAVResourcetype(zope.interface.Interface):
 
     resourcetype = schema.List(
         title = u"Specifies the nature of the resource.",
@@ -239,7 +238,7 @@ class IDAVResourcetype(interface.Interface):
         readonly = True)
 
 
-class IDAVSupportedlock(interface.Interface):
+class IDAVSupportedlock(zope.interface.Interface):
 
     supportedlock = schema.List(
         title = u"To provide a listing of the lock capabilities supported by the resource.",
@@ -352,7 +351,7 @@ class LockdiscoveryDAVWidget(z3c.dav.widgets.ListDAVWidget):
       True
 
     """
-    interface.classProvides(z3c.dav.interfaces.IIDAVWidget)
+    zope.interface.classProvides(z3c.dav.interfaces.IIDAVWidget)
 
     def render(self):
         etree = z3c.etree.getEngine()
@@ -429,9 +428,9 @@ class ResourceTypeAdapter(object):
       [u'collection']
 
     """
-    interface.implements(IDAVResourcetype)
+    zope.interface.implements(IDAVResourcetype)
     zope.component.adapts(
-        interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
+        zope.interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

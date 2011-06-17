@@ -15,14 +15,13 @@
 
 This needs to be cleaned up in order to be easily ported to Zope2.
 
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
 import urllib
 import urlparse
 
-from zope import interface
+import zope.interface
 import zope.component
 import zope.publisher.interfaces.http
 from zope.copypastemove.interfaces import IObjectCopier, IObjectMover
@@ -35,7 +34,7 @@ import z3c.dav.interfaces
 
 class Base(object):
     zope.component.adapts(
-        interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
+        zope.interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
 
     def __init__(self, context, request):
         self.context = context

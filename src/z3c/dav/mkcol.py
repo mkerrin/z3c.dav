@@ -10,8 +10,6 @@
 # FOR A PARTICULAR PURPOSE.
 ##############################################################################
 """DAV method MKCOL
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 

@@ -13,13 +13,11 @@
 ##############################################################################
 """Miscellanous helper methods for implementing the WebDAV data model. See
 datamodel.txt
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
 import zope.component
-from zope import interface
+import zope.interface
 from zope import schema
 from zope.schema.interfaces import IField
 from zope.schema.fieldproperty import FieldProperty
@@ -56,7 +54,7 @@ class DAVProperty(object):
       False
 
     """
-    interface.implements(IDAVProperty)
+    zope.interface.implements(IDAVProperty)
 
     namespace = FieldProperty(IDAVProperty['namespace'])
     __name__  = FieldProperty(IDAVProperty['__name__'])
@@ -98,7 +96,7 @@ class OpaqueInputWidget(z3c.dav.widgets.DAVInputWidget):
     """
 
       >>> class Storage(object):
-      ...    interface.implements(IOpaquePropertyStorage)
+      ...    zope.interface.implements(IOpaquePropertyStorage)
       ...    def __init__(self):
       ...        self.data = {}
       ...    def setProperty(self, tag, value):
@@ -170,7 +168,7 @@ class OpaqueField(schema.Field):
       'test'
 
     """
-    interface.implements(IOpaqueField)
+    zope.interface.implements(IOpaqueField)
 
     tag = FieldProperty(IOpaqueField["tag"])
 
@@ -208,7 +206,7 @@ class OpaqueProperty(object):
       True
 
     """
-    interface.implements(IDAVProperty)
+    zope.interface.implements(IDAVProperty)
 
     def __init__(self, tag):
         namespace, name = z3c.dav.utils.parseEtreeTag(tag)

@@ -12,13 +12,12 @@
 #
 ##############################################################################
 """WebDAV-specific interfaces
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
 import UserDict
-from zope import interface
+
+import zope.interface
 from zope.interface.interfaces import IInterface
 from zope.interface.common.interfaces import IException
 from zope.interface.common.mapping import IMapping
@@ -41,12 +40,14 @@ class IBadRequest(IException):
     Some information passed in the request is in invalid.
     """
 
-    request = interface.Attribute("""The request in which the error occured.""")
+    request = zope.interface.Attribute(
+        """The request in which the error occured.""")
 
-    message = interface.Attribute("""Message to send back to the user.""")
+    message = zope.interface.Attribute(
+        """Message to send back to the user.""")
 
 class BadRequest(Exception):
-    interface.implements(IBadRequest)
+    zope.interface.implements(IBadRequest)
 
     def __init__(self, request, message = None):
         self.request = request
@@ -61,12 +62,12 @@ class IUnsupportedMediaType(IException):
     Unsupported media type.
     """
 
-    context = interface.Attribute(""" """)
+    context = zope.interface.Attribute(""" """)
 
-    message = interface.Attribute(""" """)
+    message = zope.interface.Attribute(""" """)
 
 class UnsupportedMediaType(Exception):
-    interface.implements(IUnsupportedMediaType)
+    zope.interface.implements(IUnsupportedMediaType)
 
     def __init__(self, context, message = u""):
         self.context = context
@@ -83,12 +84,12 @@ class IBadGateway(IException):
     fulfill the request.
     """
 
-    context = interface.Attribute(""" """)
+    context = zope.interface.Attribute(""" """)
 
-    request = interface.Attribute(""" """)
+    request = zope.interface.Attribute(""" """)
 
 class BadGateway(Exception):
-    interface.implements(IBadGateway)
+    zope.interface.implements(IBadGateway)
 
     def __init__(self, context, request):
         self.context = context
@@ -104,17 +105,17 @@ class IDAVException(IException):
     to inform the client that something has gone a bit to the left.
     """
 
-    resource = interface.Attribute("""
+    resource = zope.interface.Attribute("""
     Possible resource on which this error was raised.
     """)
 
     ## XXX - this attribute was added has an after-thought. It currently
     ## isn't being used and has such it properly should be removed.
-    propertyname = interface.Attribute("""
+    propertyname = zope.interface.Attribute("""
     Possible property name for which the error applies.
     """)
 
-    message = interface.Attribute("""
+    message = zope.interface.Attribute("""
     Human readable message detailing what went wrong.
     """)
 
@@ -136,7 +137,7 @@ class IConflictError(IDAVException):
     """
 
 class ConflictError(DAVException):
-    interface.implements(IConflictError)
+    zope.interface.implements(IConflictError)
 
 
 class IForbiddenError(IDAVException):
@@ -146,7 +147,7 @@ class IForbiddenError(IDAVException):
     """
 
 class ForbiddenError(DAVException):
-    interface.implements(IForbiddenError)
+    zope.interface.implements(IForbiddenError)
 
 
 class IUnprocessableError(IDAVException):
@@ -155,7 +156,7 @@ class IUnprocessableError(IDAVException):
     """
 
 class UnprocessableError(DAVException):
-    interface.implements(IUnprocessableError)
+    zope.interface.implements(IUnprocessableError)
 
 
 # XXX - PropertyNotFound should go away and instead we should
@@ -166,7 +167,7 @@ class IPropertyNotFound(IDAVException):
     """
 
 class PropertyNotFound(DAVException):
-    interface.implements(IPropertyNotFound)
+    zope.interface.implements(IPropertyNotFound)
 
 
 class IPreconditionFailed(IDAVException):
@@ -175,7 +176,7 @@ class IPreconditionFailed(IDAVException):
     """
 
 class PreconditionFailed(DAVException):
-    interface.implements(IPreconditionFailed)
+    zope.interface.implements(IPreconditionFailed)
 
 
 class IFailedDependency(IDAVException):
@@ -185,7 +186,7 @@ class IFailedDependency(IDAVException):
     """
 
 class FailedDependency(DAVException):
-    interface.implements(IFailedDependency)
+    zope.interface.implements(IFailedDependency)
 
 
 class IAlreadyLocked(IDAVException):
@@ -194,7 +195,7 @@ class IAlreadyLocked(IDAVException):
     """
 
 class AlreadyLocked(Exception):
-    interface.implements(IAlreadyLocked)
+    zope.interface.implements(IAlreadyLocked)
 
     def __init__(self, context, message = None):
         self.resource = context
@@ -223,7 +224,7 @@ class WebDAVErrors(Exception):
     Collect has many errors has we can and then provide a view of all the
     errors to the user.
     """
-    interface.implements(IWebDAVErrors)
+    zope.interface.implements(IWebDAVErrors)
 
     def __init__(self, context, errors = ()):
         Exception.__init__(self)
@@ -250,12 +251,12 @@ class IWebDAVPropstatErrors(IMapping, IException):
     properties on a resource.
     """
 
-    context = interface.Attribute("""
+    context = zope.interface.Attribute("""
     The context on which all the properties are defined.
     """)
 
 class WebDAVPropstatErrors(UserDict.IterableUserDict, Exception):
-    interface.implements(IWebDAVPropstatErrors)
+    zope.interface.implements(IWebDAVPropstatErrors)
 
     def __init__(self, context):
         ## Allowing users to pass the list of errors into this exception
@@ -272,7 +273,7 @@ class WebDAVPropstatErrors(UserDict.IterableUserDict, Exception):
 #
 ################################################################################
 
-class IWebDAVMethod(interface.Interface):
+class IWebDAVMethod(zope.interface.Interface):
     """
     A object implementing this method is a callable object that implements
     one of the WebDAV specific methods.
@@ -293,14 +294,14 @@ class IWebDAVRequest(IHTTPRequest):
     that contains either XML or nothing has a payload.
     """
 
-    xmlDataSource = interface.Attribute("""
+    xmlDataSource = zope.interface.Attribute("""
     xml.dom.Document instance representing the input stream has an XML document.
 
     If there was no input or the input wasn't in XML then this attribute
     is None.
     """)
 
-    content_type = interface.Attribute("""
+    content_type = zope.interface.Attribute("""
     A string representing the content type of the input stream without any
     parameters.
     """)
@@ -328,11 +329,11 @@ class IBaseDAVWidget(IView):
 
     """
 
-    name = interface.Attribute("""
+    name = zope.interface.Attribute("""
     The local naem of the property.
     """)
 
-    namespace = interface.Attribute("""
+    namespace = zope.interface.Attribute("""
     The XML namespace to which the property belongs.
     """)
 
@@ -407,26 +408,26 @@ class IDAVWidget(IBaseDAVWidget):
         """
 
 
-class IDAVErrorWidget(interface.Interface):
+class IDAVErrorWidget(zope.interface.Interface):
     """
     Widget used to render any errors that should be included in a multi-status
     response.
     """
 
-    status = interface.Attribute("""
+    status = zope.interface.Attribute("""
     The HTTP status code.
     """)
 
-    errors = interface.Attribute("""
+    errors = zope.interface.Attribute("""
     List of etree elements that is a precondition or a postcondition code.
     """)
 
-    propstatdescription = interface.Attribute("""
+    propstatdescription = zope.interface.Attribute("""
     Contains readable information about an error that occured and applies
     to all properties contained within the current propstat XML element.
     """)
 
-    responsedescription = interface.Attribute("""
+    responsedescription = zope.interface.Attribute("""
     Contains readable information about an error that occured and applies to
     all resources contained within the current response XML element.
     """)
@@ -437,7 +438,7 @@ class IDAVErrorWidget(interface.Interface):
 #
 ################################################################################
 
-class IDAVProperty(interface.Interface):
+class IDAVProperty(zope.interface.Interface):
     """
     Data structure that holds information about a live WebDAV property.
     """
@@ -495,7 +496,7 @@ class IDAVProperty(interface.Interface):
 #
 ################################################################################
 
-class IOpaquePropertyStorage(interface.Interface):
+class IOpaquePropertyStorage(zope.interface.Interface):
     """
     Declaration of an adapter that is used to store, remove and query all
     dead properties on a resource.
@@ -529,7 +530,7 @@ class IOpaquePropertyStorage(interface.Interface):
         """
 
 
-class IDAVLockmanager(interface.Interface):
+class IDAVLockmanager(zope.interface.Interface):
     """
     Helper adapter for manage locks in an independent manner. Different
     Zope systems are going to have there own locking mechanisms for example

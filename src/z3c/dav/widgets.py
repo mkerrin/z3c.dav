@@ -10,8 +10,6 @@
 # FOR A PARTICULAR PURPOSE.
 ##############################################################################
 """A collection of usefull classes and methods related to WebDAV.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
@@ -19,7 +17,7 @@ import datetime
 import calendar
 
 import zope.component
-from zope import interface
+import zope.interface
 from zope.schema import getFieldsInOrder
 
 import z3c.etree
@@ -35,8 +33,8 @@ class DAVWidget(object):
     """Base class for rendering WebDAV properties through implementations like
     PROPFIND and PROPPATCH.
     """
-    interface.implements(interfaces.IDAVWidget)
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.implements(interfaces.IDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def __init__(self, context, request):
         self.context = context
@@ -69,7 +67,7 @@ class DAVWidget(object):
 
 
 class TextDAVWidget(DAVWidget):
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def toDAVValue(self, value):
         if value is None:
@@ -78,7 +76,7 @@ class TextDAVWidget(DAVWidget):
 
 
 class IntDAVWidget(DAVWidget):
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def toDAVValue(self, value):
         if value is not None:
@@ -88,7 +86,7 @@ class IntDAVWidget(DAVWidget):
 
 class DatetimeDAVWidget(DAVWidget):
     """Same widget can be used for a date field also."""
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def toDAVValue(self, value):
         # datetime object
@@ -100,7 +98,7 @@ class DatetimeDAVWidget(DAVWidget):
 
 class DateDAVWidget(DAVWidget):
     """Same widget can be used for a date field also."""
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def toDAVValue(self, value):
         # datetime object
@@ -112,7 +110,7 @@ class DateDAVWidget(DAVWidget):
 
 class ISO8601DatetimeDAVWidget(DAVWidget):
     """Same widget can be used for a date field also."""
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def toDAVValue(self, value):
         if value is None:
@@ -131,7 +129,7 @@ class ObjectDAVWidget(DAVWidget):
     `render_missing_values` attribute is a marker to tell webdav to render
     all fields which instance value is equal to the fields missing_value.
     """
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     render_missing_values = True
 
@@ -164,7 +162,7 @@ class ObjectDAVWidget(DAVWidget):
 
 
 class ListDAVWidget(DAVWidget):
-    interface.classProvides(interfaces.IIDAVWidget)
+    zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def render(self):
         etree = z3c.etree.getEngine()
@@ -197,8 +195,8 @@ class ListDAVWidget(DAVWidget):
 
 
 class DAVInputWidget(object):
-    interface.implements(interfaces.IDAVInputWidget)
-    interface.classProvides(interfaces.IIDAVInputWidget)
+    zope.interface.implements(interfaces.IDAVInputWidget)
+    zope.interface.classProvides(interfaces.IIDAVInputWidget)
 
     def __init__(self, context, request):
         self.context = context
@@ -237,7 +235,7 @@ class DAVInputWidget(object):
 
 
 class TextDAVInputWidget(DAVInputWidget):
-    interface.classProvides(interfaces.IIDAVInputWidget)
+    zope.interface.classProvides(interfaces.IIDAVInputWidget)
 
     def toFieldValue(self, element):
         value = element.text
@@ -249,7 +247,7 @@ class TextDAVInputWidget(DAVInputWidget):
 
 
 class IntDAVInputWidget(DAVInputWidget):
-    interface.classProvides(interfaces.IIDAVInputWidget)
+    zope.interface.classProvides(interfaces.IIDAVInputWidget)
 
     def toFieldValue(self, element):
         value = element.text
@@ -265,7 +263,7 @@ class IntDAVInputWidget(DAVInputWidget):
 
 
 class FloatDAVInputWidget(DAVInputWidget):
-    interface.classProvides(interfaces.IIDAVInputWidget)
+    zope.interface.classProvides(interfaces.IIDAVInputWidget)
 
     def toFieldValue(self, element):
         value = element.text
@@ -280,7 +278,7 @@ class FloatDAVInputWidget(DAVInputWidget):
 
 
 class DatetimeDAVInputWidget(DAVInputWidget):
-    interface.classProvides(interfaces.IIDAVInputWidget)
+    zope.interface.classProvides(interfaces.IIDAVInputWidget)
 
     def toFieldValue(self, element):
         value = element.text
@@ -291,7 +289,7 @@ class DatetimeDAVInputWidget(DAVInputWidget):
 
 
 class DateDAVInputWidget(DatetimeDAVInputWidget):
-    interface.classProvides(interfaces.IIDAVInputWidget)
+    zope.interface.classProvides(interfaces.IIDAVInputWidget)
 
     def toFieldValue(self, element):
         value = super(DateDAVInputWidget, self).toFieldValue(element)

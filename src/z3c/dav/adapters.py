@@ -10,14 +10,12 @@
 # FOR A PARTICULAR PURPOSE.
 ##############################################################################
 """Basic WebDAV storage adapters for Files and Folders content objects.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
 from BTrees.OOBTree import OOBTree
 
-from zope import interface
+import zope.interface
 import zope.annotation.interfaces
 from zope.dublincore.interfaces import IDCTimes, IDCDescriptiveProperties
 
@@ -60,7 +58,7 @@ class DAVDublinCore(object):
     Now define the IZopeDublinCore adapters, the properties can now have
     non None values.
 
-      >>> interface.classImplements(Resource,
+      >>> zope.interface.classImplements(Resource,
       ...    zope.annotation.interfaces.IAttributeAnnotatable)
       >>> component.getGlobalSiteManager().registerAdapter(
       ...     AttributeAnnotations)
@@ -94,7 +92,7 @@ class DAVDublinCore(object):
       True
 
     """
-    interface.implements(z3c.dav.coreproperties.IDAVCoreSchema)
+    zope.interface.implements(z3c.dav.coreproperties.IDAVCoreSchema)
 
     def __init__(self, context, request):
         self.context = context
@@ -143,7 +141,7 @@ class OpaqueProperties(object):
     Initiial the object contains no dead properties.
 
       >>> class DemoContent(object):
-      ...     interface.implements(zope.annotation.interfaces.IAnnotatable)
+      ...     zope.interface.implements(zope.annotation.interfaces.IAnnotatable)
       >>> resource = DemoContent()
       >>> opaqueProperties = OpaqueProperties(resource)
       >>> verifyObject(z3c.dav.interfaces.IOpaquePropertyStorage,
@@ -228,7 +226,7 @@ class OpaqueProperties(object):
       True
 
     """
-    interface.implements(z3c.dav.interfaces.IOpaquePropertyStorage)
+    zope.interface.implements(z3c.dav.interfaces.IOpaquePropertyStorage)
 
     _annotations = None
 

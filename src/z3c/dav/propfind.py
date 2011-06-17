@@ -31,14 +31,12 @@ requested by the PROPFIND method.
                                              the properties to render.
 
 And all these methods return a z3c.dav.utils.IResponse implementation.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
 import sys
 
-from zope import interface
+import zope.interface
 import zope.component
 from zope.filerepresentation.interfaces import IReadDirectory
 from zope.error.interfaces import IErrorReportingUtility
@@ -55,9 +53,9 @@ class PROPFIND(object):
     """
     PROPFIND handler for all objects.
     """
-    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    zope.interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     zope.component.adapts(
-        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+        zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context

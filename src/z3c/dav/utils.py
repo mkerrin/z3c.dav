@@ -28,37 +28,35 @@ MultiStatus
 Also contains some usefully methods like
 
 + getObjectURL
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
 import zope.component
-from zope import interface
+import zope.interface
 from zope.publisher.http import status_reasons
 from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.container.interfaces import IReadContainer
 import z3c.etree
 
-class IPropstat(interface.Interface):
+class IPropstat(zope.interface.Interface):
     """Helper interface to render a response XML element. 
     """
 
-    properties = interface.Attribute("""List of etree elements that make up
-    the prop element.
+    properties = zope.interface.Attribute("""List of etree elements that make
+    up the prop element.
     """)
 
-    status = interface.Attribute("""Integer status code of all the properties
-    belonging to this propstat XML element.
+    status = zope.interface.Attribute("""Integer status code of all the
+    properties belonging to this propstat XML element.
     """)
 
-    error = interface.Attribute("""List of etree elements describing the
+    error = zope.interface.Attribute("""List of etree elements describing the
     error condition of the properties within this propstat XML element.
     """)
 
-    responsedescription = interface.Attribute("""String containing readable
-    information about the status of all the properties belonging to this
-    propstat element.
+    responsedescription = zope.interface.Attribute("""String containing
+    readable information about the status of all the properties belonging to
+    this propstat element.
     """)
 
     def __call__():
@@ -66,29 +64,29 @@ class IPropstat(interface.Interface):
         """
 
 
-class IResponse(interface.Interface):
+class IResponse(zope.interface.Interface):
     """Helper object to render a response XML element.
     """
 
-    href = interface.Attribute("""String representation of the HTTP URL
+    href = zope.interface.Attribute("""String representation of the HTTP URL
     pointing to the resource that this response element represents.
     """)
 
-    status = interface.Attribute("""Optional integer status code for this
+    status = zope.interface.Attribute("""Optional integer status code for this
     response element.
     """)
 
-    error = interface.Attribute("""List of etree elements describing the
+    error = zope.interface.Attribute("""List of etree elements describing the
     error conditions of all the properties contained within an instance of
     this response XML element.
     """)
 
-    responsedescription = interface.Attribute("""String containing readable
-    information about this response relative to the request or result.
+    responsedescription = zope.interface.Attribute("""String containing
+    readable information about this response relative to the request or result.
     """)
 
-    location = interface.Attribute("""The "Location" HTTP header for use with
-    some status codes like 201 and 300. This value should be set if any of
+    location = zope.interface.Attribute("""The "Location" HTTP header for use
+    with some status codes like 201 and 300. This value should be set if any of
     status codes contained within this response XML element are required to
     have a HTTP "Location" header.
     """)
@@ -109,14 +107,14 @@ class IResponse(interface.Interface):
         """
 
 
-class IMultiStatus(interface.Interface):
+class IMultiStatus(zope.interface.Interface):
 
-    responses = interface.Attribute("""List of IResponse objects that make
+    responses = zope.interface.Attribute("""List of IResponse objects that make
     all the responses contained within this multistatus XML element.
     """)
 
-    responsedescription = interface.Attribute("""String containing a readable
-    informatino about the status of all the responses belonging to this
+    responsedescription = zope.interface.Attribute("""String containing a
+    readable information about the status of all the responses belonging to this
     multistatus element.
     """)
 
@@ -170,8 +168,8 @@ def makestatuselement(status):
 
     Do we want this?
 
-      >>> etree.tostring(makestatuselement('XXX')) #doctest:+XMLDATA
-      '<status xmlns="DAV:">XXX</status>'
+      >>> etree.tostring(makestatuselement('GREAT')) #doctest:+XMLDATA
+      '<status xmlns="DAV:">GREAT</status>'
     """
     if isinstance(status, (int, long)):
         status = 'HTTP/1.1 %d %s' %(status, status_reasons[status])
@@ -264,7 +262,7 @@ class Propstat(object):
       ValueError: Must set status before rendering a propstat.
 
     """
-    interface.implements(IPropstat)
+    zope.interface.implements(IPropstat)
 
     def __init__(self):
         # etree.Element
@@ -489,7 +487,7 @@ class Response(object):
        </response>
 
     """
-    interface.implements(IResponse)
+    zope.interface.implements(IResponse)
 
     def __init__(self, href):
         self.href = [href]
@@ -622,7 +620,7 @@ class MultiStatus(object):
       </multistatus>
 
     """
-    interface.implements(IMultiStatus)
+    zope.interface.implements(IMultiStatus)
 
     def __init__(self):
         # list of Response objects

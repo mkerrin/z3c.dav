@@ -15,13 +15,11 @@
   <!ELEMENT remove (prop) >
   <!ELEMENT set (prop) >
   <!ELEMENT prop ANY >
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 
 import zope.event
-from zope import interface
+import zope.interface
 import zope.component
 import zope.lifecycleevent
 
@@ -34,9 +32,9 @@ import z3c.dav.properties
 
 class PROPPATCH(object):
     """PROPPATCH handler for all objects"""
-    interface.implements(z3c.dav.interfaces.IWebDAVMethod)
+    zope.interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     zope.component.adapts(
-        interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+        zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
 
     def __init__(self, context, request):
         self.context = context

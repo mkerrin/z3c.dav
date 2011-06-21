@@ -15,8 +15,6 @@
 
 It is easier to do this has a unit test has we have complete control over
 what properties are defined or not.
-
-$Id$
 """
 
 import unittest
@@ -43,7 +41,7 @@ from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
 class TestRequest(z3c.dav.publisher.WebDAVRequest):
 
     def __init__(self, set_properties = None, remove_properties = None,
-                 environ = {}):
+                 environ = {}, content_type = "text/xml"):
         set_body = ""
         if set_properties is not None:
             set_body = "<set><prop>%s</prop></set>" % set_properties
@@ -61,7 +59,7 @@ class TestRequest(z3c.dav.publisher.WebDAVRequest):
 
         env = environ.copy()
         env.setdefault("REQUEST_METHOD", "PROPPATCH")
-        env.setdefault("CONTENT_TYPE", "text/xml")
+        env.setdefault("CONTENT_TYPE", content_type)
         env.setdefault("CONTENT_LENGTH", len(body))
 
         super(TestRequest, self).__init__(StringIO(body), env)
@@ -183,8 +181,9 @@ class PROPPATCHXmlParsing(unittest.TestCase):
         request.processInputs()
 
         propp = PROPPATCHHandler(Resource(), request)
-        self.assertRaises(z3c.dav.interfaces.UnprocessableError,
-                          propp.PROPPATCH)
+        self.assertRaises(
+            z3c.dav.interfaces.UnprocessableError,
+            propp.PROPPATCH)
 
     def test_not_set_element(self):
         body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -292,6 +291,20 @@ class PROPPATCHXmlParsing(unittest.TestCase):
 
         self.assertEqual(propp.setprops, ["bar"])
         self.assertEqual(propp.removeprops, [])
+
+    def test_set_propnullns(self):
+        # test litmus #15
+        body = """<?xml version="1.0" encoding="utf-8" ?><propertyupdate xmlns="DAV:"><set><prop><nonamespace xmlns="">randomvalue</nonamespace></prop></set></propertyupdate>"""
+        env = {
+            "REQUEST_METHOD": "PROPPATCH",
+            "CONTENT_TYPE": "",
+            "CONTENT_LENGTH": len(body)
+            }
+        request = z3c.dav.publisher.WebDAVRequest(StringIO(body), env)
+        request.processInputs()
+
+        propp = PROPPATCHHandler(Resource(), request)
+        propp.PROPPATCH()    
 
     def test_set_one_prop(self):
         request = TestRequest(

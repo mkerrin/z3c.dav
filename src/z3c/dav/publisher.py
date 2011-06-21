@@ -59,7 +59,7 @@ class WebDAVRequest(z3c.conditionalviews.ConditionalHTTPRequest):
         if content_length:
             content_length = int(content_length)
 
-        if content_type in ("text/xml", "application/xml", None) and \
+        if content_type in ("text/xml", "application/xml", None, "") and \
                content_length > 0:
             etree = z3c.etree.getEngine()
             try:

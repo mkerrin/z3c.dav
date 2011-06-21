@@ -14,7 +14,7 @@
 
 import os.path
 import unittest
-from zope.testing import doctest
+import doctest
 
 import z3c.etree.testing
 import z3c.dav.testing

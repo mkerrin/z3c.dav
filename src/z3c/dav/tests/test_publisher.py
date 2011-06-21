@@ -12,8 +12,6 @@
 #
 ##############################################################################
 """Test utility for interfacing with the zope.locking package from ZC
-
-$Id$
 """
 
 import unittest

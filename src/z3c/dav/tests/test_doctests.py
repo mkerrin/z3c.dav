@@ -12,13 +12,11 @@
 #
 ##############################################################################
 """Run all doctests contained within z3c.dav.
-
-$Id$
 """
+
 import unittest
 import UserDict
-
-from zope.testing import doctest
+import doctest
 
 from zope import component
 from zope import interface

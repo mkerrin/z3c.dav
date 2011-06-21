@@ -17,8 +17,6 @@ There are two types of error views. Ones that get caught by the WebDAV protocol
 and the other which escapes to the publisher. Both these views implement
 different interface which we can control through the WebDAV package via the
 IPublication.handleException method.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 

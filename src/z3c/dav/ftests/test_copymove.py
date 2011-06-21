@@ -12,8 +12,6 @@
 #
 ##############################################################################
 """Collection of functional tests for the LOCK method.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 

@@ -16,8 +16,6 @@
 A lot of WebDAV requests can go badly wrong. If this is the case then return
 a snippet of HTML that could be displayed to the user describing what went
 left.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 

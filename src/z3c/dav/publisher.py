@@ -10,8 +10,6 @@
 # FOR A PARTICULAR PURPOSE.
 ##############################################################################
 """WebDAV publishing objects including the request and response.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 

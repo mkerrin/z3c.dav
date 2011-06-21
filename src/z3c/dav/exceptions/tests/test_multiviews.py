@@ -12,8 +12,6 @@
 #
 ##############################################################################
 """Test the multistatus views.
-
-$Id$
 """
 __docformat__ = 'restructuredtext'
 

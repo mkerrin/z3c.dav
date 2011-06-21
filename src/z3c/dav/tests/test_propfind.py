@@ -15,8 +15,6 @@
 
 It is easier to do this has a unit test has we have complete control over
 what properties are defined or not.
-
-$Id$
 """
 
 import unittest

@@ -11,8 +11,6 @@
 ##############################################################################
 """
 Miscellaneous utilities used for testing WebDAV components.
-
-$Id$
 """
 __docformat__ = "restructuredtext"
 

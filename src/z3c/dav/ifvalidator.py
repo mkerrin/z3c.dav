@@ -147,7 +147,7 @@ class IFValidator(object):
       ...    zope.interface.implements(IStateTokens)
       ...    def __init__(self, context, request, view):
       ...        self.context = context
-      ...    schemes = ('', 'opaquetoken')
+      ...    schemes = ('ns',)
       ...    @property
       ...    def tokens(self):
       ...        context = removeSecurityProxy(self.context) # ???
@@ -266,54 +266,76 @@ class IFValidator(object):
     We collect the parsed state tokens from the `IF` as we find them and
     store them as an annotation on the request object.
 
-      >>> request = TestRequest(environ = {'IF': '(<locktoken>)'})
+      >>> request = TestRequest(environ = {'IF': '(<ns:locktoken>)'})
       >>> validator.valid(resource, request, None)
       False
       >>> getStateResults(request)
-      {'/test': {'locktoken': False}}
+      {'/test': {'ns:locktoken': False}}
 
-      >>> resource._tokens = ['locktoken']
+      >>> resource._tokens = ['ns:locktoken']
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'locktoken': False}}
+      {'/test': {'ns:locktoken': False}}
+
+    Namespace with digit. Some versions of Python fail to parse the following
+    lock tokens. The problem is in `urlparse.urlparse' which is known to be
+    broken in versions 2.7 and 2.7.1 of Python.
+
+      >>> request = TestRequest(environ = {'IF': '(<ns:0.916441024976-0.164634675389-00105A989226:1308916796.245>)'})
+      >>> validator.valid(resource, request, None)
+      False
+      >>> getStateResults(request)
+      {'/test': {'ns:0.916441024976-0.164634675389-00105A989226:1308916796.245': False}}
+
+      >>> request = TestRequest(environ = {'IF': '(<ns:0.916441024976-0.164634675389-00105A989226:1308916796.245>)'})
+      >>> resource._tokens = ['ns:0.916441024976-0.164634675389-00105A989226:1308916796.245']
+
+    This is the test that breaks on the broken versions.
+
+      >>> validator.valid(resource, request, None)
+      True
+      >>> getStateResults(request)
+      {'/test': {'ns:0.916441024976-0.164634675389-00105A989226:1308916796.245': False}}
 
     If there are multiple locktokens associated with a resource, we only
     are interested in the token that is represented in the IF header, so we
     only have one entry in the state results variable.
 
-      >>> resource._tokens = ['locktoken', 'nolocktoken']
+      >>> request = TestRequest(environ = {'IF': '(<ns:locktoken>)'})
+      >>> resource._tokens = ['ns:locktoken', 'ns:nolocktoken']
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'locktoken': False}}
-      >>> request._environ['IF'] = '(NOT <locktoken>)'
+      {'/test': {'ns:locktoken': False}}
+      >>> request._environ['IF'] = '(NOT <ns:locktoken>)'
       >>> validator.valid(resource, request, None)
       False
       >>> getStateResults(request)
-      {'/test': {'locktoken': True}}
+      {'/test': {'ns:locktoken': True}}
 
-      >>> request._environ['IF'] = '(NOT <invalidlocktoken>)'
+      >>> request._environ['IF'] = '(NOT <ns:invalidlocktoken>)'
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'invalidlocktoken': True}}
+      {'/test': {'ns:invalidlocktoken': True}}
+
 
     Combined entity / state tokens
     ------------------------------
 
-      >>> request = TestRequest(environ = {'IF': '(<locktoken> ["xx"])'})
+      >>> request = TestRequest(environ = {'IF': '(<ns:locktoken> ["xx"])'})
       >>> validator.valid(resource, request, None)
       True
-      >>> resource._tokens = ['nolocktoken']
+      >>> resource._tokens = ['ns:nolocktoken']
       >>> validator.valid(resource, request, None)
       False
 
-      >>> request._environ['IF'] = '(<nolocktoken> ["xx"]) (["yy"])'
+      >>> request._environ['IF'] = '(<ns:nolocktoken> ["xx"]) (["yy"])'
       >>> validator.valid(resource, request, None)
       True
 
-      >>> request._environ['IF'] = '(<nolocktoken> ["yy"]) (["xx"])'
+      >>> request._environ['IF'] = '(<ns:nolocktoken> ["yy"]) (["xx"])'
       >>> validator.valid(resource, request, None)
       True
 
@@ -321,11 +343,11 @@ class IFValidator(object):
     associated with it, then the request must be valid.
 
       >>> resource._tokens = []
-      >>> request._environ['IF'] = '(<locktoken>)'
+      >>> request._environ['IF'] = '(<ns:locktoken>)'
       >>> validator.valid(resource, request, None)
       True
       >>> getStateResults(request)
-      {'/test': {'locktoken': False}}
+      {'/test': {'ns:locktoken': False}}
 
     But we if the condition in the state token contains a state token belong
     to the URL scheme that we don't know about then the condition false, and
@@ -375,40 +397,40 @@ class IFValidator(object):
     Setup all the state tokens for all content objects to be their `__name__`
     attribute.
 
-      >>> demo._tokens = ['demo']
-      >>> locked._tokens = ['locked']
-      >>> request._environ['IF'] = '<http://localhost/locked> (<demo>)'
+      >>> demo._tokens = ['ns:demo']
+      >>> locked._tokens = ['ns:locked']
+      >>> request._environ['IF'] = '<http://localhost/locked> (<ns:demo>)'
       >>> validator.valid(demo, request, None)
       False
-      >>> request._environ['IF'] = '<http://localhost/locked> (<locked>)'
+      >>> request._environ['IF'] = '<http://localhost/locked> (<ns:locked>)'
       >>> validator.valid(demo, request, None)
       True
 
     If a specified resource does not exist then the only way for the IF header
-    to match is for the state tokens to be `(Not <locktoken>)`.
+    to match is for the state tokens to be `(Not <ns:locktoken>)`.
 
-      >>> request._environ['IF'] = '<http://localhost/missing> (<locked>)'
+      >>> request._environ['IF'] = '<http://localhost/missing> (<ns:locked>)'
       >>> validator.valid(demo, request, None)
       True
 
-    In this case when we try to match against `(Not <locked>)` but we stored
-    state is still matched.
+    In this case when we try to match against `(Not <ns:locked>)`
+    but we stored state is still matched.
 
-      >>> request._environ['IF'] = '<http://localhost/missing> (Not <locked>)'
+      >>> request._environ['IF'] = '<http://localhost/missing> (Not <ns:locked>)'
       >>> validator.valid(demo, request, None)
       False
       >>> getStateResults(request)
-      {'/missing': {'locked': True}}
+      {'/missing': {'ns:locked': True}}
 
     If we have specify multiple resources then we need to parse the
     whole `IF` header so that the state results method knows about the
     different resources.
 
-      >>> request._environ['IF'] = '</demo> (<demo>) </locked> (<notlocked>)'
+      >>> request._environ['IF'] = '</demo> (<ns:demo>) </locked> (<ns:notlocked>)'
       >>> validator.valid(demo, request, None)
       True
       >>> getStateResults(request)
-      {'/locked': {'notlocked': False}, '/demo': {'demo': False}}
+      {'/locked': {'ns:notlocked': False}, '/demo': {'ns:demo': False}}
 
     Null resources
     ==============
@@ -443,7 +465,7 @@ class IFValidator(object):
     Now generate a request with an IF header, and LOCK method that fails to
     find a resource, we get a NullResource instead of a NotFound exception.
 
-      >>> request = TestRequest(environ = {'IF': '</missing> (<locked>)',
+      >>> request = TestRequest(environ = {'IF': '</missing> (<ns:locked>)',
       ...                                  'REQUEST_METHOD': 'LOCK'})
       >>> request.setPublication(ZopePublication(None))
 
@@ -459,7 +481,7 @@ class IFValidator(object):
       >>> validator.valid(demo2, request, None)
       True
       >>> getStateResults(request)
-      {'/missing': {'locked': False}}
+      {'/missing': {'ns:locked': False}}
       >>> matchesIfHeader(demo2, request)
       True
       >>> matchesIfHeader(missingdemo2, request)
@@ -467,11 +489,11 @@ class IFValidator(object):
 
     The demo object is not locked so it automatically matches the if header.
 
-      >>> root2._tokens = ['locked']
+      >>> root2._tokens = ['ns:locked']
       >>> validator.valid(demo2, request, None)
       True
       >>> getStateResults(request)
-      {'/missing': {'locked': False}}
+      {'/missing': {'ns:locked': False}}
       >>> matchesIfHeader(demo2, request)
       True
 
@@ -482,18 +504,18 @@ class IFValidator(object):
       >>> matchesIfHeader(root2, request)
       False
 
-      >>> root2._tokens = ['otherlocktoken']
+      >>> root2._tokens = ['ns:otherlocktoken']
       >>> validator.valid(demo2, request, None)
       True
       >>> getStateResults(request)
-      {'/missing': {'locked': False}}
+      {'/missing': {'ns:locked': False}}
 
       >>> validator.valid(missingdemo2, request, None)
       True
       >>> matchesIfHeader(missingdemo2, request)
       True
 
-      >>> root2._tokens = ['locked']
+      >>> root2._tokens = ['ns:locked']
       >>> validator.valid(missingdemo2, request, None)
       True
 
@@ -618,8 +640,8 @@ class IFValidator(object):
     The parsed state token in the `IF` header for the demo object matches
     the current state token.
 
-      >>> demo._tokens = ['test'] # setup the state tokens
-      >>> request._environ['IF'] = '</demo> (<test>)'
+      >>> demo._tokens = ['ns:test'] # setup the state tokens
+      >>> request._environ['IF'] = '</demo> (<ns:test>)'
       >>> validator.valid(demo, request, None)
       True
       >>> matchesIfHeader(demo, request)
@@ -631,7 +653,7 @@ class IFValidator(object):
     executed but there are event handlers that might call the matchesIfHeader
     which does return False since we don't have any locktoken.
 
-      >>> request._environ['IF'] = '</demo> (<falsetest>) (NOT <DAV:no-lock>)'
+      >>> request._environ['IF'] = '</demo> (<ns:falsetest>) (NOT <DAV:no-lock>)'
       >>> validator.valid(demo, request, None)
       True
       >>> matchesIfHeader(demo, request)
@@ -641,8 +663,8 @@ class IFValidator(object):
     this as special meaning for any children of the root folder, if there
     state token is the same then we get a match.
 
-      >>> root._tokens = ['roottest']
-      >>> request._environ['IF'] = '</> (<roottest>)'
+      >>> root._tokens = ['ns:roottest']
+      >>> request._environ['IF'] = '</> (<ns:roottest>)'
       >>> validator.valid(demo, request, None)
       True
       >>> matchesIfHeader(root, request)
@@ -657,7 +679,7 @@ class IFValidator(object):
     Two resources are specified in the `IF` header, so the root object fails
     to match the `IF` header whereas the demo object does match.
 
-      >>> request._environ['IF'] = '</> (<falseroottest>) </demo> (<test>)'
+      >>> request._environ['IF'] = '</> (<ns:falseroottest>) </demo> (<ns:test>)'
       >>> validator.valid(demo, request, None)
       True
       >>> matchesIfHeader(root, request)
@@ -669,7 +691,7 @@ class IFValidator(object):
     its state token appears in the `IF` header for a parent object then
     the demo object matches the `IF` header.
 
-      >>> request._environ['IF'] = '</> (<roottest>)'
+      >>> request._environ['IF'] = '</> (<ns:roottest>)'
       >>> validator.valid(root, request, None)
       True
       >>> matchesIfHeader(root, request)
@@ -679,7 +701,7 @@ class IFValidator(object):
 
     But if the demo object is not locked then it passes.
 
-      >>> demo._tokens = ['roottest']
+      >>> demo._tokens = ['ns:roottest']
       >>> validator.valid(demo, request, None)
       True
       >>> matchesIfHeader(root, request)

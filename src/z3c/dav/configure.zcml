@@ -245,6 +245,10 @@
      factory=".coreproperties.ResourceTypeAdapter"
      />
 
+  <adapter
+     factory=".coreproperties.DAVGetetag"
+     />
+
   <!--
       Zope3 support for WebDAV. Since zope.app.folder is the only content
       component that is a dependency of zope.app.zcmlfiles we will include

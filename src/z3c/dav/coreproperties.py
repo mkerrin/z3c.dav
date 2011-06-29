@@ -23,6 +23,7 @@ import zope.component
 from zope import schema
 import zope.container.interfaces
 import zope.publisher.interfaces.http
+import zope.publisher.defaultview
 
 from z3c.dav.properties import DAVProperty, DeadField
 import z3c.dav.widgets
@@ -441,3 +442,42 @@ class ResourceTypeAdapter(object):
             self.context):
             return [u'collection']
         return None
+
+################################################################################
+#
+# GetEtag property based on z3c.conditionalviews.
+#
+################################################################################
+
+class Getetag(object):
+    zope.interface.implements(IDAVGetetag)
+
+    def __init__(self, etag):
+        self.getetag = etag
+
+
+@zope.component.adapter(
+    zope.interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
+@zope.interface.implementer(IDAVGetetag)
+def DAVGetetag(context, request):
+    # XXX - this is tested via the z3c.davapp.zopefile package.
+    sm = zope.component.getSiteManager(context)
+    ob = zope.interface.providedBy(context)
+
+    # get default view, then get z3c.conditionalviews.interfaces.IETag adapter
+    name = sm.adapters.lookup(
+        (ob, zope.publisher.interfaces.browser.IBrowserRequest),
+        zope.publisher.interfaces.IDefaultViewName)
+    if name:
+        view = sm.adapters.lookup(
+            (ob, zope.publisher.interfaces.browser.IBrowserRequest),
+            zope.interface.Interface,
+            name = name)
+        if view:
+            etag = zope.component.queryMultiAdapter(
+                (context, request, view), z3c.conditionalviews.interfaces.IETag)
+            if etag:
+                return Getetag(etag.etag)
+
+    # Failed to find either the default name, view or etag data source.
+    return None

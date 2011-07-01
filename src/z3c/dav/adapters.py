@@ -264,3 +264,44 @@ class OpaqueProperties(object):
     def removeProperty(self, tag):
         del self._mapping[tag]
         self._changed()
+
+################################################################################
+#
+# GetEtag property based on z3c.conditionalviews.
+#
+################################################################################
+
+class Getetag(object):
+    zope.interface.implements(z3c.dav.coreproperties.IDAVGetetag)
+
+    def __init__(self, etag):
+        self.getetag = etag
+
+
+@zope.component.adapter(
+    zope.interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
+@zope.interface.implementer(z3c.dav.coreproperties.IDAVGetetag)
+def DAVGetetag(context, request):
+    # XXX - this is tested via the z3c.davapp.zopefile package.
+    sm = zope.component.getSiteManager(context)
+    ob = zope.interface.providedBy(context)
+
+    # get default view, then get z3c.conditionalviews.interfaces.IETag adapter
+    name = sm.adapters.lookup(
+        (ob, zope.publisher.interfaces.browser.IBrowserRequest),
+        zope.publisher.interfaces.IDefaultViewName)
+    if name:
+        view = sm.adapters.lookup(
+            (ob, zope.publisher.interfaces.browser.IBrowserRequest),
+            zope.interface.Interface,
+            name = name)
+        if view:
+            etag = zope.component.queryMultiAdapter(
+                (context, request, view), z3c.conditionalviews.interfaces.IETag)
+            if etag:
+                import pdb
+                pdb.set_trace()
+                return Getetag(etag.etag)
+
+    # Failed to find either the default name, view or etag data source.
+    return None

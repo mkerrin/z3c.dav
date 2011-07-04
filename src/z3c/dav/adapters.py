@@ -299,8 +299,6 @@ def DAVGetetag(context, request):
             etag = zope.component.queryMultiAdapter(
                 (context, request, view), z3c.conditionalviews.interfaces.IETag)
             if etag:
-                import pdb
-                pdb.set_trace()
                 return Getetag(etag.etag)
 
     # Failed to find either the default name, view or etag data source.

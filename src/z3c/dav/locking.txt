@@ -26,7 +26,6 @@ Setup
   >>> import zope.component
   >>> import zope.annotation.interfaces
   >>> import zope.publisher.interfaces.http
-  >>> import zope.app.container.interfaces
   >>> import z3c.dav.interfaces
   >>> from zope.traversing.interfaces import IPhysicallyLocatable
 

@@ -31,12 +31,13 @@ Also contains some usefully methods like
 """
 __docformat__ = 'restructuredtext'
 
+from xml.etree import ElementTree
+
 import zope.component
 import zope.interface
 from zope.publisher.http import status_reasons
 from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.container.interfaces import IReadContainer
-import z3c.etree
 
 class IPropstat(zope.interface.Interface):
     """Helper interface to render a response XML element. 
@@ -137,8 +138,7 @@ class IMultiStatus(zope.interface.Interface):
 ################################################################################
 
 def makeelement(namespace, tagname, text_or_el = None):
-    etree = z3c.etree.getEngine()
-    el = etree.Element(etree.QName(namespace, tagname))
+    el = ElementTree.Element(ElementTree.QName(namespace, tagname))
     if isinstance(text_or_el, (str, unicode)):
         el.text = text_or_el
     elif text_or_el is not None:
@@ -629,8 +629,7 @@ class MultiStatus(object):
         self.responsedescription = ""
 
     def __call__(self):
-        etree = z3c.etree.getEngine()
-        el = etree.Element(etree.QName('DAV:', 'multistatus'))
+        el = ElementTree.Element(ElementTree.QName('DAV:', 'multistatus'))
         for response in self.responses:
             el.append(response())
 

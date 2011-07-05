@@ -18,6 +18,8 @@
 """
 __docformat__ = 'restructuredtext'
 
+import xml.etree.ElementTree
+
 import zope.interface
 import zope.component
 from zope import schema
@@ -354,8 +356,8 @@ class LockdiscoveryDAVWidget(z3c.dav.widgets.ListDAVWidget):
     zope.interface.classProvides(z3c.dav.interfaces.IIDAVWidget)
 
     def render(self):
-        etree = z3c.etree.getEngine()
-        el = etree.Element(etree.QName(self.namespace, self.name))
+        el = xml.etree.ElementTree.Element(
+            xml.etree.ElementTree.QName(self.namespace, self.name))
 
         if self._value is not self.context.missing_value:
             for value in self._value:

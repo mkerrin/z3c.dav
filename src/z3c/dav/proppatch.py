@@ -18,12 +18,13 @@
 """
 __docformat__ = 'restructuredtext'
 
+from xml.etree import ElementTree
+
 import zope.event
 import zope.interface
 import zope.component
 import zope.lifecycleevent
 
-import z3c.etree
 from zope.security.interfaces import Unauthorized
 
 import z3c.dav.utils
@@ -52,8 +53,6 @@ class PROPPATCH(object):
                 self.context,
                 message = u"PROPPATCH request body must be a "
                            "`propertyupdate' XML element.")
-
-        etree = z3c.etree.getEngine()
 
         # propErrors - list of (property tag, error). error is None if no
         #              error occurred in setting / removing the property.
@@ -118,7 +117,7 @@ class PROPPATCH(object):
         propstat = response.getPropstat(200)
 
         for proptag in properties:
-            propstat.properties.append(etree.Element(proptag))
+            propstat.properties.append(ElementTree.Element(proptag))
 
         multistatus = z3c.dav.utils.MultiStatus()
         multistatus.responses.append(response)
@@ -126,7 +125,7 @@ class PROPPATCH(object):
         self.request.response.setStatus(207)
         self.request.response.setHeader("content-type", "application/xml")
         ## Is UTF-8 encoding ok here or is there a better way of doing this.
-        return etree.tostring(multistatus(), encoding = "utf-8")
+        return ElementTree.tostring(multistatus(), encoding = "utf-8")
 
     def handleSet(self, prop):
         davprop, adapter = z3c.dav.properties.getProperty(

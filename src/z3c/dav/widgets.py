@@ -15,12 +15,12 @@ __docformat__ = 'restructuredtext'
 
 import datetime
 import calendar
+from xml.etree import ElementTree
 
 import zope.component
 import zope.interface
 from zope.schema import getFieldsInOrder
 
-import z3c.etree
 import interfaces
 
 import zope.datetime
@@ -57,8 +57,7 @@ class DAVWidget(object):
               "please implemented this method in a subclass of DAVWidget."
 
     def render(self):
-        etree = z3c.etree.getEngine()
-        el = etree.Element(etree.QName(self.namespace, self.name))
+        el = ElementTree.Element(ElementTree.QName(self.namespace, self.name))
 
         rendered_value = self.toDAVValue(self._value)
         el.text = rendered_value
@@ -134,8 +133,7 @@ class ObjectDAVWidget(DAVWidget):
     render_missing_values = True
 
     def render(self):
-        etree = z3c.etree.getEngine()
-        el = etree.Element(etree.QName(self.namespace, self.name))
+        el = ElementTree.Element(ElementTree.QName(self.namespace, self.name))
 
         if self._value is None:
             return el
@@ -165,8 +163,7 @@ class ListDAVWidget(DAVWidget):
     zope.interface.classProvides(interfaces.IIDAVWidget)
 
     def render(self):
-        etree = z3c.etree.getEngine()
-        el = etree.Element(etree.QName(self.namespace, self.name))
+        el = ElementTree.Element(ElementTree.QName(self.namespace, self.name))
 
         if self._value is None:
             return el
@@ -174,7 +171,11 @@ class ListDAVWidget(DAVWidget):
         value_type = self.context.value_type
         if value_type is None:
             for value in self._value:
-                el.append(etree.Element(etree.QName(self.namespace, value)))
+                el.append(
+                    ElementTree.Element(
+                        ElementTree.QName(self.namespace, value)
+                        )
+                    )
         else:
             # value_type is not None so render each item in the sequence
             # according to the widget register for this field.

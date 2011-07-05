@@ -42,11 +42,11 @@ import copy
 import time
 import random
 import datetime
+from xml.etree import ElementTree
 
 import zope.component
 import zope.interface
 
-import z3c.etree
 import z3c.dav.interfaces
 import z3c.dav.properties
 from z3c.dav.coreproperties import IDAVLockdiscovery, IDAVSupportedlock
@@ -271,13 +271,11 @@ class LOCKMethod(object):
         else: # Body => try to lock the resource
             locktoken = self.handleLock()
 
-        etree = z3c.etree.getEngine()
-
         davprop, adapter = z3c.dav.properties.getProperty(
             self.context, self.request, "{DAV:}lockdiscovery")
         davwidget = z3c.dav.properties.getWidget(
             davprop, adapter, self.request)
-        propel = etree.Element(etree.QName("DAV:", "prop"))
+        propel = ElementTree.Element(ElementTree.QName("DAV:", "prop"))
         propel.append(davwidget.render())
 
         self.request.response.setStatus(200)
@@ -285,7 +283,7 @@ class LOCKMethod(object):
         if not refreshlock:
             self.request.response.setHeader("Lock-Token", "<%s>" % locktoken)
 
-        return etree.tostring(propel)
+        return ElementTree.tostring(propel)
 
     def handleLockRefresh(self):
         if not self.lockmanager.islocked():
@@ -311,8 +309,6 @@ class LOCKMethod(object):
         timeout = self.getTimeout()
 
         depth = self.getDepth()
-
-        etree = z3c.etree.getEngine()
 
         lockscope = xmlsource.find("{DAV:}lockscope")
         if lockscope is None:
@@ -341,7 +337,7 @@ class LOCKMethod(object):
 
         owner = xmlsource.find("{DAV:}owner")
         if owner is not None: # The owner element is optional.
-            owner_str = etree.tostring(copy.copy(owner))
+            owner_str = ElementTree.tostring(copy.copy(owner))
         else:
             owner_str = None
 

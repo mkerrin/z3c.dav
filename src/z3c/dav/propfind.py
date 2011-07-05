@@ -35,6 +35,7 @@ And all these methods return a z3c.dav.utils.IResponse implementation.
 __docformat__ = 'restructuredtext'
 
 import sys
+from xml.etree import ElementTree
 
 import zope.interface
 import zope.component
@@ -42,7 +43,6 @@ from zope.filerepresentation.interfaces import IReadDirectory
 from zope.error.interfaces import IErrorReportingUtility
 import zope.security.interfaces
 
-import z3c.etree
 import z3c.dav.utils
 import z3c.dav.interfaces
 import z3c.dav.properties
@@ -111,12 +111,10 @@ class PROPFIND(object):
             self.context, self.request, depth, propertiesFactory, extraArg)
         multistatus.responses.extend(responses)
 
-        etree = z3c.etree.getEngine()
-
         self.request.response.setStatus(207)
         self.request.response.setHeader("content-type", "application/xml")
         ## Is UTF-8 encoding ok here or is there a better way of doing this.
-        return etree.tostring(multistatus(), encoding = "utf-8")
+        return ElementTree.tostring(multistatus(), encoding = "utf-8")
 
     def handlePropfindResource(self, ob, req, depth, \
                                propertiesFactory, extraArg,
@@ -190,8 +188,7 @@ class PROPFIND(object):
         errUtility = zope.component.getUtility(IErrorReportingUtility)
         errUtility.raising(exc_info, request)
 
-        etree = z3c.etree.getEngine()
-        propstat.properties.append(etree.Element(proptag))
+        propstat.properties.append(ElementTree.Element(proptag))
 
     def renderPropnames(self, ob, req, ignoreExtraArg, ignorelevel = 0):
         """
@@ -203,12 +200,10 @@ class PROPFIND(object):
         response = z3c.dav.utils.Response(
             z3c.dav.utils.getObjectURL(ob, req))
 
-        etree = z3c.etree.getEngine()
-
         for davprop, adapter in \
                 z3c.dav.properties.getAllProperties(ob, req):
-            rendered_name = etree.Element(
-                etree.QName(davprop.namespace, davprop.__name__)
+            rendered_name = ElementTree.Element(
+                ElementTree.QName(davprop.namespace, davprop.__name__)
                 )
             response.addProperty(200, rendered_name)
 

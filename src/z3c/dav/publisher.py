@@ -13,13 +13,14 @@
 """
 __docformat__ = 'restructuredtext'
 
+from xml.etree import ElementTree
+
 import zope.component
 from zope.interface import implements
 from zope.publisher.http import HTTPResponse, HTTPRequest
 from zope.app.publication.http import HTTPPublication
 from zope.app.publication.interfaces import IRequestPublicationFactory
 
-import z3c.etree
 import z3c.conditionalviews
 import interfaces
 
@@ -59,9 +60,9 @@ class WebDAVRequest(z3c.conditionalviews.ConditionalHTTPRequest):
 
         if content_type in ("text/xml", "application/xml", None, "") and \
                content_length > 0:
-            etree = z3c.etree.getEngine()
             try:
-                self.xmlDataSource = etree.parse(self.bodyStream).getroot()
+                self.xmlDataSource = \
+                                   ElementTree.parse(self.bodyStream).getroot()
             except:
                 # There was an error parsing the body stream so this is a
                 # bad request if the content was declared as xml

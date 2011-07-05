@@ -16,13 +16,14 @@ datamodel.txt
 """
 __docformat__ = 'restructuredtext'
 
+from xml.etree import ElementTree
+
 import zope.component
 import zope.interface
 from zope import schema
 from zope.schema.interfaces import IField
 from zope.schema.fieldproperty import FieldProperty
 
-import z3c.etree
 from z3c.dav.interfaces import IDAVProperty, IDAVWidget, IDAVInputWidget
 from z3c.dav.interfaces import IOpaquePropertyStorage
 import z3c.dav.widgets
@@ -87,8 +88,7 @@ class DeadField(schema.Field):
 class OpaqueWidget(z3c.dav.widgets.DAVWidget):
 
     def render(self):
-        etree = z3c.etree.getEngine()
-        el = etree.fromstring(self._value)
+        el = ElementTree.fromstring(self._value)
         return el
 
 
@@ -132,9 +132,8 @@ class OpaqueInputWidget(z3c.dav.widgets.DAVInputWidget):
         el = self.request.xmlDataSource.findall(
             "{DAV:}set/{DAV:}prop/%s" % self.context.tag)
 
-        etree = z3c.etree.getEngine()
         # XXX - ascii seems a bit wrong here
-        return etree.tostring(el[-1], encoding="utf-8")
+        return ElementTree.tostring(el[-1], encoding = "utf-8")
 
 
 class IOpaqueField(IField):

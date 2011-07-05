@@ -21,13 +21,27 @@ setup(name = "z3c.dav",
       packages = find_packages("src"),
       package_dir = {"": "src"},
       namespace_packages = ["z3c"],
+
       install_requires = ["setuptools",
                           "z3c.etree",
                           "z3c.conditionalviews",
-                          "zope.app.zcmlfiles",
+
+                          "zope.app.folder",
+                          "zope.copypastemove",
+                          "zope.app.pagetemplate",
+                          "zope.login",
+                          "zope.principalregistry",
                           "zope.securitypolicy",
-                          "zope.app.testing", # remove dependency
+
+                          "zope.app.wsgi",
+                          "zope.app.form",
+                          "zope.app.security",
                           ],
+
+      extras_require = dict(
+          test = ["zope.app.testing",
+                  ],
+          ),
 
       include_package_data = True,
       zip_safe = False)

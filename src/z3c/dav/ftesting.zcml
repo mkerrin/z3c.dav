@@ -14,13 +14,16 @@
   <include package="zope.app.publication" file="meta.zcml" />
   <include package="zope.browserresource" file="meta.zcml" />
   <include package="zope.browsermenu" file="meta.zcml" />
+  <include package="zope.browserpage" file="meta.zcml" />
 
   <include package="zope.security" file="meta.zcml" />
   <include package="zope.securitypolicy" file="meta.zcml" />
   <include package="zope.principalregistry" file="meta.zcml" />
 
   <include package="zope.app.http" />
+  <include package="z3c.conditionalviews" />
   <include package="zope.publisher" />
+  <include package="zope.app.publication" />
 
   <include package="zope.site" />
   <include package="zope.traversing" />

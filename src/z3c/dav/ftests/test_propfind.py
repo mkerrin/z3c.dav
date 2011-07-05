@@ -178,7 +178,8 @@ class PROPFINDTests(dav.DAVTestCase):
             properties = """<D:prop>
   <D:resourcetype />
   <D:missingproperty />
-</D:prop>""")
+</D:prop>""",
+            handle_errors = False)
 
         self.assertEqual(len(httpresponse.getMSResponses()), 1)
         z3c.etree.testing.assertXMLEqual(

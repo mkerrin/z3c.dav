@@ -345,7 +345,8 @@ This is a dead property.</X:deadprop>""")
 
         httpresponse = self.checkProppatch(
             "/" + teststr.encode("utf-8"), basic = "mgr:mgrpw",
-            set_properties = "<D:displayname>%s</D:displayname>" % teststr)
+            set_properties = "<D:displayname>%s</D:displayname>" % teststr,
+            handle_errors = False)
 
         assertXMLEqual(
             """<multistatus xmlns="DAV:">

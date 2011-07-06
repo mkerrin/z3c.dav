@@ -90,11 +90,4 @@
 
   <include package="z3c.dav" />
 
-<!-- This is usually how we register the elementtree engine to use within
-     our application but for testing purposes we use the .dav.WebDAVLayerClass
-  <utility
-     factory="z3c.etree.etree.EtreeEtree"
-     />
--->
-
 </configure>

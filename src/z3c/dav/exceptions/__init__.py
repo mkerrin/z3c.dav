@@ -20,6 +20,8 @@ IPublication.handleException method.
 """
 __docformat__ = 'restructuredtext'
 
+from xml.etree import ElementTree
+
 from zope import interface
 from zope import schema
 from zope import component
@@ -29,7 +31,6 @@ import zope.publisher.defaultview
 
 import z3c.dav.interfaces
 import z3c.dav.utils
-import z3c.etree
 
 class DAVError(object):
     interface.implements(z3c.dav.interfaces.IDAVErrorWidget)
@@ -89,7 +90,6 @@ class MultiStatusErrorView(object):
         self.request = request
 
     def __call__(self):
-        etree = z3c.etree.getEngine()
         multistatus = z3c.dav.utils.MultiStatus()
 
         if len(self.error.errors) == 1 and \
@@ -130,7 +130,7 @@ class MultiStatusErrorView(object):
 
         self.request.response.setStatus(207)
         self.request.response.setHeader("content-type", "application/xml")
-        return etree.tostring(multistatus(), encoding = "utf-8")
+        return ElementTree.tostring(multistatus(), encoding = "utf-8")
 
 
 class WebDAVPropstatErrorView(object):
@@ -143,7 +143,6 @@ class WebDAVPropstatErrorView(object):
         self.request = request
 
     def __call__(self):
-        etree = z3c.etree.getEngine()
         multistatus = z3c.dav.utils.MultiStatus()
 
         response = z3c.dav.utils.Response(
@@ -159,14 +158,14 @@ class WebDAVPropstatErrorView(object):
                 ## XXX - not tested - but is it needed?
                 prop = "{%s}%s" %(prop.namespace, prop.__name__)
 
-            propstat.properties.append(etree.Element(prop))
+            propstat.properties.append(ElementTree.Element(prop))
             ## XXX - needs testing.
             propstat.responsedescription += error_view.propstatdescription
             response.responsedescription += error_view.responsedescription
 
         self.request.response.setStatus(207)
         self.request.response.setHeader("content-type", "application/xml")
-        return etree.tostring(multistatus(), encoding = "utf-8")
+        return ElementTree.tostring(multistatus(), encoding = "utf-8")
 
 ################################################################################
 #

@@ -23,7 +23,6 @@ setup(name = "z3c.dav",
       namespace_packages = ["z3c"],
 
       install_requires = ["setuptools",
-                          "z3c.etree",
                           "z3c.conditionalviews",
 
                           "zope.app.folder",
@@ -40,6 +39,7 @@ setup(name = "z3c.dav",
 
       extras_require = dict(
           test = ["zope.app.testing",
+                  "z3c.etree",
                   ],
           ),
 

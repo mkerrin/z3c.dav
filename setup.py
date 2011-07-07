@@ -33,13 +33,12 @@ setup(name = "z3c.dav",
                           "zope.securitypolicy",
 
                           "zope.app.wsgi",
-                          "zope.app.form",
+                          "zope.formlib",
                           "zope.app.security",
                           ],
 
       extras_require = dict(
-          test = ["zope.app.testing",
-                  "z3c.etree",
+          test = ["z3c.etree",
                   ],
           ),
 

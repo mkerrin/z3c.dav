@@ -16,17 +16,18 @@
 __docformat__ = 'restructuredtext'
 
 import unittest
-from zope.app.testing.placelesssetup import PlacelessSetup
-from zope import component
-from zope import interface
+
+import zope.component
+import zope.interface
 from zope.formlib.namedtemplate import INamedTemplate
 
 import z3c.dav.interfaces
 import z3c.dav.exceptions
 import z3c.dav.exceptions.browser
+
 from zope.publisher.browser import TestRequest
 
-class TestExceptionViews(PlacelessSetup, unittest.TestCase):
+class TestExceptionViews(unittest.TestCase):
 
     def test_unprocessable(self):
         request = TestRequest()
@@ -156,8 +157,8 @@ class DummyTemplate(object):
     def __init__(self, context):
         self.context = context
 
-    component.adapts(z3c.dav.exceptions.browser.BadRequest)
-    interface.implements(INamedTemplate)
+    zope.component.adapts(z3c.dav.exceptions.browser.BadRequest)
+    zope.interface.implements(INamedTemplate)
 
     def __call__(self):
         return "Errr... bad request"
@@ -166,11 +167,11 @@ class DummyTemplate(object):
 class TestBadRequestView(unittest.TestCase):
 
     def setUp(self):
-        component.getGlobalSiteManager().registerAdapter(
+        zope.component.getGlobalSiteManager().registerAdapter(
             DummyTemplate, name = "default")
 
     def tearDown(self):
-        component.getGlobalSiteManager().unregisterAdapter(
+        zope.component.getGlobalSiteManager().unregisterAdapter(
             DummyTemplate, name = "default")
 
     def test_badrequestView(self):

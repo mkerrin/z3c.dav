@@ -28,8 +28,6 @@ import z3c.dav.publisher
 class WebDAVLayer(zope.app.wsgi.testlayer.BrowserLayer):
 
     def setUp(self):
-        import pdb
-        # pdb.set_trace()
         super(WebDAVLayer, self).setUp()
         z3c.etree.testing.etreeSetup()
 
@@ -368,8 +366,6 @@ def http(string, handle_errors = True):
 
 
 def functionalSetUp(test):
-    import pdb
-    pdb.set_trace()
     test.globs["http"] = http
     test.globs["webdav"] = http
     # test.globs["getRootFolder"] = test.layer.getRootFolder

@@ -46,6 +46,7 @@ from xml.etree import ElementTree
 
 import zope.component
 import zope.interface
+import zope.publisher.interfaces.http
 
 import z3c.dav.interfaces
 import z3c.dav.properties
@@ -67,7 +68,7 @@ def generateLocktoken():
 
 
 @zope.component.adapter(
-    zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+    zope.interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
 @zope.interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def LOCK(context, request):
     """
@@ -359,7 +360,7 @@ class LOCKMethod(object):
 ################################################################################
 
 @zope.component.adapter(
-    zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+    zope.interface.Interface, zope.publisher.interfaces.http.IHTTPRequest)
 @zope.interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
 def UNLOCK(context, request):
     """

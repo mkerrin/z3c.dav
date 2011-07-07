@@ -48,16 +48,12 @@
      />
 
   <adapter
-     for="zope.interface.Interface
-          z3c.dav.interfaces.IWebDAVRequest"
      provides="z3c.dav.interfaces.IWebDAVMethod"
      factory=".locking.LOCK"
      name="LOCK"
      />
 
   <adapter
-     for="zope.interface.Interface
-          z3c.dav.interfaces.IWebDAVRequest"
      provides="z3c.dav.interfaces.IWebDAVMethod"
      factory=".locking.UNLOCK"
      name="UNLOCK"

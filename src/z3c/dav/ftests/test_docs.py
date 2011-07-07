@@ -12,16 +12,12 @@
 #
 ##############################################################################
 
-import os.path
 import unittest
 import doctest
 
 import z3c.etree.testing
 import z3c.dav.testing
-
-here = os.path.dirname(os.path.realpath(z3c.dav.testing.__file__))
-ZopeFolderDAVLayer = z3c.dav.testing.WebDAVLayerClass(
-    os.path.join(here, "ftesting.zcml"), __name__, "ZopeFolderDAVLayer")
+import z3c.dav
 
 def test_suite():
     properties = doctest.DocFileSuite(
@@ -30,7 +26,7 @@ def test_suite():
         tearDown = z3c.dav.testing.functionalTearDown,
         checker = z3c.etree.testing.xmlOutputChecker,
         )
-    properties.layer = ZopeFolderDAVLayer
+    properties.layer = z3c.dav.testing.WebDAVLayer(z3c.dav)
 
     return unittest.TestSuite((
         properties,

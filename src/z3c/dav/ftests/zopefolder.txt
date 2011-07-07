@@ -4,8 +4,7 @@ zope.app.folder integration
 
   >>> from zope.app.folder.folder import Folder
 
-  >>> resp = http("""
-  ... PROPFIND / HTTP/1.1
+  >>> resp = http("""PROPFIND / HTTP/1.1
   ... """, handle_errors = True)
   >>> resp.getStatus()
   207
@@ -39,8 +38,7 @@ zope.app.folder integration
 When we are logged in we get more information on the '++etc++site' folder since
 we are allowed to list the folder contents here.
 
-  >>> resp = http("""
-  ... PROPFIND / HTTP/1.1
+  >>> resp = http("""PROPFIND / HTTP/1.1
   ... Authorization: Basic mgr:mgrpw
   ... """, handle_errors = True)
   >>> resp.getStatus()

@@ -14,26 +14,31 @@ Miscellaneous utilities used for testing WebDAV components.
 """
 __docformat__ = "restructuredtext"
 
-import zope.publisher.publish
+from cStringIO import StringIO
+import unittest
+import webtest
+
 from zope.publisher.http import status_reasons
-import zope.app.testing.functional
-import zope.app.publication.http
+
+import zope.app.wsgi.testlayer
 
 import z3c.etree.testing
 import z3c.dav.publisher
 
-class WebDAVLayerClass(zope.app.testing.functional.ZCMLLayer):
+class WebDAVLayer(zope.app.wsgi.testlayer.BrowserLayer):
 
     def setUp(self):
+        import pdb
+        # pdb.set_trace()
+        super(WebDAVLayer, self).setUp()
         z3c.etree.testing.etreeSetup()
-        zope.app.testing.functional.ZCMLLayer.setUp(self)
 
     def tearDown(self):
+        super(WebDAVLayer, self).tearDown()
         z3c.etree.testing.etreeTearDown()
-        zope.app.testing.functional.ZCMLLayer.tearDown(self)
 
 
-class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
+class WebDAVResponseWrapper(object):
     """
 
     A HTTP response wrapper that adds support for parsing and retrieving
@@ -44,7 +49,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       >>> from zope.publisher.http import HTTPResponse
       >>> etree = z3c.etree.getEngine()
 
-      >>> response = HTTPResponse()
+      >>> response = webtest.Response()
       >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
 
     Get a list of response sub elements from the multistatus response body
@@ -55,21 +60,22 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       ...
       ValueError: Not a multistatus response
 
-      >>> response.setStatus(207)
+      >>> response = webtest.Response(status = 207)
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
       >>> wrapped.getMSResponses()
       Traceback (most recent call last):
       ...
       ValueError: Invalid response content type
 
-      >>> response.setHeader('content-type', 'application/xml')
-      >>> response.setResult('<testdata />')
+      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '<testdata />')
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
       >>> wrapped.getMSResponses()
       Traceback (most recent call last):
       ...
       ValueError: Invalid multistatus response body
 
-      >>> response.setResult('<multistatus xmlns="DAV:" />')
-      >>> wrapped._body = None # turn off cache
+      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '<multistatus xmlns="DAV:" />')
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
       >>> wrapped.getMSResponses()
       Traceback (most recent call last):
       ...
@@ -79,10 +85,10 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
     data is in complete it is enough for the getMSResponses method to
     work with.
 
-      >>> response.setResult('''<multistatus xmlns="DAV:">
+      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response />
       ... </multistatus>''')
-      >>> wrapped._body = None # turn off cache
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
 
       >>> msresponses = wrapped.getMSResponses()
       >>> len(msresponses)
@@ -98,12 +104,12 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       ...
       ValueError: Invalid multistatus response body
 
-      >>> response.setResult('''<multistatus xmlns="DAV:">
+      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...   </response>
       ... </multistatus>''')
-      >>> wrapped._body = None # turn off cache
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
 
       >>> print etree.tostring(
       ...    copy.copy(
@@ -129,7 +135,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       ...
       ValueError: Response contains no propstats sub elements
 
-      >>> response.setResult('''<multistatus xmlns="DAV:">
+      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...     <propstat>
@@ -139,7 +145,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       ...     </propstat>
       ...   </response>
       ... </multistatus>''')
-      >>> wrapped._body = None # turn off cache
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
 
       >>> wrapped.getMSPropstat('/testfile.txt', 200)
       Traceback (most recent call last):
@@ -149,7 +155,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
     The propstat element is not complete here but again there is enough
     information for `getMSPropstat` method to do its job.
 
-      >>> response.setResult('''<multistatus xmlns="DAV:">
+      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...     <propstat>
@@ -157,7 +163,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       ...     </propstat>
       ...   </response>
       ... </multistatus>''')
-      >>> wrapped._body = None # turn off cache
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
 
       >>> wrapped.getMSPropstat('/testfile.txt', 200)
       Traceback (most recent call last):
@@ -181,7 +187,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
 
     Finally set up a completely valid multistatus response.
 
-      >>> response.setResult('''<multistatus xmlns="DAV:">
+      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...     <propstat>
@@ -192,7 +198,7 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
       ...     </propstat>
       ...   </response>
       ... </multistatus>''')
-      >>> wrapped._body = None # turn off cache
+      >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
 
       >>> wrapped.getMSProperty('/testfile.txt', '{testns:}missing', 404)
       Traceback (most recent call last):
@@ -206,13 +212,26 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
     """
 
     def __init__(self, response, path, omit = ()):
-        super(WebDAVResponseWrapper, self).__init__(response, path, omit)
+        self._response = response
+        self._path = path
         self._xmlcachebody = None
 
+    def __getattr__(self, attr):
+        return getattr(self._response, attr)
+
+    def getBody(self):
+        return self._response.body
+
+    def getHeader(self, header, literal = None):
+        return self._response.headers.get(header, None)
+
+    def getStatus(self):
+        return self._response.status_int
+
     def getMSResponses(self):
-        if self._response.getStatus() != 207:
+        if self.getStatus() != 207:
             raise ValueError("Not a multistatus response")
-        if self._response.getHeader('content-type') != 'application/xml':
+        if not self.getHeader('Content-Type').startswith('application/xml'):
             raise ValueError("Invalid response content type")
 
         etree = z3c.etree.getEngine()
@@ -292,62 +311,71 @@ class WebDAVResponseWrapper(zope.app.testing.functional.ResponseWrapper):
         return ret[0]
 
 
-class WebDAVTestCase(zope.app.testing.functional.HTTPTestCase):
+class WebDAVTestCase(unittest.TestCase):
 
     def makeRequest(self, path = "", basic = None, form = None,
                     env = {}, instream = None):
-        """Create a new WebDAV request
-        """
         if instream is None:
             instream = ""
 
-        environment = {"HTTP_HOST": "localhost",
-                       "HTTP_REFERER": "localhost"}
+        environment = {
+            "HTTP_HOST": "localhost",
+            "HTTP_REFERER": "localhost",
+            "PATH_INFO": path,
+            }
         environment.update(env)
         if instream and "CONTENT_LENGTH" not in environment:
             if getattr(instream, "getvalue", None) is not None:
                 instream = instream.getvalue()
             environment["CONTENT_LENGTH"] = len(instream)
 
-        app = \
-            zope.app.testing.functional.FunctionalTestSetup().getApplication()
+        environment["wsgi.input"] = StringIO(instream)
 
-        request = app._request(
-            path, instream, environment = environment,
-            basic = basic, form = form,
-            request = z3c.dav.publisher.WebDAVRequest,
-            publication = zope.app.publication.http.HTTPPublication)
+        # setup auth
+        if basic:
+            environment["HTTP_AUTHORIZATION"] = "Basic %s" % basic
+
+        request = webtest.TestRequest(environment)
 
         return request
 
     def publish(self, path, basic = None, form = None, env = {},
                 handle_errors = False, request_body = ""):
-        request = self.makeRequest(path, basic = basic, form = form, env = env,
-                                   instream = request_body)
-        response = WebDAVResponseWrapper(request.response, path)
+        app = self.layer.get_app()
 
-        zope.publisher.publish.publish(request, handle_errors = handle_errors)
+        env["wsgi.handleErrors"] = handle_errors
+
+        request = self.makeRequest(
+            path, basic = basic, form = form, env = env, instream = request_body)
+
+        response = WebDAVResponseWrapper(request.get_response(app), path)
 
         return response
 
+    def getRootFolder(self):
+        return self.layer.getRootFolder()
 
-class WebDAVCaller(zope.app.testing.functional.HTTPCaller):
 
-    def __call__(self, request_string, handle_errors = True, form = None):
-        response = super(WebDAVCaller, self).__call__(
-            request_string, handle_errors, form)
+def http(string, handle_errors = True):
+    app = zope.testbrowser.wsgi.Layer.get_app()
+    if app is None:
+        raise Exception("No app")
 
-        # response should be a zope.app.testing.functional.ResponseWrapper
-        return WebDAVResponseWrapper(response, response._path, response.omit)
+    request = webtest.TestRequest.from_file(StringIO(string))
+    request.environ['wsgi.handleErrors'] = handle_errors
+    response = WebDAVResponseWrapper(request.get_response(app), "")
+    return response
 
 
 def functionalSetUp(test):
-    test.globs["http"] = zope.app.testing.functional.HTTPCaller()
-    test.globs["webdav"] = WebDAVCaller()
-    test.globs["getRootFolder"] = zope.app.testing.functional.getRootFolder
+    import pdb
+    pdb.set_trace()
+    test.globs["http"] = http
+    test.globs["webdav"] = http
+    # test.globs["getRootFolder"] = test.layer.getRootFolder
 
 
 def functionalTearDown(test):
     del test.globs["http"]
     del test.globs["webdav"]
-    del test.globs["getRootFolder"]
+    # del test.globs["getRootFolder"]

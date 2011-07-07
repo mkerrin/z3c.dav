@@ -18,7 +18,6 @@ a global setup method so that individual tests can call it if they need to.
 """
 
 from cStringIO import StringIO
-import os.path
 from BTrees.OOBTree import OOBTree
 
 import transaction
@@ -38,11 +37,7 @@ from z3c.dav.publisher import WebDAVRequest
 from z3c.dav.properties import DAVProperty
 
 import z3c.dav.testing
-
-here = os.path.dirname(os.path.realpath(__file__))
-WebDAVLayer = z3c.dav.testing.WebDAVLayerClass(
-    os.path.join(here, "ftesting.zcml"), __name__, "WebDAVLayer")
-
+import z3c.dav.ftests
 
 class IExamplePropertyStorage(interface.Interface):
 
@@ -132,7 +127,7 @@ class Resource(object):
 
 class DAVTestCase(z3c.dav.testing.WebDAVTestCase):
 
-    layer = WebDAVLayer
+    layer = z3c.dav.testing.WebDAVLayer(z3c.dav.ftests)
 
     def login(self, principalid = "mgr"):
         """Some locking methods new an interaction in order to lock a resource

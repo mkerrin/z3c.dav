@@ -359,8 +359,19 @@ def http(string, handle_errors = True):
     if app is None:
         raise Exception("No app")
 
-    request = webtest.TestRequest.from_file(StringIO(string))
+    fp = StringIO(string)
+    request = webtest.TestRequest.from_file(fp)
+    # XXX - there is a bug in WebOB where setting the body let so, is
+    # surrounded by a if request.method in ('PUT', 'POST') which fails
+    # to work for lots of WebDAV requests.
+    body = request.body_file_raw.read()
+    if not body:
+        clen = request.content_length
+        if clen:
+            request.body = fp.read(clen)
+
     request.environ['wsgi.handleErrors'] = handle_errors
+
     response = WebDAVResponseWrapper(request.get_response(app), "")
     return response
 

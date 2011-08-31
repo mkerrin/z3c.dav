@@ -47,7 +47,7 @@ class WebDAVResponseWrapper(object):
       >>> from zope.publisher.http import HTTPResponse
       >>> etree = z3c.etree.getEngine()
 
-      >>> response = webtest.Response()
+      >>> response = webtest.TestResponse()
       >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
 
     Get a list of response sub elements from the multistatus response body
@@ -58,21 +58,21 @@ class WebDAVResponseWrapper(object):
       ...
       ValueError: Not a multistatus response
 
-      >>> response = webtest.Response(status = 207)
+      >>> response = webtest.TestResponse(status = 207)
       >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
       >>> wrapped.getMSResponses()
       Traceback (most recent call last):
       ...
       ValueError: Invalid response content type
 
-      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '<testdata />')
+      >>> response = webtest.TestResponse(status = 207, content_type = 'application/xml', body = '<testdata />')
       >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
       >>> wrapped.getMSResponses()
       Traceback (most recent call last):
       ...
       ValueError: Invalid multistatus response body
 
-      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '<multistatus xmlns="DAV:" />')
+      >>> response = webtest.TestResponse(status = 207, content_type = 'application/xml', body = '<multistatus xmlns="DAV:" />')
       >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
       >>> wrapped.getMSResponses()
       Traceback (most recent call last):
@@ -83,7 +83,7 @@ class WebDAVResponseWrapper(object):
     data is in complete it is enough for the getMSResponses method to
     work with.
 
-      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
+      >>> response = webtest.TestResponse(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response />
       ... </multistatus>''')
       >>> wrapped = WebDAVResponseWrapper(response, '/testfile.txt')
@@ -102,7 +102,7 @@ class WebDAVResponseWrapper(object):
       ...
       ValueError: Invalid multistatus response body
 
-      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
+      >>> response = webtest.TestResponse(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...   </response>
@@ -133,7 +133,7 @@ class WebDAVResponseWrapper(object):
       ...
       ValueError: Response contains no propstats sub elements
 
-      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
+      >>> response = webtest.TestResponse(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...     <propstat>
@@ -153,7 +153,7 @@ class WebDAVResponseWrapper(object):
     The propstat element is not complete here but again there is enough
     information for `getMSPropstat` method to do its job.
 
-      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
+      >>> response = webtest.TestResponse(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...     <propstat>
@@ -185,7 +185,7 @@ class WebDAVResponseWrapper(object):
 
     Finally set up a completely valid multistatus response.
 
-      >>> response = webtest.Response(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
+      >>> response = webtest.TestResponse(status = 207, content_type = 'application/xml', body = '''<multistatus xmlns="DAV:">
       ...   <response>
       ...     <href>/testfile.txt</href>
       ...     <propstat>

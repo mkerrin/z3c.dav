@@ -30,8 +30,13 @@ Locking
   the IDAVLockmanager should be dealing with accepting or rejecting the
   requested timeout.
 
-- lock on unmapped urls doesn't work yet. Zope3 will need to be changed
-  to get this to work.
+- lock on unmapped urls are starting to work, but the following needs work
+
+ - Null objects need to be deleted when they timeout.
+
+ - Refreshing null objects needs to be worked on.
+
+ - Putting a file to a Null object needs to be implemented and tested.
 
 Misc
 ----

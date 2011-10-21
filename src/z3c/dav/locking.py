@@ -44,9 +44,12 @@ import random
 import datetime
 from xml.etree import ElementTree
 
+import persistent
 import zope.component
 import zope.interface
 import zope.publisher.interfaces.http
+import zope.app.http.interfaces
+import zope.location.interfaces
 
 import z3c.dav.interfaces
 import z3c.dav.properties
@@ -65,6 +68,45 @@ def generateLocktoken():
     """
     return "opaquelocktoken:%s-%s-00105A989226:%.03f" % \
            (_randGen.random(), _randGen.random(), time.time())
+
+
+class Null(persistent.Persistent):
+    zope.interface.implements(
+        zope.location.interfaces.ILocation,
+        zope.app.http.interfaces.INullResource
+        )
+
+    __name__ = None
+    __parent__ = None
+
+    @property
+    def container(self):
+        return self.__parent__
+
+    @property
+    def name(self):
+        return self.__name_
+
+
+@zope.component.adapter(
+    zope.app.http.interfaces.INullResource,
+    zope.publisher.interfaces.http.IHTTPRequest)
+@zope.interface.implementer(z3c.dav.interfaces.IWebDAVMethod)
+def LOCKNullResource(context, request):
+    # XXX - This persistent lock would need to be deleted when it times out
+    container = context.container
+    # Create a null object that we can lock.
+    # XXX - a Null object might already exist at this location. We need to
+    # check for this and handle this case appropriately
+    container[context.name] = Null()
+    # Load new object from the database with all the connections in place.
+    newnullob = container[context.name]
+    view = LOCK(newnullob, request)
+    if view is None:
+        return None
+    # We created a new resource so return a 201, if the lock is successful
+    view.success_status = 201
+    return view
 
 
 @zope.component.adapter(
@@ -91,6 +133,8 @@ class LOCKMethod(object):
     zope.interface.implements(z3c.dav.interfaces.IWebDAVMethod)
     zope.component.adapts(
         zope.interface.Interface, z3c.dav.interfaces.IWebDAVRequest)
+
+    success_status = 200
 
     def __init__(self, context, request, lockmanager):
         self.context = context
@@ -279,7 +323,7 @@ class LOCKMethod(object):
         propel = ElementTree.Element(ElementTree.QName("DAV:", "prop"))
         propel.append(davwidget.render())
 
-        self.request.response.setStatus(200)
+        self.request.response.setStatus(self.success_status)
         self.request.response.setHeader("Content-Type", "application/xml")
         if not refreshlock:
             self.request.response.setHeader("Lock-Token", "<%s>" % locktoken)

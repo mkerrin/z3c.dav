@@ -87,6 +87,8 @@ can test for.
   ...    _islockable = True
   ...    def __init__(self, context):
   ...        self.context = context
+  ...        if getattr(self.context, '_lockinfo', 1) is 1:
+  ...            self.context._lockinfo = None
   ...    def islockable(self):
   ...        return self._islockable
   ...    def islocked(self):
@@ -437,10 +439,9 @@ implementation.
   >>> resource._lockinfo = None
 
 By calling the LOCK method directly on a unlocked resource we get a full
-response to a LOCK request. This is a response with a status of 200 (we get
-a 201 on unmapped URL's but this isn't supported yet), a correct content-type
-of application/xml and the body should be a rendering of the
-`{DAV:}lockdiscovery` property.
+response to a LOCK request. This is a response with a status of 200, a
+correct content-type of application/xml and the body should be a rendering
+of the `{DAV:}lockdiscovery` property.
 
 First we note that the owner element is optional.
 
@@ -529,6 +530,63 @@ request.
   </prop>
   >>> request.response.getStatus()
   200
+  >>> request.response.getHeader("Content-type")
+  'application/xml'
+  >>> request.response.getHeader("Lock-token")
+  '<opaquelocktoken:resourcelocktoken>'
+
+Unmapped URL's
+~~~~~~~~~~~~~~
+
+  >>> from z3c.dav.locking import LOCKNullResource
+  >>> from zope.app.http.put import NullResource
+
+You can successfully lock an unmapped URL. This creates a `Null` object at the
+point of the unmapped URL reserving the name space for user how has locked it.
+We get a 201 response on a successful LOCK of an unmapped URL.
+
+  >>> container = {}
+  >>> unmapped = NullResource(container, "name")
+  >>> request = TestWebDAVRequest(
+  ...    body = """<?xml version="1.0" encoding="utf-8" ?>
+  ... <D:lockinfo xmlns:D="DAV:">
+  ...   <D:lockscope><D:exclusive/></D:lockscope>
+  ...   <D:locktype><D:write/></D:locktype>
+  ... </D:lockinfo>""")
+  >>> LOCKNullResource(unmapped, request) is None
+  True
+
+So we need to make the Null object lockable. This requires that we register
+the following adapters against the `INullResource` interface.
+
+  >>> gsm.registerAdapter(
+  ...    DAVLockmanager, (zope.app.http.interfaces.INullResource,))
+  >>> gsm.registerAdapter(
+  ...    Supportedlock, (zope.app.http.interfaces.INullResource, z3c.dav.interfaces.IWebDAVRequest))
+  >>> gsm.registerAdapter(
+  ...    Lockdiscovery, (zope.app.http.interfaces.INullResource, z3c.dav.interfaces.IWebDAVRequest))
+
+We create an object here, to reserve the URL from other users. So in this case
+we return a status code of 201. Everything else is pretty much the same as
+the case with a mapped URL.
+
+  >>> respbody = LOCKNullResource(unmapped, request).LOCK()
+  Locked the resource.
+  >>> print respbody #doctest:+XMLDATA
+  <prop xmlns="DAV:">
+    <lockdiscovery>
+      <activelock>
+        <lockscope><exclusive /></lockscope>
+        <locktype><write /></locktype>
+        <depth>infinity</depth>
+        <timeout>Second-720</timeout>
+        <locktoken><href>opaquelocktoken:resourcelocktoken</href></locktoken>
+        <lockroot>http://localhost/resource</lockroot>
+      </activelock>
+    </lockdiscovery>
+  </prop>
+  >>> request.response.getStatus()
+  201
   >>> request.response.getHeader("Content-type")
   'application/xml'
   >>> request.response.getHeader("Lock-token")

@@ -55,6 +55,12 @@
 
   <adapter
      provides="z3c.dav.interfaces.IWebDAVMethod"
+     factory=".locking.LOCKNullResource"
+     name="LOCK"
+     />
+
+  <adapter
+     provides="z3c.dav.interfaces.IWebDAVMethod"
      factory=".locking.UNLOCK"
      name="UNLOCK"
      />

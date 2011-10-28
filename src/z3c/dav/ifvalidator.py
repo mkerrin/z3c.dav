@@ -1056,3 +1056,107 @@ class StateTokensForNullResource(object):
     schemes = ("opaquelocktoken",)
 
     tokens = []
+
+
+@zope.component.adapter(zope.lifecycleevent.interfaces.IObjectModifiedEvent)
+def checkLockedOnModify(event):
+    """
+    When a content object is modified we need to check that the client
+    submitted an `IF` header that corresponds with the lock.
+
+      >>> import UserDict
+      >>> import datetime
+      >>> from zope.locking import utility
+      >>> import zope.publisher.interfaces.http
+      >>> from zope.publisher.browser import TestRequest
+      >>> from zope.security.proxy import removeSecurityProxy
+      >>> from zope.lifecycleevent import ObjectModifiedEvent
+
+    Some adapters needed to represent the data stored in the `IF` header,
+    and the current state tokens for the content.
+
+      >>> class ReqAnnotation(UserDict.IterableUserDict):
+      ...    zope.interface.implements(zope.annotation.interfaces.IAnnotations)
+      ...    def __init__(self, request):
+      ...        self.data = request._environ.setdefault('annotation', {})
+      >>> zope.component.getGlobalSiteManager().registerAdapter(
+      ...    ReqAnnotation, (zope.publisher.interfaces.http.IHTTPRequest,))
+
+      >>> class Statetokens(object):
+      ...    zope.interface.implements(z3c.dav.ifvalidator.IStateTokens)
+      ...    def __init__(self, context, request, view):
+      ...        self.context = context
+      ...    schemes = ('', 'opaquetoken')
+      ...    @property
+      ...    def tokens(self):
+      ...        context = removeSecurityProxy(self.context) # ???
+      ...        if getattr(context, '_tokens', None) is not None:
+      ...            return context._tokens
+      ...        return []
+      >>> zope.component.getGlobalSiteManager().registerAdapter(
+      ...    Statetokens, (None, TestRequest, None))
+
+      >>> util = utility.TokenUtility()
+      >>> zope.component.getGlobalSiteManager().registerUtility(
+      ...    util, zope.locking.interfaces.ITokenUtility)
+      >>> conn.add(util) # add to persistent database
+
+      >>> demofolder = DemoFolder()
+      >>> demofile = Demo()
+      >>> demofolder['demofile'] = demofile
+
+    The test passes when the object is not locked.
+
+      >>> checkLockedOnModify(ObjectModifiedEvent(demofile))
+
+    Lock the file and setup the request annotation.
+
+      >>> adapter = DAVLockmanager(demofile)
+      >>> locktoken = adapter.lock(u'exclusive', u'write',
+      ...    u'Michael', datetime.timedelta(seconds = 3600), '0')
+
+      >>> request = zope.security.management.getInteraction().participations[0]
+      >>> ReqAnnotation(request)[z3c.dav.ifvalidator.STATE_ANNOTS] = {
+      ...    '/demofile': {'statetoken': True}}
+
+      >>> demofile._tokens = ['wrongstatetoken'] # wrong token.
+      >>> checkLockedOnModify(ObjectModifiedEvent(demofile)) #doctest:+ELLIPSIS
+      Traceback (most recent call last):
+      ...
+      AlreadyLocked: <z3c.davapp.zopelocking.tests.Demo object at ...>: None
+
+    With the correct lock token submitted the test passes.
+
+      >>> demofile._tokens = ['statetoken'] # wrong token.
+      >>> checkLockedOnModify(ObjectModifiedEvent(demofile))
+
+    Child of locked token.
+
+      >>> ReqAnnotation(request)[z3c.dav.ifvalidator.STATE_ANNOTS] = {
+      ...    '/': {'statetoken': True}}
+      >>> demofile._tokens = ['statetoken']
+      >>> checkLockedOnModify(ObjectModifiedEvent(demofile))
+
+    Cleanup
+    -------
+
+      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
+      ...    ReqAnnotation, (zope.publisher.interfaces.http.IHTTPRequest,))
+      True
+      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
+      ...    Statetokens, (None, TestRequest, None))
+      True
+      >>> zope.component.getGlobalSiteManager().unregisterUtility(
+      ...    util, zope.locking.interfaces.ITokenUtility)
+      True
+
+    """
+    # This is an hack to get at the current request object
+    interaction = zope.security.management.queryInteraction()
+    if interaction:
+        request = interaction.participations[0]
+        if zope.publisher.interfaces.http.IHTTPRequest.providedBy(request) \
+               and request.method not in BROWSER_METHODS:
+            if not z3c.dav.ifvalidator.matchesIfHeader(event.object, request):
+                raise z3c.dav.interfaces.AlreadyLocked(
+                    event.object, "Modifing locked object is not permitted.")

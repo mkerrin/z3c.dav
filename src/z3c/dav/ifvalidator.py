@@ -1054,6 +1054,6 @@ def checkLockedOnModify(event):
         request = interaction.participations[0]
         if zope.publisher.interfaces.http.IHTTPRequest.providedBy(request) \
                and request.method not in BROWSER_METHODS:
-            if not z3c.dav.ifvalidator.matchesIfHeader(event.object, request):
+            if not matchesIfHeader(event.object, request):
                 raise z3c.dav.interfaces.AlreadyLocked(
                     event.object, "Modifing locked object is not permitted.")

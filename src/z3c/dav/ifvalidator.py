@@ -99,12 +99,10 @@ class ListCondition(object):
 class IFValidator(object):
     """
 
-      >>> import UserDict
       >>> import zope.interface.verify
-      >>> import zope.publisher.interfaces.http
       >>> from zope.publisher.interfaces import IPublishTraverse
       >>> from zope.publisher.browser import TestRequest
-      >>> from zope.traversing.interfaces import IPhysicallyLocatable
+      >>> from zope.location.interfaces import ILocationInfo
       >>> from zope.app.publication.zopepublication import ZopePublication
       >>> from zope.security.proxy import removeSecurityProxy
 
@@ -127,53 +125,8 @@ class IFValidator(object):
 
     We need to set up following adapters for the validator to work.
 
-      >>> class ReqAnnotation(UserDict.IterableUserDict):
-      ...    zope.interface.implements(zope.annotation.interfaces.IAnnotations)
-      ...    def __init__(self, request):
-      ...        self.data = request._environ.setdefault('annotation', {})
-      >>> zope.component.getGlobalSiteManager().registerAdapter(
-      ...    ReqAnnotation, (zope.publisher.interfaces.http.IHTTPRequest,))
-
-      >>> class ETag(object):
-      ...    zope.interface.implements(z3c.conditionalviews.interfaces.IETag)
-      ...    def __init__(self, context, request, view):
-      ...        pass
-      ...    etag = None
-      ...    weak = False
-      >>> zope.component.getGlobalSiteManager().registerAdapter(
-      ...    ETag, (None, TestRequest, None))
-
-      >>> class Statetokens(object):
-      ...    zope.interface.implements(IStateTokens)
-      ...    def __init__(self, context, request, view):
-      ...        self.context = context
-      ...    schemes = ('ns',)
-      ...    @property
-      ...    def tokens(self):
-      ...        context = removeSecurityProxy(self.context) # ???
-      ...        if getattr(context, '_tokens', None) is not None:
-      ...            return context._tokens
-      ...        return []
-      >>> zope.component.getGlobalSiteManager().registerAdapter(
-      ...    Statetokens, (None, TestRequest, None))
-
-      >>> class Demo(object):
-      ...    zope.interface.implements(IPublishTraverse)
-      ...    def __init__(self, name):
-      ...        self.__name__ = name
-      ...        self.__parent__ = None
-      ...        self.children = {}
-      ...    def add(self, value):
-      ...        self.children[value.__name__] = value
-      ...        value.__parent__ = self
-      ...    def publishTraverse(self, request, name):
-      ...        child = self.children.get(name, None)
-      ...        if child:
-      ...            return child
-      ...        raise zope.publisher.interfaces.NotFound(self, name, request)
-
       >>> class PhysicallyLocatable(object):
-      ...    zope.interface.implements(IPhysicallyLocatable)
+      ...    zope.interface.implements(ILocationInfo)
       ...    def __init__(self, context):
       ...        self.context = context
       ...    def getRoot(self):
@@ -733,10 +686,6 @@ class IFValidator(object):
     case the request is not valid as we have no knowledge of the token passed
     in the conditional request so we can't match against it.
 
-      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
-      ...    Statetokens, (None, TestRequest, None))
-      True
-
       >>> request._environ['IF'] = '</> (<roottest>)'
       >>> validator.valid(root, request, None)
       False
@@ -744,9 +693,6 @@ class IFValidator(object):
     Cleanup
     =======
 
-      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
-      ...    ReqAnnotation, (zope.publisher.interfaces.http.IHTTPRequest,))
-      True
       >>> zope.component.getGlobalSiteManager().unregisterAdapter(
       ...    ETag, (None, TestRequest, None))
       True
@@ -1058,51 +1004,21 @@ class StateTokensForNullResource(object):
     tokens = []
 
 
+BROWSER_METHODS = ("GET", "HEAD", "POST")
+
 @zope.component.adapter(zope.lifecycleevent.interfaces.IObjectModifiedEvent)
 def checkLockedOnModify(event):
     """
     When a content object is modified we need to check that the client
     submitted an `IF` header that corresponds with the lock.
 
-      >>> import UserDict
-      >>> import datetime
-      >>> from zope.locking import utility
-      >>> import zope.publisher.interfaces.http
-      >>> from zope.publisher.browser import TestRequest
-      >>> from zope.security.proxy import removeSecurityProxy
       >>> from zope.lifecycleevent import ObjectModifiedEvent
 
     Some adapters needed to represent the data stored in the `IF` header,
     and the current state tokens for the content.
 
-      >>> class ReqAnnotation(UserDict.IterableUserDict):
-      ...    zope.interface.implements(zope.annotation.interfaces.IAnnotations)
-      ...    def __init__(self, request):
-      ...        self.data = request._environ.setdefault('annotation', {})
-      >>> zope.component.getGlobalSiteManager().registerAdapter(
-      ...    ReqAnnotation, (zope.publisher.interfaces.http.IHTTPRequest,))
-
-      >>> class Statetokens(object):
-      ...    zope.interface.implements(z3c.dav.ifvalidator.IStateTokens)
-      ...    def __init__(self, context, request, view):
-      ...        self.context = context
-      ...    schemes = ('', 'opaquetoken')
-      ...    @property
-      ...    def tokens(self):
-      ...        context = removeSecurityProxy(self.context) # ???
-      ...        if getattr(context, '_tokens', None) is not None:
-      ...            return context._tokens
-      ...        return []
-      >>> zope.component.getGlobalSiteManager().registerAdapter(
-      ...    Statetokens, (None, TestRequest, None))
-
-      >>> util = utility.TokenUtility()
-      >>> zope.component.getGlobalSiteManager().registerUtility(
-      ...    util, zope.locking.interfaces.ITokenUtility)
-      >>> conn.add(util) # add to persistent database
-
       >>> demofolder = DemoFolder()
-      >>> demofile = Demo()
+      >>> demofile = Demo('demofile')
       >>> demofolder['demofile'] = demofile
 
     The test passes when the object is not locked.
@@ -1111,9 +1027,7 @@ def checkLockedOnModify(event):
 
     Lock the file and setup the request annotation.
 
-      >>> adapter = DAVLockmanager(demofile)
-      >>> locktoken = adapter.lock(u'exclusive', u'write',
-      ...    u'Michael', datetime.timedelta(seconds = 3600), '0')
+      >>> demofile._tokens = ['test']
 
       >>> request = zope.security.management.getInteraction().participations[0]
       >>> ReqAnnotation(request)[z3c.dav.ifvalidator.STATE_ANNOTS] = {
@@ -1123,7 +1037,7 @@ def checkLockedOnModify(event):
       >>> checkLockedOnModify(ObjectModifiedEvent(demofile)) #doctest:+ELLIPSIS
       Traceback (most recent call last):
       ...
-      AlreadyLocked: <z3c.davapp.zopelocking.tests.Demo object at ...>: None
+      AlreadyLocked: <z3c.dav.tests.test_locking.Demo object at ...>: None
 
     With the correct lock token submitted the test passes.
 
@@ -1136,19 +1050,6 @@ def checkLockedOnModify(event):
       ...    '/': {'statetoken': True}}
       >>> demofile._tokens = ['statetoken']
       >>> checkLockedOnModify(ObjectModifiedEvent(demofile))
-
-    Cleanup
-    -------
-
-      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
-      ...    ReqAnnotation, (zope.publisher.interfaces.http.IHTTPRequest,))
-      True
-      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
-      ...    Statetokens, (None, TestRequest, None))
-      True
-      >>> zope.component.getGlobalSiteManager().unregisterUtility(
-      ...    util, zope.locking.interfaces.ITokenUtility)
-      True
 
     """
     # This is an hack to get at the current request object

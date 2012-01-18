@@ -39,6 +39,7 @@ setup(name = "z3c.dav",
 
       extras_require = dict(
           test = ["z3c.etree",
+                  "zope.testing",
                   ],
           ),
 

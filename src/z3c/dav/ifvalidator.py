@@ -100,7 +100,6 @@ class IFValidator(object):
     """
 
       >>> import zope.interface.verify
-      >>> from zope.publisher.interfaces import IPublishTraverse
       >>> from zope.publisher.browser import TestRequest
       >>> from zope.location.interfaces import ILocationInfo
       >>> from zope.app.publication.zopepublication import ZopePublication
@@ -693,9 +692,6 @@ class IFValidator(object):
     Cleanup
     =======
 
-      >>> zope.component.getGlobalSiteManager().unregisterAdapter(
-      ...    ETag, (None, TestRequest, None))
-      True
       >>> zope.component.getGlobalSiteManager().unregisterAdapter(
       ...    PhysicallyLocatable, (Demo,))
       True

@@ -65,6 +65,11 @@
      name="UNLOCK"
      />
 
+  <subscriber
+      for="zope.lifecycleevent.ObjectModifiedEvent"
+      handler=".ifvalidator.checkLockedOnModify"
+      />
+
   <utility
      factory=".ifvalidator.IFValidator"
      name="webdav.ifheader"

@@ -19,6 +19,7 @@ what properties are defined or not.
 
 import unittest
 from cStringIO import StringIO
+from xml.etree import ElementTree
 
 from zope import event
 from zope import interface
@@ -35,7 +36,7 @@ import z3c.dav.coreproperties
 import z3c.dav.proppatch
 import z3c.dav.publisher
 import z3c.dav.interfaces
-import z3c.etree
+
 from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
 
 class TestRequest(z3c.dav.publisher.WebDAVRequest):
@@ -248,20 +249,19 @@ class PROPPATCHXmlParsing(unittest.TestCase):
         self.assertEqual(propp.removeprops, [])
 
     def test_invalid_namespace_prop(self):
-        etree = z3c.etree.getEngine()
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         # Manually set up the xmlDataSource as some  etree `parse` method
         # raise a syntax error with the prop element with an empty namespace
         # which we are trying to test
         request.content_type = "application/xml"
-        request.xmlDataSource = etree.fromstring("""<?xml version="1.0" encoding="utf-8" ?>
+        request.xmlDataSource = ElementTree.fromstring("""<?xml version="1.0" encoding="utf-8" ?>
 <D:propertyupdate xmlns:D="DAV:" xmlns="DAV:">
   <set>
     <prop>
     </prop>
   </set>
 </D:propertyupdate>""")
-        prop = etree.Element("{}bar")
+        prop = ElementTree.Element("{}bar")
         prop.tag = "{}bar"
         request.xmlDataSource[0][0].append(prop)
         propp = PROPPATCHHandler(Resource(), request)
@@ -270,20 +270,19 @@ class PROPPATCHXmlParsing(unittest.TestCase):
                           propp.PROPPATCH)
 
     def test_none_namespace_prop(self):
-        etree = z3c.etree.getEngine()
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         # Manually set up the xmlDataSource as some  etree `parse` method
         # raise a syntax error with the prop element with an empty namespace
         # which we are trying to test
         request.content_type = "application/xml"
-        request.xmlDataSource = etree.fromstring("""<?xml version="1.0" encoding="utf-8" ?>
+        request.xmlDataSource = ElementTree.fromstring("""<?xml version="1.0" encoding="utf-8" ?>
 <D:propertyupdate xmlns:D="DAV:" xmlns="DAV:">
   <set>
     <prop>
     </prop>
   </set>
 </D:propertyupdate>""")
-        prop = etree.Element("bar")
+        prop = ElementTree.Element("bar")
         prop.tag = "bar"
         request.xmlDataSource[0][0].append(prop)
         propp = PROPPATCHHandler(Resource(), request)
@@ -546,8 +545,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         zope.event.subscribers.remove(self.eventLog)
 
     def test_handleSetProperty(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{DAVtest:}exampletextprop")
+        propel = ElementTree.Element("{DAVtest:}exampletextprop")
         propel.text = "Example Text Prop"
 
         request = TestRequest(
@@ -565,8 +563,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         self.assertEqual(resource.text, "Example Text Prop")
 
     def test_handleSetProperty_samevalue(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{DAVtest:}exampletextprop")
+        propel = ElementTree.Element("{DAVtest:}exampletextprop")
         propel.text = "Text Prop"
 
         request = TestRequest(
@@ -578,8 +575,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         self.assertEqual(resource.text, "Text Prop")
 
     def test_handleSet_forbidden_property(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{DAVtest:}exampletextprop")
+        propel = ElementTree.Element("{DAVtest:}exampletextprop")
         propel.text = "Example Text Prop"
 
         exampleTextProperty.field.readonly = True
@@ -594,8 +590,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
                           propel)
 
     def test_handleSet_unauthorized(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{DAVtest:}unauthprop")
+        propel = ElementTree.Element("{DAVtest:}unauthprop")
         propel.text = "Example Text Prop"
 
         request = TestRequest(
@@ -606,8 +601,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         self.assertRaises(Unauthorized, propp.handleSet, propel)
 
     def test_handleSet_property_notfound(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{DAVtest:}exampletextpropmissing")
+        propel = ElementTree.Element("{DAVtest:}exampletextpropmissing")
         propel.text = "Example Text Prop"
 
         request = TestRequest(
@@ -620,8 +614,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
                           propel)
 
     def test_handleRemove_live_property(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{DAVtest:}exampletextprop")
+        propel = ElementTree.Element("{DAVtest:}exampletextprop")
         propel.text = "Example Text Prop"
 
         request = TestRequest(
@@ -634,8 +627,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
                           propel)
 
     def test_handleRemove_no_dead_properties(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{example:}exampledeadprop")
+        propel = ElementTree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
         request = TestRequest(
@@ -698,9 +690,8 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         # When trying to set a value on the `{DAV:}resourcetype` property
         # we need to first check that the field is readonly as the resourcetype
         # property has no input widget registered for it.
-        etree = z3c.etree.getEngine()
-        resourcetype = etree.Element("{DAV:}resourcetype")
-        resourcetype.append(etree.Element("{DAV:}collection"))
+        resourcetype = ElementTree.Element("{DAV:}resourcetype")
+        resourcetype.append(ElementTree.Element("{DAV:}collection"))
         request = TestRequest(set_properties = """<D:resourcetype />""")
         resource = Resource("Test prop", 10)
 
@@ -711,8 +702,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
     def test_set_readonly_resourcetype_samevalue(self):
         # Make sure we get the same error as the previous test but this time
         # trying to set the resourcetype to same value.
-        etree = z3c.etree.getEngine()
-        resourcetype = etree.Element("{DAV:}resourcetype")
+        resourcetype = ElementTree.Element("{DAV:}resourcetype")
         request = TestRequest(set_properties = """<D:resourcetype />""")
         resource = Resource("Test prop", 10)
 
@@ -777,8 +767,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         zope.event.subscribers.remove(self.eventLog)
 
     def test_remove_no_storage(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{example:}exampledeadprop")
+        propel = ElementTree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
         request = TestRequest(
@@ -789,8 +778,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         self.assertEqual(propp.handleRemove(propel), [])
 
     def test_remove_not_there(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{example:}exampledeadprop")
+        propel = ElementTree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
         request = TestRequest(
@@ -802,8 +790,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         self.assertEqual(self.events, [])
 
     def test_remove_prop(self):
-        etree = z3c.etree.getEngine()
-        propel = etree.Element("{example:}exampledeadprop")
+        propel = ElementTree.Element("{example:}exampledeadprop")
         propel.text = "Example Text Prop"
 
         request = TestRequest(

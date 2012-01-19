@@ -23,8 +23,7 @@ from zope.interface.verify import verifyObject
 from z3c.dav.publisher import WebDAVRequest
 from z3c.dav.interfaces import IWebDAVRequest, IWebDAVResponse, BadRequest
 
-from z3c.etree.testing import etreeSetup
-from z3c.etree.testing import etreeTearDown
+import z3c.etree.testing
 
 def create_request(body = None, env = {}):
     if isinstance(body, types.StringTypes):
@@ -37,10 +36,10 @@ def create_request(body = None, env = {}):
 class TestWebDAVPublisher(unittest.TestCase):
 
     def setUp(self):
-        self.etree = etreeSetup()
+        self.etree = z3c.etree.testing.etreeSetup(key = "py25")
 
     def tearDown(self):
-        etreeTearDown()
+        z3c.etree.testing.etreeTearDown()
 
     def test_noinput(self):
         request = create_request()

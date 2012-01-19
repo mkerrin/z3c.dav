@@ -26,7 +26,7 @@ from zope.traversing.browser.interfaces import IAbsoluteURL
 from zope.publisher.interfaces import IDefaultViewName
 
 import z3c.dav.publisher
-from z3c.etree.testing import etreeSetup, etreeTearDown, assertXMLEqual
+import z3c.etree.testing
 
 class IResource(interface.Interface):
 
@@ -99,7 +99,7 @@ class TestPropstatErrorView(unittest.TestCase):
     def setUp(self):
         super(TestPropstatErrorView, self).setUp()
 
-        etreeSetup()
+        z3c.etree.testing.etreeSetup(key = "py25")
 
         gsm = component.getGlobalSiteManager()
         gsm.registerAdapter(DummyResourceURL,
@@ -111,7 +111,7 @@ class TestPropstatErrorView(unittest.TestCase):
     def tearDown(self):
         super(TestPropstatErrorView, self).tearDown()
 
-        etreeTearDown()
+        z3c.etree.testing.etreeTearDown()
 
         gsm = component.getGlobalSiteManager()
         gsm.unregisterAdapter(DummyResourceURL,
@@ -140,7 +140,7 @@ class TestPropstatErrorView(unittest.TestCase):
 
         self.assertEqual(request.response.getStatus(), 207)
         self.assertEqual(request.response.getHeader("content-type"), "application/xml")
-        assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
+        z3c.etree.testing.assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
 <ns0:response>
   <ns0:href>/resource</ns0:href>
   <ns0:propstat>
@@ -157,7 +157,7 @@ class TestMSErrorView(unittest.TestCase):
     def setUp(self):
         super(TestMSErrorView, self).setUp()
 
-        etreeSetup()
+        z3c.etree.testing.etreeSetup(key = "py25")
 
         gsm = component.getGlobalSiteManager()
         gsm.registerAdapter(DummyResourceURL,
@@ -181,7 +181,7 @@ class TestMSErrorView(unittest.TestCase):
     def tearDown(self):
         super(TestMSErrorView, self).tearDown()
 
-        etreeTearDown()
+        z3c.etree.testing.etreeTearDown()
 
         gsm = component.getGlobalSiteManager()
         gsm.unregisterAdapter(DummyResourceURL,
@@ -223,7 +223,7 @@ class TestMSErrorView(unittest.TestCase):
         self.assertEqual(request.response.getHeader("content-type"),
                          "application/xml")
 
-        assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
+        z3c.etree.testing.assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
 <ns0:response>
   <ns0:href>/resource</ns0:href>
   <ns0:status>HTTP/1.1 403 Forbidden</ns0:status>
@@ -247,7 +247,7 @@ class TestMSErrorView(unittest.TestCase):
         self.assertEqual(request.response.getHeader("content-type"),
                          "application/xml")
 
-        assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
+        z3c.etree.testing.assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
 <ns0:response>
   <ns0:href>/resource</ns0:href>
   <ns0:status>HTTP/1.1 403 Forbidden</ns0:status>
@@ -275,7 +275,7 @@ class TestMSErrorView(unittest.TestCase):
         self.assertEqual(request.response.getHeader("content-type"),
                          "application/xml")
 
-        assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
+        z3c.etree.testing.assertXMLEqual(result, """<ns0:multistatus xmlns:ns0="DAV:">
 <ns0:response>
   <ns0:href>/secondresource</ns0:href>
   <ns0:status>HTTP/1.1 404 Not Found</ns0:status>

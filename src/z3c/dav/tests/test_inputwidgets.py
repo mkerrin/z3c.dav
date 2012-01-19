@@ -17,6 +17,7 @@
 import unittest
 import datetime
 from cStringIO import StringIO
+from xml.etree import ElementTree
 
 from zope import component
 from zope import schema
@@ -28,8 +29,7 @@ from zope.datetime import tzinfo
 
 from z3c.dav import widgets
 from z3c.dav.interfaces import IDAVInputWidget
-import z3c.etree
-from z3c.etree.testing import etreeSetup, etreeTearDown
+import z3c.etree.testing
 
 from test_widgets import TestWebDAVRequest
 
@@ -47,12 +47,10 @@ class _WebDAVWidgetTest(unittest.TestCase):
     _WidgetFactory = None
 
     def tearDown(self):
-        etreeTearDown()
-        del self.etree
+        z3c.etree.testing.etreeTearDown()
 
     def setUp(self):
-        etreeSetup()
-        self.etree = z3c.etree.getEngine()
+        z3c.etree.testing.etreeSetup(key = "py25")
 
     def setUpContent(self, desc = u'', title = u'Foo Title', element = None):
         ## setup the field first to stop some really weird errors
@@ -86,9 +84,10 @@ class WebDAVBaseInputWidgetTest(_WebDAVWidgetTest):
         self.setUpContent()
 
     def test_dontuseDAVWidgetToFieldValue(self):
-        self.assertRaises(NotImplementedError, self.widget.toFieldValue,
-                          self.etree.Element(self.etree.QName(self.namespace,
-                                                              self.name)))
+        self.assertRaises(
+            NotImplementedError,
+            self.widget.toFieldValue,
+            ElementTree.Element(ElementTree.QName(self.namespace, self.name)))
 
 
 class WebDAVInputWidgetTest(_WebDAVWidgetTest):
@@ -99,8 +98,8 @@ class WebDAVInputWidgetTest(_WebDAVWidgetTest):
     def setUp(self):
         super(WebDAVInputWidgetTest, self).setUp()
 
-        self.element = self.etree.Element(
-            self.etree.QName(self.namespace, self.name))
+        self.element = ElementTree.Element(
+            ElementTree.QName(self.namespace, self.name))
         if self.rendered_content is not None:
             self.element.text = self.rendered_content
         self.setUpContent(element = self.element)
@@ -121,8 +120,8 @@ class WebDAVInputWidgetTest(_WebDAVWidgetTest):
         self.field.validate(value) # this will raise an exception if false
 
     def test_noInput(self):
-        element = self.etree.Element(
-            self.etree.QName(self.namespace, self.missing_name))
+        element = ElementTree.Element(
+            ElementTree.QName(self.namespace, self.missing_name))
         element.text = self.rendered_content
         request = TestWebDAVRequest(element)
         widget  = self._WidgetFactory(self.field, request)
@@ -130,8 +129,8 @@ class WebDAVInputWidgetTest(_WebDAVWidgetTest):
         self.assertEqual(widget.hasInput(), False)
 
     def test_getInputValue_NoInput(self):
-        element = self.etree.Element(
-            self.etree.QName(self.namespace, self.missing_name))
+        element = ElementTree.Element(
+            ElementTree.QName(self.namespace, self.missing_name))
         element.text = self.rendered_content
         request = TestWebDAVRequest(element)
         widget  = self._WidgetFactory(self.field, request)
@@ -143,7 +142,8 @@ class WebDAVInputWidgetTest(_WebDAVWidgetTest):
         # The test case must expility call this method.
         if bad_rendered_content is None:
             bad_rendered_content = self.bad_rendered_content
-        element = self.etree.Element(self.etree.QName(self.namespace, self.name))
+        element = ElementTree.Element(
+            ElementTree.QName(self.namespace, self.name))
         element.text = bad_rendered_content
         request = TestWebDAVRequest(element)
         widget = self._WidgetFactory(self.field, request)
@@ -160,7 +160,8 @@ class TextWebDAVInputWidgetTest(WebDAVInputWidgetTest):
     rendered_content = u"Foo Value"
 
     def test_noinput(self):
-        element = self.etree.Element(self.etree.QName(self.namespace, self.name))
+        element = ElementTree.Element(
+            ElementTree.QName(self.namespace, self.name))
         request = TestWebDAVRequest(element)
         widget = self._WidgetFactory(self.field, request)
         widget.namespace = self.namespace
@@ -181,7 +182,8 @@ class IntWebDAVInputWidgetTest(WebDAVInputWidgetTest):
         super(IntWebDAVInputWidgetTest, self)._test_badinput()
 
     def test_noinput(self):
-        element = self.etree.Element(self.etree.QName(self.namespace, self.name))
+        element = ElementTree.Element(
+            ElementTree.QName(self.namespace, self.name))
         request = TestWebDAVRequest(element)
         widget = self._WidgetFactory(self.field, request)
         widget.namespace = self.namespace
@@ -204,8 +206,8 @@ class FloatWebDAVInputWidgetTest(WebDAVInputWidgetTest):
         super(FloatWebDAVInputWidgetTest, self)._test_badinput()
 
     def test_noinput(self):
-        element = self.etree.Element(
-            self.etree.QName(self.namespace, self.name))
+        element = ElementTree.Element(
+            ElementTree.QName(self.namespace, self.name))
         request = TestWebDAVRequest(element)
         widget = self._WidgetFactory(self.field, request)
         widget.namespace = self.namespace

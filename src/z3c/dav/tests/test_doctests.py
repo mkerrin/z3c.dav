@@ -56,8 +56,12 @@ class DemoFolder(UserDict.UserDict):
         self.data[key] = value
 
 
+def etreeSetup(test):
+    z3c.etree.testing.etreeSetup(test, key = "py25")
+
+
 def contentSetup(test):
-    z3c.etree.testing.etreeSetup(test)
+    etreeSetup(test)
     test.globs["Demo"] = Demo
     test.globs["DemoFolder"] = DemoFolder
 
@@ -76,28 +80,28 @@ def test_suite():
                              tearDown = contentTeardown),
         doctest.DocTestSuite("z3c.dav.utils",
                              checker = z3c.etree.testing.xmlOutputChecker,
-                             setUp = z3c.etree.testing.etreeSetup,
+                             setUp = etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
         doctest.DocTestSuite("z3c.dav.coreproperties",
                              checker = z3c.etree.testing.xmlOutputChecker,
-                             setUp = z3c.etree.testing.etreeSetup,
+                             setUp = etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
         doctest.DocFileSuite("datamodel.txt", package = "z3c.dav",
                              checker = z3c.etree.testing.xmlOutputChecker,
-                             setUp = z3c.etree.testing.etreeSetup,
+                             setUp = etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
         doctest.DocTestSuite("z3c.dav.adapters"),
         doctest.DocTestSuite("z3c.dav.locking",
                              checker = z3c.etree.testing.xmlOutputChecker,
-                             setUp = z3c.etree.testing.etreeSetup,
+                             setUp = etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
         doctest.DocFileSuite("locking.txt", package = "z3c.dav",
                              checker = z3c.etree.testing.xmlOutputChecker,
-                             setUp = z3c.etree.testing.etreeSetup,
+                             setUp = etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
         doctest.DocTestSuite("z3c.dav.mkcol"),
         doctest.DocTestSuite("z3c.dav.testing",
                              checker = z3c.etree.testing.xmlOutputChecker,
-                             setUp = z3c.etree.testing.etreeSetup,
+                             setUp = etreeSetup,
                              tearDown = z3c.etree.testing.etreeTearDown),
         ))

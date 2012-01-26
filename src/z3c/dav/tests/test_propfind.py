@@ -519,8 +519,8 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        props = ElementTree.Element(etree.QName("DAV:", "prop"))
-        prop = etree.Element("{}bar")
+        props = ElementTree.Element(ElementTree.QName("DAV:", "prop"))
+        prop = ElementTree.Element("{}bar")
         prop.tag = "{}bar" # lxml ignores the namespace in the above element
         props.append(prop)
 
@@ -533,8 +533,8 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        props = ElementTree.Element(etree.QName("DAV:", "prop"))
-        prop = etree.Element("bar")
+        props = ElementTree.Element(ElementTree.QName("DAV:", "prop"))
+        prop = ElementTree.Element("bar")
         props.append(prop)
 
         response = propf.renderSelectedProperties(resource, request, props)

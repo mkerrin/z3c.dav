@@ -61,7 +61,7 @@ def etreeSetup(test):
 
 
 def contentSetup(test):
-    etreeSetup(test)
+    etreeSetup(test, key = "py25")
     test.globs["Demo"] = Demo
     test.globs["DemoFolder"] = DemoFolder
 

@@ -132,7 +132,7 @@ class PROPPATCHHandler(z3c.dav.proppatch.PROPPATCH):
 class PROPPATCHXmlParsing(unittest.TestCase):
 
     def setUp(self):
-        etreeSetup()
+        etreeSetup(key = "py25")
 
         gsm = component.getGlobalSiteManager()
 
@@ -466,7 +466,7 @@ class PROPPATCHHandlePropertyModification(unittest.TestCase):
         self.events.append(event)
 
     def setUp(self):
-        etreeSetup()
+        etreeSetup(key = "py25")
 
         gsm = component.getGlobalSiteManager()
 
@@ -740,7 +740,7 @@ class PROPPATCHHandlePropertyRemoveDead(unittest.TestCase):
         self.events.append(event)
 
     def setUp(self):
-        etreeSetup()
+        etreeSetup(key = "py25")
 
         gsm = component.getGlobalSiteManager()
 

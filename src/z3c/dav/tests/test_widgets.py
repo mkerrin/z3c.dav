@@ -75,7 +75,7 @@ class _WebDAVWidgetTest(unittest.TestCase):
         etreeTearDown()
 
     def setUp(self):
-        self.etree = etreeSetup()
+        self.etree = etreeSetup(key = "py25")
 
     def setUpContent(self, desc = u'', title = u'Foo Title', element = None):
         ## setup the field first to stop some really weird errors
@@ -263,7 +263,7 @@ class ListTextWebDAVWidgetTest(WebDAVWidgetTest):
     rendered_content = "<ns0:name>firstitem</ns0:name><ns0:name>seconditem</ns0:name>"
 
     def setUp(self):
-        self.etree = etreeSetup()
+        self.etree = etreeSetup(key = "py25")
         component.getGlobalSiteManager().registerAdapter(
             widgets.TextDAVWidget,
             (zope.schema.interfaces.ITextLine,
@@ -324,7 +324,7 @@ class ObjectDAVWidgetTest(WebDAVWidgetTest):
                           <ns0:age>26</ns0:age>"""
 
     def setUp(self):
-        self.etree = etreeSetup()
+        self.etree = etreeSetup(key = "py25")
 
         foofield = schema.Object(__name__ = self.name,
                                  title = u"Foo Title",

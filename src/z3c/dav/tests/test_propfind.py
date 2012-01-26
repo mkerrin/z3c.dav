@@ -20,6 +20,7 @@ what properties are defined or not.
 import unittest
 from cStringIO import StringIO
 import UserDict
+from xml.etree import ElementTree
 
 from zope import interface
 from zope import component
@@ -42,7 +43,6 @@ from z3c.dav.propfind import PROPFIND
 from z3c.etree.testing import etreeSetup, etreeTearDown
 from z3c.etree.testing import assertXMLEqual
 from z3c.etree.testing import assertXMLEqualIgnoreOrdering
-import z3c.etree
 
 from test_proppatch import unauthProperty, UnauthorizedPropertyStorage, \
      IUnauthorizedPropertyStorage
@@ -88,7 +88,7 @@ class PROPFINDBodyTestCase(unittest.TestCase):
     # get set up.
 
     def setUp(self):
-        etreeSetup()
+        etreeSetup(key = "py25")
 
     def tearDown(self):
         etreeTearDown()
@@ -327,7 +327,7 @@ class DummyResourceURL(object):
 
 
 def propfindSetUp():
-    etreeSetup()
+    etreeSetup(key = "py25")
 
     gsm = component.getGlobalSiteManager()
 
@@ -498,8 +498,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
+        props = ElementTree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 <D:exampleintprop />
 </prop>""")
@@ -520,8 +519,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        props = etree.Element(etree.QName("DAV:", "prop"))
+        props = ElementTree.Element(etree.QName("DAV:", "prop"))
         prop = etree.Element("{}bar")
         prop.tag = "{}bar" # lxml ignores the namespace in the above element
         props.append(prop)
@@ -535,8 +533,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        props = etree.Element(etree.QName("DAV:", "prop"))
+        props = ElementTree.Element(etree.QName("DAV:", "prop"))
         prop = etree.Element("bar")
         props.append(prop)
 
@@ -557,8 +554,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
+        props = ElementTree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 <D:extratextprop />
 </prop>""")
@@ -603,8 +599,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        include = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
+        include = ElementTree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 </include>""")
         response = propf.renderAllProperties(resource, request, include)
@@ -644,8 +639,7 @@ class PROPFINDTestRender(unittest.TestCase):
         propf = PROPFIND(None, None)
 
         exampleTextProperty.restricted = True
-        etree = z3c.etree.getEngine()
-        include = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
+        include = ElementTree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:exampletextprop />
 </include>""")
         response = propf.renderAllProperties(resource, request, include)
@@ -666,8 +660,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
+        props = ElementTree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:brokenprop />
 </prop>""")
         response = propf.renderSelectedProperties(resource, request, props)
@@ -696,8 +689,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
+        props = ElementTree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:unauthprop />
 <D:exampletextprop />
 </prop>""")
@@ -718,8 +710,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, None)
 
-        etree = z3c.etree.getEngine()
-        props = etree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
+        props = ElementTree.fromstring("""<prop xmlns="DAV:" xmlns:D="DAVtest:">
 <D:unauthprop />
 <D:exampletextprop />
 </prop>""")
@@ -834,8 +825,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, request)
 
-        etree = z3c.etree.getEngine()
-        includes = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
+        includes = ElementTree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:unauthprop />
 </include>""")
 
@@ -869,8 +859,7 @@ class PROPFINDTestRender(unittest.TestCase):
         request = z3c.dav.publisher.WebDAVRequest(StringIO(""), {})
         propf = PROPFIND(None, request)
 
-        etree = z3c.etree.getEngine()
-        includes = etree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
+        includes = ElementTree.fromstring("""<include xmlns="DAV:" xmlns:D="DAVtest:">
 <D:brokenprop />
 </include>""")
 
